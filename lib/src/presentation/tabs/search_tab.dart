@@ -534,7 +534,7 @@ class _SearchTabState extends State<SearchTab> {
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         scrollDirection: Axis.horizontal,
         itemCount: _serviceCategories.length,
-        separatorBuilder: (_, __) => SizedBox(width: 8.w),
+        separatorBuilder: (_, _) => SizedBox(width: 8.w),
         itemBuilder: (context, index) {
           final category = _serviceCategories[index];
           final isSelected = _selectedCategory == category;
