@@ -97,43 +97,50 @@ class PropertiesManagementScreen extends StatelessWidget {
                 else
                   ...properties.map((prop) => _buildPropertyTile(context, prop, repository)),
 
-                SizedBox(height: 16.h),
-
-                // Add Property Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54.h,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AddNewPropertyScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add_home_rounded, color: Colors.white),
-                    label: Text(
-                      'Add New Property',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.buttonBackground,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(27.r),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20.h),
               ],
             ),
           );
         },
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          border: Border(
+            top: BorderSide(color: AppColors.borderUnselected, width: 1.0),
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 54.h,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddNewPropertyScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add_home_rounded, color: Colors.white),
+              label: Text(
+                'Add New Property',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.buttonBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(27.r),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class JobDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> job;
@@ -884,9 +885,7 @@ class JobDetailsScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Estimate Approved Successfully!')),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Estimate Approved Successfully!');
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
@@ -897,7 +896,7 @@ class JobDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Approve & Pay',
+                    'Approve',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
@@ -913,9 +912,7 @@ class JobDetailsScreen extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Downloading Receipt PDF...')),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Downloading Receipt PDF...');
                   },
                   icon: Icon(Icons.receipt_long_rounded, size: 18.r),
                   label: Text(
@@ -940,9 +937,7 @@ class JobDetailsScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Rebooking Service...')),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Rebooking Service...');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryDark,
@@ -969,9 +964,7 @@ class JobDetailsScreen extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Calling $providerName...')),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Calling $providerName...');
                   },
                   icon: Icon(Icons.call_rounded, size: 18.r),
                   label: Text(

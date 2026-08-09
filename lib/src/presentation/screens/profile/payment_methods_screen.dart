@@ -6,6 +6,7 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/payment_card.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_card_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -678,13 +679,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 HapticFeedback.lightImpact();
                 await _repository.setDefaultPaymentCard(activeCard.id);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Card ending in ${activeCard.lastFourDigits} set as default.'),
-                      backgroundColor: AppColors.primary,
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  DynamicIslandToast.showSuccess(context, 'Card ending in ${activeCard.lastFourDigits} set as default.');
                 }
               },
             ),
@@ -709,16 +704,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               HapticFeedback.mediumImpact();
               await _repository.toggleFreezePaymentCard(activeCard.id);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isFrozen
+                DynamicIslandToast.showSuccess(context, isFrozen
                           ? 'Card unfrozen. Online payments active.'
-                          : 'Card temporarily frozen.',
-                    ),
-                    backgroundColor: AppColors.primaryDark,
-                  ),
-                );
+                          : 'Card temporarily frozen.');
               }
             },
           ),
@@ -1210,12 +1198,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 onTap: () {
                   HapticFeedback.lightImpact();
                   if (!isPaid) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Processing payment for $title...'),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Processing payment for $title...');
                   }
                 },
                 child: Container(

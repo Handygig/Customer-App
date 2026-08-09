@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/user_profile.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -49,15 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final phone = _phoneController.text.trim();
 
     if (first.isEmpty || last.isEmpty || email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please fill in all required fields.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+      DynamicIslandToast.showError(context, 'Please fill in all required fields.');
       return;
     }
 
@@ -75,16 +68,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     await ProfileRepositoryImpl().updateUserProfile(updated);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Profile updated successfully!',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      DynamicIslandToast.showSuccess(context, 'Profile updated successfully!');
       Navigator.of(context).pop();
     }
   }

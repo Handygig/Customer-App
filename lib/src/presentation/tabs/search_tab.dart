@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class ServiceProvider {
   final String id;
@@ -989,12 +990,7 @@ class _SearchTabState extends State<SearchTab> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Contacting ${provider.name}...'),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Contacting ${provider.name}...');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

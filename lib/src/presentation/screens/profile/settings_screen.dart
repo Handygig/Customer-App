@@ -6,6 +6,7 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/user_profile.dart';
 import 'package:customer_app/src/presentation/screens/language/language_selection_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -160,22 +161,57 @@ class SettingsScreen extends StatelessWidget {
                 _buildSectionHeader('PREFERENCES & APP'),
                 SizedBox(height: 12.h),
 
-                // Language Selection Tile
-                _buildSettingTile(
-                  icon: Icons.language_rounded,
-                  title: 'App Language',
-                  subtitle: profile.languageCode == 'en' ? 'English (US)' : 'Selected Language',
-                  trailingText: profile.languageCode.toUpperCase(),
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const LanguageSelectionScreen(),
+                // Language Selection Tile (3-way switch)
+                Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: AppColors.borderUnselected),
+                  ),
+                  child: ListTile(
+                    leading: Container(
+                      padding: EdgeInsets.all(10.r),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardSelectedBg,
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
-                    );
-                  },
+                      child: Icon(Icons.language_rounded,
+                          color: AppColors.primary, size: 22.r),
+                    ),
+                    title: Text(
+                      'App Language',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textHeadline,
+                      ),
+                    ),
+                    subtitle: Text(
+                      profile.languageCode == 'si' ? 'සිංහල' : (profile.languageCode == 'ta' ? 'தமிழ்' : 'English'),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: EdgeInsets.all(3.r),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(color: AppColors.borderUnselected, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLanguageSegment('en', 'EN', profile.languageCode, repository),
+                          _buildLanguageSegment('si', 'SI', profile.languageCode, repository),
+                          _buildLanguageSegment('ta', 'TA', profile.languageCode, repository),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-
                 // Push Notifications Switch Tile
                 Container(
                   margin: EdgeInsets.only(bottom: 12.h),
@@ -235,6 +271,37 @@ class SettingsScreen extends StatelessWidget {
         fontWeight: FontWeight.w800,
         color: AppColors.primary,
         letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildLanguageSegment(String code, String display, String currentCode, ProfileRepositoryImpl repository) {
+    final isSelected = code == currentCode;
+    return GestureDetector(
+      onTap: () {
+        if (!isSelected) {
+          HapticFeedback.selectionClick();
+          repository.updateLanguage(code);
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(8.r),
+          boxShadow: isSelected 
+             ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
+             : null,
+        ),
+        child: Text(
+          display,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12.sp,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? AppColors.primary : AppColors.textMuted,
+          ),
+        ),
       ),
     );
   }
@@ -365,27 +432,11 @@ class SettingsScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (newCtrl.text.length < 6) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Password must be at least 6 characters.',
-                            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                          ),
-                          backgroundColor: Colors.red.shade700,
-                        ),
-                      );
+                      DynamicIslandToast.showError(context, 'Password must be at least 6 characters.');
                       return;
                     }
                     if (newCtrl.text != confirmCtrl.text) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'New passwords do not match.',
-                            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                          ),
-                          backgroundColor: Colors.red.shade700,
-                        ),
-                      );
+                      DynamicIslandToast.showError(context, 'New passwords do not match.');
                       return;
                     }
 
@@ -396,15 +447,7 @@ class SettingsScreen extends StatelessWidget {
 
                     if (ctx.mounted) {
                       Navigator.of(ctx).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Password updated successfully!',
-                            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                          ),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
+                      DynamicIslandToast.showSuccess(context, 'Password updated successfully!');
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -533,15 +576,7 @@ class SettingsScreen extends StatelessWidget {
                   onPressed: () {
                     repository.toggleTwoFactorAuth(true);
                     Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          '2FA Authentication enabled!',
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                        ),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
+                    DynamicIslandToast.showSuccess(context, '2FA Authentication enabled!');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.buttonBackground,

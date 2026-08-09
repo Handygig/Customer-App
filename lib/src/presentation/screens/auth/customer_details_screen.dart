@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/auth/add_properties_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 enum Gender { male, female }
 
@@ -128,20 +129,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
 
   void _handleImagePicker() {
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Image picker profile photo selection',
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-        ),
-        backgroundColor: AppColors.primaryDark,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    DynamicIslandToast.showSuccess(context, 'Image picker profile photo selection');
   }
 
   void _handleSubmit() {

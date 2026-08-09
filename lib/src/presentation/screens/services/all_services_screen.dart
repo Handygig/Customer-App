@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AllServicesScreen extends StatefulWidget {
   final String? initialCategory;
@@ -549,15 +550,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Booking request sent for ${srv['title']}!',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                        ),
-                        backgroundColor: AppColors.primary,
-                      ),
-                    );
+                    DynamicIslandToast.showSuccess(context, 'Booking request sent for ${srv['title']}!');
                   },
                   child: Text(
                     'Confirm & Schedule Service',

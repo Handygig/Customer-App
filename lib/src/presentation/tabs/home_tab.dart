@@ -344,42 +344,6 @@ class _HomeTabState extends State<HomeTab> {
                               Text('👋', style: TextStyle(fontSize: 14.sp)),
                             ],
                           ),
-                          SizedBox(height: 3.h),
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6.r,
-                                  height: 6.r,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                Flexible(
-                                  child: Text(
-                                    currentProp['title'] as String,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: AppColors.textSecondary,
-                                  size: 16.r,
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -529,27 +493,6 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                 ],
-              ),
-              GestureDetector(
-                onTap: widget.onAddPropertyTap,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 16.r,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      'Add New',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -816,6 +759,48 @@ class _HomeTabState extends State<HomeTab> {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                  if (isSelected) ...[
+                    SizedBox(height: 10.h),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onNavigateTab?.call(2);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add_task_rounded,
+                              size: 14.r,
+                              color: AppColors.primaryDark,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'Book a Service',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ],

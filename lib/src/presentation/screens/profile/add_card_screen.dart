@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/payment_card.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AddCardScreen extends StatefulWidget {
   const AddCardScreen({super.key});
@@ -116,42 +117,13 @@ class _AddCardScreenState extends State<AddCardScreen> {
     await ProfileRepositoryImpl().addPaymentCard(card);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Text(
-                  '${_detectedBrand.name.toUpperCase()} ending in $lastFour added successfully!',
-                  style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.primaryDark,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      DynamicIslandToast.showSuccess(context, '${_detectedBrand.name.toUpperCase()} Card Added Successfully');
       Navigator.of(context).pop();
     }
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-        ),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      ),
-    );
+    DynamicIslandToast.showError(context, message);
   }
 
   List<int> _getBrandGradientColors(CardBrand brand) {

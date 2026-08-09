@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/chat/camera_preview_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 enum MessageType { text, image, audio }
 
@@ -517,9 +518,7 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             onPressed: () {
               HapticFeedback.lightImpact();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Calling ${widget.providerName}...')),
-              );
+              DynamicIslandToast.showSuccess(context, 'Calling ${widget.providerName}...');
             },
             icon: Container(
               width: 38.r,

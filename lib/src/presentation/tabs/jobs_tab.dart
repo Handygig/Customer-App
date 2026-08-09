@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -168,40 +169,76 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                 ),
                 SizedBox(height: 16.h),
 
-                // Pill Tab Bar
-                Container(
-                  padding: EdgeInsets.all(4.r),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
-                    indicator: BoxDecoration(
-                      color: AppColors.accentLime,
-                      borderRadius: BorderRadius.circular(12.r),
+                // Pill Tab Bar with Liquid Glass Effect
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      padding: EdgeInsets.all(4.r),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.white.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+                        indicator: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.accentLime.withValues(alpha: 0.95),
+                              AppColors.accentLime,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              blurRadius: 1,
+                              offset: const Offset(0, -1),
+                            ),
+                          ],
+                        ),
+                        labelColor: AppColors.primaryDark,
+                        unselectedLabelColor: Colors.white.withValues(alpha: 0.85),
+                        labelStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        dividerColor: Colors.transparent,
+                        tabs: [
+                          Tab(text: 'Waiting ($waitingCount)'),
+                          Tab(text: 'To Approve ($toApproveCount)'),
+                          Tab(text: 'Ongoing ($ongoingCount)'),
+                          Tab(text: 'Completed ($completedCount)'),
+                        ],
+                      ),
                     ),
-                    labelColor: AppColors.primaryDark,
-                    unselectedLabelColor: Colors.white.withValues(alpha: 0.85),
-                    labelStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    dividerColor: Colors.transparent,
-                    tabs: [
-                      Tab(text: 'Waiting ($waitingCount)'),
-                      Tab(text: 'To Approve ($toApproveCount)'),
-                      Tab(text: 'Ongoing ($ongoingCount)'),
-                      Tab(text: 'Completed ($completedCount)'),
-                    ],
                   ),
                 ),
               ],

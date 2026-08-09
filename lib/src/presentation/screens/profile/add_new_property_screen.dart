@@ -9,6 +9,7 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/property.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AddNewPropertyScreen extends StatefulWidget {
   const AddNewPropertyScreen({super.key});
@@ -52,44 +53,12 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     final postalCode = _postalCodeController.text.trim();
 
     if (name.isEmpty || line1.isEmpty || city.isEmpty || province.isEmpty || postalCode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please fill in all required fields.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: Colors.red.shade800,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      DynamicIslandToast.showError(context, 'Please fill in all required fields.');
       return;
     }
 
     if (_selectedImagePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.add_a_photo_rounded, color: Colors.white),
-              SizedBox(width: 8.w),
-              Text(
-                'Please upload a property photo.',
-                style: GoogleFonts.plusJakartaSans(color: Colors.white),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red.shade800,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      DynamicIslandToast.showError(context, 'Please upload a property photo.');
       return;
     }
 
@@ -117,26 +86,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     await _repository.addProperty(newProperty);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              SizedBox(width: 8.w),
-              Text(
-                'New property added successfully!',
-                style: GoogleFonts.plusJakartaSans(color: Colors.white),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      DynamicIslandToast.showSuccess(context, 'New property added successfully!');
       Navigator.of(context).pop();
     }
   }
@@ -679,32 +629,40 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                         ),
                 ),
               ),
-              SizedBox(height: 24.h),
-
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 52.h,
-                child: ElevatedButton(
-                  onPressed: _saveProperty,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.buttonBackground,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26.r),
-                    ),
-                  ),
-                  child: Text(
-                    'Save Property',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          border: Border(
+            top: BorderSide(color: AppColors.borderUnselected, width: 1.0),
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 52.h,
+            child: ElevatedButton(
+              onPressed: _saveProperty,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.buttonBackground,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26.r),
                 ),
               ),
-            ],
+              child: Text(
+                'Save Property',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ),
       ),
