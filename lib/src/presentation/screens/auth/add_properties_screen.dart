@@ -8,6 +8,7 @@ import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class PropertyItem {
   final String name;
@@ -130,44 +131,12 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     final postalCode = _postalCodeController.text.trim();
 
     if (name.isEmpty || line1.isEmpty || city.isEmpty || province.isEmpty || postalCode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please fill all required fields.',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-          ),
-          backgroundColor: Colors.red.shade800,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      DynamicIslandToast.showError(context, 'Please fill all required fields.');
       return;
     }
 
     if (_selectedImagePath == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.add_a_photo_rounded, color: Colors.white),
-              SizedBox(width: 8.w),
-              Text(
-                'Please upload a property photo.',
-                style: GoogleFonts.plusJakartaSans(color: Colors.white),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red.shade800,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      DynamicIslandToast.showError(context, 'Please upload a property photo.');
       return;
     }
 
@@ -217,26 +186,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
   }
 
   void _finishRegistration(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white),
-            SizedBox(width: 8.w),
-            Text(
-              'Account setup completed!',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.r),
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    DynamicIslandToast.showSuccess(context, 'Account setup completed!');
 
     Navigator.of(context).pushAndRemoveUntil(
       CupertinoPageRoute(

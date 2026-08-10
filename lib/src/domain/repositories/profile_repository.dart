@@ -10,6 +10,7 @@ abstract class ProfileRepository {
   Stream<List<PaymentCard>> watchPaymentCards();
   Future<List<PaymentCard>> getPaymentCards();
   Future<void> addPaymentCard(PaymentCard card);
+  Future<void> updatePaymentCard(PaymentCard card);
   Future<void> deletePaymentCard(String cardId);
   Future<void> setDefaultPaymentCard(String cardId);
   Future<void> toggleFreezePaymentCard(String cardId);
@@ -17,6 +18,7 @@ abstract class ProfileRepository {
   Stream<List<Property>> watchProperties();
   Future<List<Property>> getProperties();
   Future<void> addProperty(Property property);
+  Future<void> updateProperty(Property property);
   Future<void> deleteProperty(String propertyId);
   Future<void> setPrimaryProperty(String propertyId);
 
@@ -29,4 +31,5 @@ abstract class ProfileRepository {
   Future<void> updateLanguage(String languageCode);
   Future<void> toggleNotifications(bool enabled);
   Future<void> toggleBiometrics(bool enabled);
+  Future<void> toggleDarkMode(bool enabled);
 }

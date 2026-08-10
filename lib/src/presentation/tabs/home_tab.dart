@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onAddPropertyTap;
@@ -224,7 +226,7 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundColor(context),
       body: Column(
         children: [
           // 1. Static Non-Scrolling Top Header Banner
@@ -232,9 +234,20 @@ class _HomeTabState extends State<HomeTab> {
 
           // 2. Scrollable Body Content
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
+            child: RefreshIndicator(
+              color: AppColors.primaryDark,
+              backgroundColor: AppColors.surfaceColor(context),
+              strokeWidth: 2.8,
+              onRefresh: () async {
+                HapticFeedback.mediumImpact();
+                await Future.delayed(const Duration(milliseconds: 1200));
+                if (context.mounted) {
+                  DynamicIslandToast.showSuccess(context, 'Dashboard Refreshed');
+                }
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 16.h),
@@ -263,7 +276,8 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ),
           ),
-        ],
+        ),
+      ],
       ),
     );
   }
@@ -279,14 +293,14 @@ class _HomeTabState extends State<HomeTab> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceColor(context),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(28.r),
           bottomRight: Radius.circular(28.r),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: AppColors.isDark(context) ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -335,7 +349,7 @@ class _HomeTabState extends State<HomeTab> {
                               Text(
                                 'Good Morning, Alex',
                                 style: GoogleFonts.plusJakartaSans(
-                                  color: AppColors.textHeadline,
+                                  color: AppColors.headlineColor(context),
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -343,42 +357,6 @@ class _HomeTabState extends State<HomeTab> {
                               SizedBox(width: 4.w),
                               Text('👋', style: TextStyle(fontSize: 14.sp)),
                             ],
-                          ),
-                          SizedBox(height: 3.h),
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 6.r,
-                                  height: 6.r,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                SizedBox(width: 6.w),
-                                Flexible(
-                                  child: Text(
-                                    currentProp['title'] as String,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  color: AppColors.textSecondary,
-                                  size: 16.r,
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),
@@ -397,10 +375,10 @@ class _HomeTabState extends State<HomeTab> {
                   width: 42.r,
                   height: 42.r,
                   decoration: BoxDecoration(
-                    color: AppColors.cardSelectedBg,
+                    color: AppColors.cardSelectedColor(context),
                     borderRadius: BorderRadius.circular(14.r),
                     border: Border.all(
-                      color: AppColors.borderUnselected,
+                      color: AppColors.borderColor(context),
                     ),
                   ),
                   child: Stack(
@@ -408,7 +386,7 @@ class _HomeTabState extends State<HomeTab> {
                     children: [
                       Icon(
                         Icons.notifications_outlined,
-                        color: AppColors.primary,
+                        color: AppColors.iconColor(context),
                         size: 22.r,
                       ),
                       Positioned(
@@ -441,16 +419,16 @@ class _HomeTabState extends State<HomeTab> {
             child: Container(
               height: 48.h,
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.searchBarColor(context),
                 borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: AppColors.borderUnselected),
+                border: Border.all(color: AppColors.borderColor(context)),
               ),
               padding: EdgeInsets.symmetric(horizontal: 14.w),
               child: Row(
                 children: [
                   Icon(
                     Icons.search_rounded,
-                    color: AppColors.primary,
+                    color: AppColors.iconColor(context),
                     size: 20.r,
                   ),
                   SizedBox(width: 10.w),
@@ -458,7 +436,7 @@ class _HomeTabState extends State<HomeTab> {
                     child: Text(
                       'Search for cleaning, repairs, plumbing...',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppColors.textMuted,
+                        color: AppColors.mutedTextColor(context),
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w500,
                       ),
@@ -468,13 +446,13 @@ class _HomeTabState extends State<HomeTab> {
                   Container(
                     padding: EdgeInsets.all(6.r),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.cardColor(context),
                       borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: AppColors.borderUnselected),
+                      border: Border.all(color: AppColors.borderColor(context)),
                     ),
                     child: Icon(
                       Icons.tune_rounded,
-                      color: AppColors.primary,
+                      color: AppColors.iconColor(context),
                       size: 16.r,
                     ),
                   ),
@@ -516,7 +494,7 @@ class _HomeTabState extends State<HomeTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textHeadline,
+                      color: AppColors.headlineColor(context),
                     ),
                   ),
                   SizedBox(width: 6.w),
@@ -525,31 +503,10 @@ class _HomeTabState extends State<HomeTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
+                      color: AppColors.mutedTextColor(context),
                     ),
                   ),
                 ],
-              ),
-              GestureDetector(
-                onTap: widget.onAddPropertyTap,
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 16.r,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      'Add New',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -818,6 +775,48 @@ class _HomeTabState extends State<HomeTab> {
                       ],
                     ),
                   ],
+                  if (isSelected) ...[
+                    SizedBox(height: 10.h),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        widget.onNavigateTab?.call(2);
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.add_task_rounded,
+                              size: 14.r,
+                              color: AppColors.primaryDark,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              'Book a Service',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -856,7 +855,7 @@ class _HomeTabState extends State<HomeTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textHeadline,
+                      color: AppColors.headlineColor(context),
                     ),
                   ),
                   SizedBox(width: 8.w),
@@ -893,9 +892,10 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ],
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 16.h),
 
           ListView.separated(
+            padding: EdgeInsets.zero,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: _ongoingJobs.length,
@@ -911,22 +911,36 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Widget _buildOngoingJobCard(Map<String, dynamic> job) {
-    final double progress = job['progress'] as double;
+    final String type = job['type'] as String? ?? 'ongoing';
+    final int currentStep = switch (type) {
+      'waiting' => 0,
+      'to_approve' => 1,
+      'ongoing' => 2,
+      'completed' => 3,
+      _ => 2,
+    };
+
+    final steps = [
+      'Requested',
+      'Approved',
+      'In Progress',
+      'Completed',
+    ];
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColors.borderUnselected),
+        color: AppColors.cardColor(context),
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: AppColors.borderColor(context), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
+            color: AppColors.primaryDark.withValues(alpha: 0.04),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.all(20.r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -934,17 +948,93 @@ class _HomeTabState extends State<HomeTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44.r,
-                height: 44.r,
+                width: 52.r,
+                height: 52.r,
                 decoration: BoxDecoration(
-                  color: AppColors.cardSelectedBg,
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(color: AppColors.borderUnselected),
+                  color: AppColors.cardSelectedColor(context),
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Icon(
                   job['icon'] as IconData,
+                  color: AppColors.iconColor(context),
+                  size: 26.r,
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      job['service'] as String,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.headlineColor(context),
+                        height: 1.3,
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13.r,
+                          color: AppColors.mutedTextColor(context),
+                        ),
+                        SizedBox(width: 3.w),
+                        Text(
+                          job['property'] as String,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.secondaryTextColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: (job['statusColor'] as Color).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(
+                    color: (job['statusColor'] as Color).withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  job['status'] as String,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w800,
+                    color: (job['statusColor'] as Color) == AppColors.accentLime
+                        ? AppColors.primary
+                        : job['statusColor'] as Color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          SizedBox(height: 18.h),
+          Divider(height: 1, color: AppColors.borderColor(context)),
+          SizedBox(height: 18.h),
+
+          // Schedule and Provider in a clean layout
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 18.r,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                child: Icon(
+                  Icons.person_rounded,
                   color: AppColors.primary,
-                  size: 24.r,
+                  size: 20.r,
                 ),
               ),
               SizedBox(width: 12.w),
@@ -953,186 +1043,161 @@ class _HomeTabState extends State<HomeTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      job['service'] as String,
+                      job['providerName'] as String,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
+                        fontSize: 13.5.sp,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textHeadline,
+                        color: AppColors.headlineColor(context),
                       ),
                     ),
-                    SizedBox(height: 3.h),
+                    SizedBox(height: 4.h),
                     Row(
                       children: [
                         Icon(
-                          Icons.location_on_outlined,
+                          Icons.event_available_rounded,
                           size: 13.r,
-                          color: AppColors.textMuted,
+                          color: AppColors.primary,
                         ),
-                        SizedBox(width: 3.w),
-                        Text(
-                          job['property'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: (job['statusColor'] as Color).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20.r),
-                  border: Border.all(
-                    color: (job['statusColor'] as Color).withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6.r,
-                      height: 6.r,
-                      decoration: BoxDecoration(
-                        color: job['statusColor'] as Color,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    SizedBox(width: 5.w),
-                    Text(
-                      job['status'] as String,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11.sp,
-                        fontWeight: FontWeight.w700,
-                        color: (job['statusColor'] as Color) == AppColors.accentLime
-                            ? AppColors.primary
-                            : job['statusColor'] as Color,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 14.h),
-
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Service Progress',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  Text(
-                    '${(progress * 100).toInt()}%',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 6.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6.r),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6.h,
-                  backgroundColor: AppColors.borderUnselected.withValues(alpha: 0.5),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 14.h),
-
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-            decoration: BoxDecoration(
-              color: AppColors.cardSelectedBg,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 14.r,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                      child: Icon(
-                        Icons.person_rounded,
-                        color: AppColors.primary,
-                        size: 16.r,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          job['providerName'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textHeadline,
-                          ),
-                        ),
+                        SizedBox(width: 4.w),
                         Text(
                           job['scheduledTime'] as String,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textMuted,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.mutedTextColor(context),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        _showJobDetailsModal(job);
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                        decoration: BoxDecoration(
-                          color: AppColors.buttonBackground,
-                          borderRadius: BorderRadius.circular(8.r),
-                        ),
-                        child: Text(
-                          'Track',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.buttonText,
-                          ),
-                        ),
-                      ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => JobDetailsScreen(job: job),
                     ),
-                  ],
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.buttonBackground,
+                    borderRadius: BorderRadius.circular(10.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.buttonBackground.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    'Track',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.buttonText,
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          
+          SizedBox(height: 18.h),
+          
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Service Progress',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.mutedTextColor(context),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(steps.length, (index) {
+                  final isPassed = index <= currentStep;
+                  final isCurrent = index == currentStep;
+
+                  return Expanded(
+                    child: Row(
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              width: 24.r,
+                              height: 24.r,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isPassed
+                                    ? (isCurrent
+                                        ? AppColors.primary
+                                        : AppColors.primaryDark)
+                                    : AppColors.borderColor(context),
+                                border: isCurrent
+                                    ? Border.all(
+                                        color: AppColors.accentLime,
+                                        width: 2.5,
+                                      )
+                                    : null,
+                              ),
+                              child: Center(
+                                child: isPassed
+                                    ? Icon(
+                                        Icons.check_rounded,
+                                        size: 14.r,
+                                        color: Colors.white,
+                                      )
+                                    : Text(
+                                        '${index + 1}',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.mutedTextColor(context),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            SizedBox(height: 6.h),
+                            Text(
+                              steps[index],
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 9.sp,
+                                fontWeight:
+                                    isPassed ? FontWeight.w700 : FontWeight.w500,
+                                color: isPassed
+                                    ? AppColors.headlineColor(context)
+                                    : AppColors.mutedTextColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (index < steps.length - 1)
+                          Expanded(
+                            child: Container(
+                              height: 2.h,
+                              margin: EdgeInsets.only(bottom: 18.h),
+                              color: index < currentStep
+                                  ? AppColors.primaryDark
+                                  : AppColors.borderColor(context),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
         ],
       ),
@@ -1167,7 +1232,7 @@ class _HomeTabState extends State<HomeTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textHeadline,
+                      color: AppColors.headlineColor(context),
                     ),
                   ),
                 ],
@@ -1415,7 +1480,7 @@ class _HomeTabState extends State<HomeTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textHeadline,
+                      color: AppColors.headlineColor(context),
                     ),
                   ),
                 ],
@@ -1470,9 +1535,9 @@ class _HomeTabState extends State<HomeTab> {
 
                   width: 110.w,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.cardColor(context),
                     borderRadius: BorderRadius.circular(18.r),
-                    border: Border.all(color: AppColors.borderUnselected),
+                    border: Border.all(color: AppColors.borderColor(context)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.025),
@@ -1507,7 +1572,7 @@ class _HomeTabState extends State<HomeTab> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5.sp,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textHeadline,
+                          color: AppColors.headlineColor(context),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1537,7 +1602,7 @@ class _HomeTabState extends State<HomeTab> {
       builder: (context) {
         return Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surfaceColor(context),
             borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
           ),
           padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 36.h),
@@ -1548,7 +1613,7 @@ class _HomeTabState extends State<HomeTab> {
                 width: 40.w,
                 height: 4.h,
                 decoration: BoxDecoration(
-                  color: AppColors.borderUnselected,
+                  color: AppColors.borderColor(context),
                   borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
@@ -1564,14 +1629,14 @@ class _HomeTabState extends State<HomeTab> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textHeadline,
+                          color: AppColors.headlineColor(context),
                         ),
                       ),
                       Text(
                         'ID: ${job['id']} • ${job['property']}',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
-                          color: AppColors.textMuted,
+                          color: AppColors.mutedTextColor(context),
                         ),
                       ),
                     ],
@@ -1597,7 +1662,7 @@ class _HomeTabState extends State<HomeTab> {
               Container(
                 padding: EdgeInsets.all(14.r),
                 decoration: BoxDecoration(
-                  color: AppColors.cardSelectedBg,
+                  color: AppColors.cardSelectedColor(context),
                   borderRadius: BorderRadius.circular(14.r),
                 ),
                 child: Row(
@@ -1621,14 +1686,14 @@ class _HomeTabState extends State<HomeTab> {
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 13.5.sp,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textHeadline,
+                              color: AppColors.headlineColor(context),
                             ),
                           ),
                           Text(
                             'Rating: ${job['providerRating']}',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.sp,
-                              color: AppColors.textMuted,
+                              color: AppColors.mutedTextColor(context),
                             ),
                           ),
                         ],

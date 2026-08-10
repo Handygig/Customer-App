@@ -97,43 +97,50 @@ class PropertiesManagementScreen extends StatelessWidget {
                 else
                   ...properties.map((prop) => _buildPropertyTile(context, prop, repository)),
 
-                SizedBox(height: 16.h),
-
-                // Add Property Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54.h,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AddNewPropertyScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add_home_rounded, color: Colors.white),
-                    label: Text(
-                      'Add New Property',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.buttonBackground,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(27.r),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 20.h),
               ],
             ),
           );
         },
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          border: Border(
+            top: BorderSide(color: AppColors.borderUnselected, width: 1.0),
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 54.h,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddNewPropertyScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add_home_rounded, color: Colors.white),
+              label: Text(
+                'Add New Property',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.buttonBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(27.r),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -280,6 +287,39 @@ class PropertiesManagementScreen extends StatelessWidget {
                           SizedBox(width: 8.w),
                         ],
 
+                        // Edit Action Button
+                        InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => AddNewPropertyScreen(propertyToEdit: property),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(20.r),
+                          child: Container(
+                            padding: EdgeInsets.all(7.r),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              color: AppColors.primary,
+                              size: 18.r,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+
                         // Delete Action Button
                         InkWell(
                           onTap: () => _confirmDeleteProperty(context, property, repository),
@@ -389,10 +429,6 @@ class PropertiesManagementScreen extends StatelessWidget {
                   // Specs Badges Row
                   Row(
                     children: [
-                      _buildSpecBadge(Icons.bed_rounded, '${property.bedrooms} Beds'),
-                      SizedBox(width: 8.w),
-                      _buildSpecBadge(Icons.square_foot_rounded, '${property.areaSqft} sqft'),
-                      SizedBox(width: 8.w),
                       _buildSpecBadge(typeIcon, typeLabel),
                     ],
                   ),

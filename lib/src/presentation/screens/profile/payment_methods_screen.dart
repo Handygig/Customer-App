@@ -6,6 +6,7 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/payment_card.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_card_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -19,7 +20,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   int _selectedCardCarouselIndex = 0;
   final PageController _pageController = PageController(viewportFraction: 0.9);
 
-  String _selectedAlternativeMethod = 'card'; // 'card', 'apple_pay', 'cash', 'bank'
+  String _selectedAlternativeMethod =
+      'card'; // 'card', 'apple_pay', 'cash', 'bank'
 
   @override
   void dispose() {
@@ -35,7 +37,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -50,7 +55,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         actions: [
           IconButton(
             tooltip: 'Add New Card',
-            icon: const Icon(Icons.add_card_rounded, color: AppColors.accentLime),
+            icon: const Icon(
+              Icons.add_card_rounded,
+              color: AppColors.accentLime,
+            ),
             onPressed: () => _navigateToAddCard(context),
           ),
         ],
@@ -94,15 +102,25 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       onTap: () => _navigateToAddCard(context),
                       borderRadius: BorderRadius.circular(20.r),
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 6.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(color: AppColors.primary, width: 1.2),
+                          border: Border.all(
+                            color: AppColors.primary,
+                            width: 1.2,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.add_rounded, size: 16.r, color: AppColors.primary),
+                            Icon(
+                              Icons.add_rounded,
+                              size: 16.r,
+                              color: AppColors.primary,
+                            ),
                             SizedBox(width: 4.w),
                             Text(
                               'Add Card',
@@ -150,90 +168,6 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 // Add Card Trigger Tile
                 _buildAddCardListTile(context),
 
-                SizedBox(height: 28.h),
-
-                // 4. Other Payment Methods (Digital Wallets & Cash)
-                Text(
-                  'Other Payment Methods',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.5.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textHeadline,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-
-                _buildAlternativeMethodTile(
-                  id: 'apple_pay',
-                  title: 'Apple Pay / Google Pay',
-                  subtitle: 'Fast one-touch checkout via biometric ID',
-                  icon: Icons.phone_iphone_rounded,
-                  badgeText: 'INSTANT',
-                ),
-                SizedBox(height: 10.h),
-
-                _buildAlternativeMethodTile(
-                  id: 'cash',
-                  title: 'Cash after Service Delivery',
-                  subtitle: 'Pay directly to technician once work is inspected',
-                  icon: Icons.payments_outlined,
-                  badgeText: 'RECOMMENDED',
-                ),
-                SizedBox(height: 10.h),
-
-                _buildAlternativeMethodTile(
-                  id: 'bank',
-                  title: 'Direct Bank Transfer (ACH)',
-                  subtitle: 'Direct bank debit for recurring maintenance',
-                  icon: Icons.account_balance_rounded,
-                ),
-
-                SizedBox(height: 28.h),
-
-                // 5. Upcoming Service Payments & Invoices
-                Text(
-                  'Upcoming Service Payments',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.5.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textHeadline,
-                  ),
-                ),
-                SizedBox(height: 12.h),
-
-                _buildServicePaymentTile(
-                  title: 'HVAC Air Conditioning Service',
-                  provider: 'Cool Breeze Repair Co.',
-                  amount: '\$836.94',
-                  dueDate: 'Due in 4 days',
-                  installmentInfo: '1 of 4 installments',
-                  status: 'Scheduled',
-                  icon: Icons.ac_unit_rounded,
-                ),
-                SizedBox(height: 12.h),
-
-                _buildServicePaymentTile(
-                  title: 'Plumbing & Water Leak Repair',
-                  provider: 'QuickFix Plumbing',
-                  amount: '\$246.00',
-                  dueDate: 'Due Aug 24',
-                  installmentInfo: 'Final Balance',
-                  status: 'Auto-Pay',
-                  icon: Icons.plumbing_rounded,
-                ),
-                SizedBox(height: 12.h),
-
-                _buildServicePaymentTile(
-                  title: 'Smart Lock & Security Setup',
-                  provider: 'SafeHome Security',
-                  amount: '\$189.50',
-                  dueDate: 'Paid on Aug 1',
-                  installmentInfo: 'Receipt #INV-8829',
-                  status: 'Paid',
-                  icon: Icons.security_rounded,
-                  isPaid: true,
-                ),
-
                 SizedBox(height: 24.h),
 
                 // Security & Guarantee Notice
@@ -252,7 +186,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           color: AppColors.primary.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.shield_rounded, color: AppColors.primary, size: 20.r),
+                        child: Icon(
+                          Icons.shield_rounded,
+                          color: AppColors.primary,
+                          size: 20.r,
+                        ),
                       ),
                       SizedBox(width: 12.w),
                       Expanded(
@@ -293,11 +231,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   void _navigateToAddCard(BuildContext context) {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const AddCardScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const AddCardScreen()));
   }
 
   Widget _buildEmptyCardsState(BuildContext context) {
@@ -324,7 +260,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               color: AppColors.cardSelectedBg,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.credit_card_off_rounded, size: 40.r, color: AppColors.primary),
+            child: Icon(
+              Icons.credit_card_off_rounded,
+              size: 40.r,
+              color: AppColors.primary,
+            ),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -351,7 +291,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             height: 48.h,
             child: ElevatedButton.icon(
               onPressed: () => _navigateToAddCard(context),
-              icon: const Icon(Icons.add_card_rounded, color: Colors.white, size: 18),
+              icon: const Icon(
+                Icons.add_card_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
               label: Text(
                 'Add Your First Card',
                 style: GoogleFonts.plusJakartaSans(
@@ -374,8 +318,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   Widget _buildCardsCarousel(List<PaymentCard> cards) {
+    double stackHeight = 215.h;
     return SizedBox(
-      height: 215.h,
+      height: stackHeight,
       child: PageView.builder(
         controller: _pageController,
         itemCount: cards.length,
@@ -400,13 +345,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   }
 
   Widget _buildCreditCardVisual(PaymentCard card) {
-    List<Color> gradientColors = [const Color(0xFF3D4127), const Color(0xFF636B2F)];
-    if (card.brand == CardBrand.visa) {
-      gradientColors = [const Color(0xFF4A5129), const Color(0xFF6B7435)];
+    List<Color> gradientColors = [
+      const Color(0xFF0D253F),
+      const Color(0xFF1E50A2),
+    ];
+    if (card.brand == CardBrand.mastercard) {
+      gradientColors = [const Color(0xFF1A1A2E), const Color(0xFF8B1E26)];
     } else if (card.brand == CardBrand.amex) {
-      gradientColors = [const Color(0xFF1E2117), const Color(0xFF383E20)];
+      gradientColors = [const Color(0xFF2C3E50), const Color(0xFF4CA1AF)];
     } else if (card.brand == CardBrand.discover) {
-      gradientColors = [const Color(0xFF53482A), const Color(0xFF756A3D)];
+      gradientColors = [const Color(0xFF3E2723), const Color(0xFFD84315)];
     }
 
     final isDefault = card.isDefault;
@@ -423,7 +371,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           colors: gradientColors,
         ),
         border: Border.all(
-          color: isDefault ? AppColors.accentLime.withValues(alpha: 0.5) : Colors.white24,
+          color: isDefault
+              ? AppColors.accentLime.withValues(alpha: 0.5)
+              : Colors.white24,
           width: isDefault ? 2.0 : 1.0,
         ),
         boxShadow: [
@@ -455,21 +405,35 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                             colors: [Color(0xFFE8D499), Color(0xFFC7AC64)],
                           ),
                           borderRadius: BorderRadius.circular(6.r),
-                          border: Border.all(color: const Color(0xFF8C7536), width: 0.8),
+                          border: Border.all(
+                            color: const Color(0xFF8C7536),
+                            width: 0.8,
+                          ),
                         ),
                         child: Center(
-                          child: Icon(Icons.nfc_rounded, color: const Color(0xFF5C4C1E), size: 16.r),
+                          child: Icon(
+                            Icons.nfc_rounded,
+                            color: const Color(0xFF5C4C1E),
+                            size: 16.r,
+                          ),
                         ),
                       ),
                       SizedBox(width: 10.w),
-                      Icon(Icons.wifi_tethering_rounded, color: Colors.white70, size: 18.r),
+                      Icon(
+                        Icons.wifi_tethering_rounded,
+                        color: Colors.white70,
+                        size: 18.r,
+                      ),
                     ],
                   ),
                   Row(
                     children: [
                       if (isDefault) ...[
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.accentLime,
                             borderRadius: BorderRadius.circular(10.r),
@@ -477,7 +441,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.star_rounded, size: 12.r, color: AppColors.primaryDark),
+                              Icon(
+                                Icons.star_rounded,
+                                size: 12.r,
+                                color: AppColors.primaryDark,
+                              ),
                               SizedBox(width: 3.w),
                               Text(
                                 'PRIMARY',
@@ -576,7 +544,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 ),
                 child: Center(
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.cyan.shade900.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(16.r),
@@ -585,7 +556,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.ac_unit_rounded, color: Colors.cyanAccent, size: 16.r),
+                        Icon(
+                          Icons.ac_unit_rounded,
+                          color: Colors.cyanAccent,
+                          size: 16.r,
+                        ),
                         SizedBox(width: 6.w),
                         Text(
                           'CARD FROZEN • BLOCKED',
@@ -678,12 +653,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 HapticFeedback.lightImpact();
                 await _repository.setDefaultPaymentCard(activeCard.id);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Card ending in ${activeCard.lastFourDigits} set as default.'),
-                      backgroundColor: AppColors.primary,
-                      duration: const Duration(seconds: 2),
-                    ),
+                  DynamicIslandToast.showSuccess(
+                    context,
+                    'Card ending in ${activeCard.lastFourDigits} set as default.',
                   );
                 }
               },
@@ -709,15 +681,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               HapticFeedback.mediumImpact();
               await _repository.toggleFreezePaymentCard(activeCard.id);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isFrozen
-                          ? 'Card unfrozen. Online payments active.'
-                          : 'Card temporarily frozen.',
-                    ),
-                    backgroundColor: AppColors.primaryDark,
-                  ),
+                DynamicIslandToast.showSuccess(
+                  context,
+                  isFrozen
+                      ? 'Card unfrozen. Online payments active.'
+                      : 'Card temporarily frozen.',
                 );
               }
             },
@@ -778,7 +746,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
-                color: isHighlight ? AppColors.primaryDark : AppColors.textHeadline,
+                color: isHighlight
+                    ? AppColors.primaryDark
+                    : AppColors.textHeadline,
               ),
             ),
           ],
@@ -817,14 +787,24 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: card.brand == CardBrand.visa
-                    ? [const Color(0xFF4A5129), const Color(0xFF6B7435)]
-                    : [const Color(0xFF3D4127), const Color(0xFF636B2F)],
+                    ? [const Color(0xFF0D253F), const Color(0xFF1E50A2)]
+                    : card.brand == CardBrand.mastercard
+                    ? [const Color(0xFF1A1A2E), const Color(0xFF8B1E26)]
+                    : card.brand == CardBrand.amex
+                    ? [const Color(0xFF2C3E50), const Color(0xFF4CA1AF)]
+                    : [const Color(0xFF3E2723), const Color(0xFFD84315)],
               ),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Center(
               child: Text(
-                card.brand == CardBrand.visa ? 'VISA' : 'MC',
+                card.brand == CardBrand.visa
+                    ? 'VISA'
+                    : card.brand == CardBrand.mastercard
+                    ? 'MC'
+                    : card.brand == CardBrand.amex
+                    ? 'AMEX'
+                    : 'DISC',
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontSize: 10.sp,
@@ -842,18 +822,24 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      '${card.brand.name.toUpperCase()} •••• ${card.lastFourDigits}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textHeadline,
+                    Flexible(
+                      child: Text(
+                        '${card.brand.name.toUpperCase()} •••• ${card.lastFourDigits}',
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textHeadline,
+                        ),
                       ),
                     ),
                     if (isDefault) ...[
                       SizedBox(width: 6.w),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 2.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.accentLime,
                           borderRadius: BorderRadius.circular(6.r),
@@ -885,8 +871,14 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
           // Actions Menu
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert_rounded, color: AppColors.textMuted, size: 20.r),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+            icon: Icon(
+              Icons.more_vert_rounded,
+              color: AppColors.textMuted,
+              size: 20.r,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
             onSelected: (value) async {
               if (value == 'default') {
                 await _repository.setDefaultPaymentCard(card.id);
@@ -904,9 +896,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   value: 'default',
                   child: Row(
                     children: [
-                      const Icon(Icons.star_rounded, color: AppColors.primary, size: 18),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
                       SizedBox(width: 10.w),
-                      Text('Set as Default', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                      Text(
+                        'Set as Default',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -914,11 +915,20 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 value: 'freeze',
                 child: Row(
                   children: [
-                    Icon(card.isFrozen ? Icons.lock_open_rounded : Icons.ac_unit_rounded,
-                        color: AppColors.primary, size: 18),
+                    Icon(
+                      card.isFrozen
+                          ? Icons.lock_open_rounded
+                          : Icons.ac_unit_rounded,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
                     SizedBox(width: 10.w),
-                    Text(card.isFrozen ? 'Unfreeze Card' : 'Freeze Card',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                    Text(
+                      card.isFrozen ? 'Unfreeze Card' : 'Freeze Card',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -926,9 +936,18 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 value: 'details',
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 18),
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
                     SizedBox(width: 10.w),
-                    Text('Card Details', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+                    Text(
+                      'Card Details',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -937,9 +956,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 18),
+                    const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.red,
+                      size: 18,
+                    ),
                     SizedBox(width: 10.w),
-                    Text('Remove Card', style: GoogleFonts.plusJakartaSans(color: Colors.red, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Remove Card',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -971,7 +1000,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 color: AppColors.cardSelectedBg,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.add_card_rounded, color: AppColors.primary, size: 22.r),
+              child: Icon(
+                Icons.add_card_rounded,
+                color: AppColors.primary,
+                size: 22.r,
+              ),
             ),
             SizedBox(width: 14.w),
             Expanded(
@@ -997,7 +1030,11 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: AppColors.primary, size: 16.r),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.primary,
+              size: 16.r,
+            ),
           ],
         ),
       ),
@@ -1042,7 +1079,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             Container(
               padding: EdgeInsets.all(10.r),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.cardSelectedBg : const Color(0xFFF6F8F3),
+                color: isSelected
+                    ? AppColors.cardSelectedBg
+                    : const Color(0xFFF6F8F3),
                 borderRadius: BorderRadius.circular(12.r),
               ),
               child: Icon(icon, color: AppColors.primary, size: 22.r),
@@ -1067,7 +1106,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                       if (badgeText != null) ...[
                         SizedBox(width: 6.w),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF2F5EC),
                             borderRadius: BorderRadius.circular(6.r),
@@ -1096,7 +1138,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               ),
             ),
             Icon(
-              isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              isSelected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked_rounded,
               color: isSelected ? AppColors.primary : AppColors.radioUnselected,
               size: 22.r,
             ),
@@ -1184,7 +1228,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     dueDate,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5.sp,
-                      color: isPaid ? Colors.green.shade700 : AppColors.textMuted,
+                      color: isPaid
+                          ? Colors.green.shade700
+                          : AppColors.textMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1210,16 +1256,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 onTap: () {
                   HapticFeedback.lightImpact();
                   if (!isPaid) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Processing payment for $title...'),
-                        backgroundColor: AppColors.primary,
-                      ),
+                    DynamicIslandToast.showSuccess(
+                      context,
+                      'Processing payment for $title...',
                     );
                   }
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isPaid ? const Color(0xFFF2F5EC) : AppColors.primary,
                     borderRadius: BorderRadius.circular(12.r),
@@ -1280,7 +1327,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                     ),
                     if (card.isDefault)
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.accentLime,
                           borderRadius: BorderRadius.circular(8.r),
@@ -1299,13 +1349,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 SizedBox(height: 16.h),
                 _buildDetailRow('Cardholder Name', card.cardholderName),
                 const Divider(),
-                _buildDetailRow('Card Number', '•••• •••• •••• ${card.lastFourDigits}'),
+                _buildDetailRow(
+                  'Card Number',
+                  '•••• •••• •••• ${card.lastFourDigits}',
+                ),
                 const Divider(),
                 _buildDetailRow('Card Network', card.brand.name.toUpperCase()),
                 const Divider(),
                 _buildDetailRow('Expiry Date', card.expiryDate),
                 const Divider(),
-                _buildDetailRow('Card Status', card.isFrozen ? 'Frozen (Blocked)' : 'Active & Verified'),
+                _buildDetailRow(
+                  'Card Status',
+                  card.isFrozen ? 'Frozen (Blocked)' : 'Active & Verified',
+                ),
                 SizedBox(height: 24.h),
                 SizedBox(
                   width: double.infinity,
@@ -1427,7 +1483,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(ctx).pop(),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.borderUnselected, width: 1.5),
+                            side: const BorderSide(
+                              color: AppColors.borderUnselected,
+                              width: 1.5,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25.r),
                             ),
@@ -1482,4 +1541,3 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 }
-

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/src/domain/entities/user_profile.dart';
 import 'package:customer_app/src/domain/entities/payment_card.dart';
@@ -152,6 +154,18 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<void> updatePaymentCard(PaymentCard card) async {
+    if (card.isDefault) {
+      _cards = _cards.map((c) => c.copyWith(isDefault: false)).toList();
+    }
+    final index = _cards.indexWhere((c) => c.id == card.id);
+    if (index != -1) {
+      _cards[index] = card;
+    }
+    _cardsController.add(_cards);
+  }
+
+  @override
   Future<void> setDefaultPaymentCard(String cardId) async {
     _cards = _cards.map((c) {
       return c.copyWith(isDefault: c.id == cardId);
@@ -183,11 +197,25 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<void> addProperty(Property property) async {
+    await Future.delayed(const Duration(milliseconds: 400));
     if (property.isPrimary) {
       _properties = _properties.map((p) => p.copyWith(isPrimary: false)).toList();
     }
     _properties = [..._properties, property];
     _propertiesController.add(_properties);
+  }
+
+  @override
+  Future<void> updateProperty(Property property) async {
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (property.isPrimary) {
+      _properties = _properties.map((p) => p.copyWith(isPrimary: false)).toList();
+    }
+    final index = _properties.indexWhere((p) => p.id == property.id);
+    if (index != -1) {
+      _properties[index] = property;
+      _propertiesController.add(_properties);
+    }
   }
 
   @override
@@ -238,5 +266,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<void> toggleBiometrics(bool enabled) async {
     _profile = _profile.copyWith(biometricsEnabled: enabled);
     _profileController.add(_profile);
+  }
+
+  @override
+  Future<void> toggleDarkMode(bool enabled) async {
+    _profile = _profile.copyWith(isDarkMode: enabled);
+    _profileController.add(_profile);
+    themeModeNotifier.value = enabled ? ThemeMode.dark : ThemeMode.light;
   }
 }

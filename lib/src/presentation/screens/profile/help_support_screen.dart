@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -106,15 +107,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.mediumImpact();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Calling Emergency Dispatch Line: +1 (800) 992-4357',
-                            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                          ),
-                          backgroundColor: AppColors.primaryDark,
-                        ),
-                      );
+                      DynamicIslandToast.showSuccess(context, 'Calling Emergency Dispatch Line: +1 (800) 123-4567');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentLime,
@@ -147,15 +140,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               child: ListTile(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Connecting to live chat agent...',
-                        style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                      ),
-                      backgroundColor: AppColors.primary,
-                    ),
-                  );
+                  DynamicIslandToast.showSuccess(context, 'Connecting to live chat agent...');
                 },
                 leading: Container(
                   padding: EdgeInsets.all(10.r),

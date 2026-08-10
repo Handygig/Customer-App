@@ -1,9 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class JobsTab extends StatefulWidget {
   const JobsTab({super.key});
@@ -168,40 +170,76 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                 ),
                 SizedBox(height: 16.h),
 
-                // Pill Tab Bar
-                Container(
-                  padding: EdgeInsets.all(4.r),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
-                    indicator: BoxDecoration(
-                      color: AppColors.accentLime,
-                      borderRadius: BorderRadius.circular(12.r),
+                // Pill Tab Bar with Liquid Glass Effect
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      padding: EdgeInsets.all(4.r),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.white.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1,
+                        ),
+                      ),
+                      child: TabBar(
+                        controller: _tabController,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+                        indicator: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.accentLime.withValues(alpha: 0.95),
+                              AppColors.accentLime,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.12),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                            BoxShadow(
+                              color: Colors.white.withValues(alpha: 0.4),
+                              blurRadius: 1,
+                              offset: const Offset(0, -1),
+                            ),
+                          ],
+                        ),
+                        labelColor: AppColors.primaryDark,
+                        unselectedLabelColor: Colors.white.withValues(alpha: 0.85),
+                        labelStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        dividerColor: Colors.transparent,
+                        tabs: [
+                          Tab(text: 'Waiting ($waitingCount)'),
+                          Tab(text: 'To Approve ($toApproveCount)'),
+                          Tab(text: 'Ongoing ($ongoingCount)'),
+                          Tab(text: 'Completed ($completedCount)'),
+                        ],
+                      ),
                     ),
-                    labelColor: AppColors.primaryDark,
-                    unselectedLabelColor: Colors.white.withValues(alpha: 0.85),
-                    labelStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    dividerColor: Colors.transparent,
-                    tabs: [
-                      Tab(text: 'Waiting ($waitingCount)'),
-                      Tab(text: 'To Approve ($toApproveCount)'),
-                      Tab(text: 'Ongoing ($ongoingCount)'),
-                      Tab(text: 'Completed ($completedCount)'),
-                    ],
                   ),
                 ),
               ],
@@ -248,14 +286,27 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
       );
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 120.h),
-      itemCount: jobs.length,
-      separatorBuilder: (context, index) => SizedBox(height: 16.h),
-      itemBuilder: (context, index) {
-        final job = jobs[index];
-        return _buildJobCard(context, job);
+    return RefreshIndicator(
+      color: AppColors.primaryDark,
+      backgroundColor: Colors.white,
+      strokeWidth: 2.8,
+      onRefresh: () async {
+        HapticFeedback.mediumImpact();
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (mounted) {
+          DynamicIslandToast.showSuccess(context, 'Jobs list updated');
+        }
       },
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 120.h),
+        itemCount: jobs.length,
+        separatorBuilder: (context, index) => SizedBox(height: 16.h),
+        itemBuilder: (context, index) {
+          final job = jobs[index];
+          return _buildJobCard(context, job);
+        },
+      ),
     );
   }
 
