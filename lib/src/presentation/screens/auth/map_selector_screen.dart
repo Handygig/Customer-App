@@ -2,14 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-
-class LatLng {
-  final double latitude;
-  final double longitude;
-
-  const LatLng(this.latitude, this.longitude);
-}
 
 class MapSelectorScreen extends StatefulWidget {
   const MapSelectorScreen({super.key});
@@ -22,12 +16,14 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
   LatLng _selectedLatLng = const LatLng(37.7749, -122.4194); // Default to SF
   String _selectedAddress = "Market Street, San Francisco, CA";
   bool _isLoadingAddress = false;
+  GoogleMapController? _mapController;
 
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
@@ -62,23 +58,6 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
     });
   }
 
-  // Handle mock map drag gesture
-  void _handleMockPan(DragUpdateDetails details) {
-    setState(() {
-      // Convert translation delta to approximate coordinates change
-      final double latDelta = -details.delta.dy * 0.0001;
-      final double lngDelta = details.delta.dx * 0.00015;
-      _selectedLatLng = LatLng(
-        (_selectedLatLng.latitude + latDelta).clamp(-85.0, 85.0),
-        (_selectedLatLng.longitude + lngDelta).clamp(-180.0, 180.0),
-      );
-    });
-  }
-
-  void _handleMockPanEnd(DragEndDetails details) {
-    _reverseGeocode(_selectedLatLng);
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -88,17 +67,25 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
       child: Scaffold(
         body: Stack(
           children: [
-            // 1. Fallback Mock Vector Map
-            GestureDetector(
-              onPanUpdate: _handleMockPan,
-              onPanEnd: _handleMockPanEnd,
-              child: Container(
-                color: const Color(0xFFE8ECE5),
-                child: CustomPaint(
-                  painter: MockMapGridPainter(center: _selectedLatLng),
-                  child: Container(),
-                ),
+            // 1. Google Map View
+            GoogleMap(
+              initialCameraPosition: CameraPosition(
+                target: _selectedLatLng,
+                zoom: 15.0,
               ),
+              onMapCreated: (controller) {
+                _mapController = controller;
+              },
+              onCameraMove: (position) {
+                _selectedLatLng = position.target;
+              },
+              onCameraIdle: () {
+                _reverseGeocode(_selectedLatLng);
+              },
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              compassEnabled: true,
             ),
 
             // 2. Centered Pin Indicator
@@ -354,88 +341,5 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
         ),
       ),
     );
-  }
-}
-
-// Custom Painter to draw a gorgeous, high-fidelity mock vector map grid
-class MockMapGridPainter extends CustomPainter {
-  final LatLng center;
-
-  MockMapGridPainter({required this.center});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint gridPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2.0;
-
-    final Paint mainRoadPaint = Paint()
-      ..color = const Color(0xFFF9E7C9)
-      ..strokeWidth = 14.0
-      ..strokeCap = StrokeCap.round;
-
-    final Paint waterPaint = Paint()
-      ..color = const Color(0xFFC5E0E5)
-      ..style = PaintingStyle.fill;
-
-    // 1. Draw a mock river
-    final Path waterPath = Path();
-    waterPath.moveTo(0, size.height * 0.2);
-    waterPath.quadraticBezierTo(
-      size.width * 0.4,
-      size.height * 0.15,
-      size.width,
-      size.height * 0.4,
-    );
-    waterPath.lineTo(size.width, 0);
-    waterPath.lineTo(0, 0);
-    waterPath.close();
-    canvas.drawPath(waterPath, waterPaint);
-
-    // Grid coordinates offset simulation (moves grid as user pans)
-    final double offsetX = (center.longitude + 122.4194) * 120000 % 80;
-    final double offsetY = (center.latitude - 37.7749) * 120000 % 80;
-
-    // 2. Draw road grid lines
-    for (double x = offsetX; x < size.width; x += 60) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (double y = offsetY; y < size.height; y += 60) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    // 3. Draw main highways
-    canvas.drawLine(
-      Offset(0, size.height * 0.5 + offsetY * 0.5),
-      Offset(size.width, size.height * 0.65 + offsetY * 0.5),
-      mainRoadPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.3 + offsetX * 0.5, 0),
-      Offset(size.width * 0.4 + offsetX * 0.5, size.height),
-      mainRoadPaint,
-    );
-
-    // 4. Draw mock park area
-    final Paint parkPaint = Paint()
-      ..color = const Color(0xFFD2E2D4)
-      ..style = PaintingStyle.fill;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          size.width * 0.6 + offsetX,
-          size.height * 0.6 + offsetY,
-          100.w,
-          100.h,
-        ),
-        Radius.circular(12.r),
-      ),
-      parkPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant MockMapGridPainter oldDelegate) {
-    return oldDelegate.center != center;
   }
 }

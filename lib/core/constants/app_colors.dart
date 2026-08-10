@@ -41,4 +41,48 @@ class AppColors {
   static const Color buttonBackground = Color(0xFF636B2F);
   static const Color buttonText = Colors.white;
   static const Color buttonShadow = Color(0x33636B2F);
+
+  // ─── Dark Mode Palette ─────────────────────────────────────────────────
+  static const Color darkBg = Color(0xFF141710);
+  static const Color darkSurface = Color(0xFF1E2319);
+  static const Color darkCard = Color(0xFF252B1E);
+  static const Color darkBorder = Color(0xFF2A3123);
+  static const Color darkTextHeadline = Color(0xFFF0F1EB);
+  static const Color darkTextSecondary = Color(0xFFBAC095);
+  static const Color darkTextMuted = Color(0xFF8A9074);
+
+  // ─── Theme-Aware Color Helpers ─────────────────────────────────────────
+  static bool isDark(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  static Color surfaceColor(BuildContext context) =>
+      isDark(context) ? darkSurface : Colors.white;
+
+  static Color backgroundColor(BuildContext context) =>
+      isDark(context) ? darkBg : background;
+
+  static Color cardColor(BuildContext context) =>
+      isDark(context) ? darkCard : Colors.white;
+
+  static Color headlineColor(BuildContext context) =>
+      isDark(context) ? darkTextHeadline : textHeadline;
+
+  static Color secondaryTextColor(BuildContext context) =>
+      isDark(context) ? darkTextSecondary : textSecondary;
+
+  static Color mutedTextColor(BuildContext context) =>
+      isDark(context) ? darkTextMuted : textMuted;
+
+  static Color borderColor(BuildContext context) =>
+      isDark(context) ? darkBorder : borderUnselected;
+
+  static Color cardSelectedColor(BuildContext context) =>
+      isDark(context) ? const Color(0xFF2A3123) : cardSelectedBg;
+
+  static Color searchBarColor(BuildContext context) =>
+      isDark(context) ? darkSurface : background;
+
+  static Color iconColor(BuildContext context) =>
+      isDark(context) ? accentLime : primary;
 }

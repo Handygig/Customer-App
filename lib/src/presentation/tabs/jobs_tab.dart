@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class JobsTab extends StatefulWidget {
   const JobsTab({super.key});
@@ -285,14 +286,27 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
       );
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 120.h),
-      itemCount: jobs.length,
-      separatorBuilder: (context, index) => SizedBox(height: 16.h),
-      itemBuilder: (context, index) {
-        final job = jobs[index];
-        return _buildJobCard(context, job);
+    return RefreshIndicator(
+      color: AppColors.primaryDark,
+      backgroundColor: Colors.white,
+      strokeWidth: 2.8,
+      onRefresh: () async {
+        HapticFeedback.mediumImpact();
+        await Future.delayed(const Duration(milliseconds: 1000));
+        if (mounted) {
+          DynamicIslandToast.showSuccess(context, 'Jobs list updated');
+        }
       },
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 120.h),
+        itemCount: jobs.length,
+        separatorBuilder: (context, index) => SizedBox(height: 16.h),
+        itemBuilder: (context, index) {
+          final job = jobs[index];
+          return _buildJobCard(context, job);
+        },
+      ),
     );
   }
 

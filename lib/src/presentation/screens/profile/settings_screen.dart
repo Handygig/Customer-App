@@ -16,9 +16,9 @@ class SettingsScreen extends StatelessWidget {
     final repository = ProfileRepositoryImpl();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: AppColors.darkHeaderBg,
+        backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -67,46 +67,50 @@ class SettingsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardSelectedBg,
-                        borderRadius: BorderRadius.circular(12.r),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardSelectedColor(context),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Icon(Icons.verified_user_outlined,
+                            color: AppColors.primary, size: 22.r),
                       ),
-                      child: Icon(Icons.verified_user_outlined,
-                          color: AppColors.primary, size: 22.r),
-                    ),
-                    title: Text(
-                      'Two-Factor Authentication (2FA)',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textHeadline,
+                      title: Text(
+                        'Two-Factor Authentication (2FA)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.headlineColor(context),
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      profile.isTwoFactorEnabled
-                          ? 'SMS OTP Protection Enabled'
-                          : 'Extra layer of security for logins',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        color: profile.isTwoFactorEnabled
-                            ? AppColors.primary
-                            : AppColors.textMuted,
+                      subtitle: Text(
+                        profile.isTwoFactorEnabled
+                            ? 'SMS OTP Protection Enabled'
+                            : 'Extra layer of security for logins',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          color: profile.isTwoFactorEnabled
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                    trailing: Switch.adaptive(
-                      value: profile.isTwoFactorEnabled,
-                      activeTrackColor: AppColors.primary,
-                      onChanged: (val) {
-                        HapticFeedback.selectionClick();
-                        if (val) {
-                          _show2FASetupModal(context, repository);
-                        } else {
-                          repository.toggleTwoFactorAuth(false);
-                        }
-                      },
+                      trailing: Switch.adaptive(
+                        value: profile.isTwoFactorEnabled,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          if (val) {
+                            _show2FASetupModal(context, repository);
+                          } else {
+                            repository.toggleTwoFactorAuth(false);
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -119,38 +123,42 @@ class SettingsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardSelectedBg,
-                        borderRadius: BorderRadius.circular(12.r),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardSelectedColor(context),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Icon(Icons.fingerprint_rounded,
+                            color: AppColors.primary, size: 22.r),
                       ),
-                      child: Icon(Icons.fingerprint_rounded,
-                          color: AppColors.primary, size: 22.r),
-                    ),
-                    title: Text(
-                      'Biometric Login (Face ID / Touch ID)',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textHeadline,
+                      title: Text(
+                        'Biometric Login (Face ID / Touch ID)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeadline,
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      'Sign in quickly using biometrics',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        color: AppColors.textMuted,
+                      subtitle: Text(
+                        'Sign in quickly using biometrics',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          color: AppColors.mutedTextColor(context),
+                        ),
                       ),
-                    ),
-                    trailing: Switch.adaptive(
-                      value: profile.biometricsEnabled,
-                      activeTrackColor: AppColors.primary,
-                      onChanged: (val) {
-                        HapticFeedback.selectionClick();
-                        repository.toggleBiometrics(val);
-                      },
+                      trailing: Switch.adaptive(
+                        value: profile.biometricsEnabled,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          repository.toggleBiometrics(val);
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -169,45 +177,99 @@ class SettingsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardSelectedBg,
-                        borderRadius: BorderRadius.circular(12.r),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardSelectedColor(context),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Icon(Icons.language_rounded,
+                            color: AppColors.primary, size: 22.r),
                       ),
-                      child: Icon(Icons.language_rounded,
-                          color: AppColors.primary, size: 22.r),
+                      title: Text(
+                        'App Language',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.headlineColor(context),
+                        ),
+                      ),
+                      subtitle: Text(
+                        profile.languageCode == 'si' ? 'සිංහල' : (profile.languageCode == 'ta' ? 'தமிழ்' : 'English'),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          color: AppColors.mutedTextColor(context),
+                        ),
+                      ),
+                      trailing: Container(
+                        padding: EdgeInsets.all(3.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(10.r),
+                          border: Border.all(color: AppColors.borderUnselected, width: 0.5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildLanguageSegment('en', 'EN', profile.languageCode, repository),
+                            _buildLanguageSegment('si', 'SI', profile.languageCode, repository),
+                            _buildLanguageSegment('ta', 'TA', profile.languageCode, repository),
+                          ],
+                        ),
+                      ),
                     ),
-                    title: Text(
-                      'App Language',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textHeadline,
+                  ),
+                ),
+                // Dark Mode Switch Tile
+                Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: AppColors.borderUnselected),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardSelectedBg,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Icon(
+                          profile.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      profile.languageCode == 'si' ? 'සිංහල' : (profile.languageCode == 'ta' ? 'தமிழ்' : 'English'),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        color: AppColors.textMuted,
+                      title: Text(
+                        'Dark Mode',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeadline,
+                        ),
                       ),
-                    ),
-                    trailing: Container(
-                      padding: EdgeInsets.all(3.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(10.r),
-                        border: Border.all(color: AppColors.borderUnselected, width: 0.5),
+                      subtitle: Text(
+                        profile.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildLanguageSegment('en', 'EN', profile.languageCode, repository),
-                          _buildLanguageSegment('si', 'SI', profile.languageCode, repository),
-                          _buildLanguageSegment('ta', 'TA', profile.languageCode, repository),
-                        ],
+                      trailing: Switch.adaptive(
+                        value: profile.isDarkMode,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          repository.toggleDarkMode(val);
+                        },
                       ),
                     ),
                   ),
@@ -220,38 +282,42 @@ class SettingsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
-                  child: ListTile(
-                    leading: Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardSelectedBg,
-                        borderRadius: BorderRadius.circular(12.r),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: ListTile(
+                      leading: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.cardSelectedBg,
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Icon(Icons.notifications_none_rounded,
+                            color: AppColors.primary, size: 22.r),
                       ),
-                      child: Icon(Icons.notifications_none_rounded,
-                          color: AppColors.primary, size: 22.r),
-                    ),
-                    title: Text(
-                      'Push Notifications',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textHeadline,
+                      title: Text(
+                        'Push Notifications',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeadline,
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      'Service updates, job alerts, and receipts',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        color: AppColors.textMuted,
+                      subtitle: Text(
+                        'Service updates, job alerts, and receipts',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                    trailing: Switch.adaptive(
-                      value: profile.pushNotificationsEnabled,
-                      activeTrackColor: AppColors.primary,
-                      onChanged: (val) {
-                        HapticFeedback.selectionClick();
-                        repository.toggleNotifications(val);
-                      },
+                      trailing: Switch.adaptive(
+                        value: profile.pushNotificationsEnabled,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (val) {
+                          HapticFeedback.selectionClick();
+                          repository.toggleNotifications(val);
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -320,7 +386,10 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.borderUnselected),
       ),
-      child: ListTile(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16.r),
+        child: ListTile(
         onTap: onTap,
         leading: Container(
           padding: EdgeInsets.all(10.r),
@@ -370,6 +439,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
@@ -202,16 +204,26 @@ class _SearchTabState extends State<SearchTab> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
+      body: Stack(
         children: [
-          // Top Search Header Block (with back button & dual-input card)
-          _buildTopSearchHeaderBlock(),
-
-          // Category Chips Bar
-          _buildCategoryChipsBar(),
-
-          // Map Area taking up remaining space
-          Expanded(child: _buildMapView(providers)),
+          // 1. Full-Screen Map Area (Base Layer)
+          Positioned.fill(
+            child: _buildMapView(providers),
+          ),
+          
+          // 2. Floating Top Elements (Search Bar & Categories)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTopSearchHeaderBlock(),
+                _buildCategoryChipsBar(),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -221,25 +233,12 @@ class _SearchTabState extends State<SearchTab> {
   // TOP SEARCH HEADER BLOCK (DESIGN INTEGRATED AT TOP WITH BRAND COLOURS)
   // ---------------------------------------------------------------------------
   Widget _buildTopSearchHeaderBlock() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderUnselected, width: 1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
       padding: EdgeInsets.fromLTRB(
         16.w,
-        MediaQuery.of(context).padding.top + 6.h,
+        MediaQuery.of(context).padding.top + 10.h,
         16.w,
-        16.h,
+        10.h,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -257,51 +256,69 @@ class _SearchTabState extends State<SearchTab> {
                   }
                 },
                 child: Container(
-                  width: 38.r,
-                  height: 38.r,
+                  width: 40.r,
+                  height: 40.r,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F5F0),
+                    color: Colors.white.withValues(alpha: 0.9),
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.borderUnselected),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: Icon(
                       Icons.arrow_back_rounded,
                       color: AppColors.textHeadline,
-                      size: 20.r,
+                      size: 22.r,
                     ),
                   ),
                 ),
               ),
-              SizedBox(width: 12.w),
-              Text(
-                'Find Nearby Providers',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textHeadline,
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Text(
+                  'Service Locator',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textHeadline,
+                    shadows: [
+                      Shadow(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
 
-          SizedBox(height: 14.h),
+          SizedBox(height: 16.h),
 
-          // Dual-Input Card matching reference design with white background & consistent border
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18.r),
-              border: Border.all(color: AppColors.borderUnselected, width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+          // Dual-Input Glassmorphic Card
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24.r),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(24.r),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
             child: Stack(
               children: [
                 Column(
@@ -519,6 +536,8 @@ class _SearchTabState extends State<SearchTab> {
               ],
             ),
           ),
+            ),
+          ),
         ],
       ),
     );
@@ -530,9 +549,9 @@ class _SearchTabState extends State<SearchTab> {
   Widget _buildCategoryChipsBar() {
     return Container(
       height: 48.h,
-      color: Colors.white,
+      color: Colors.transparent, // Floating over map
       child: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
         scrollDirection: Axis.horizontal,
         itemCount: _serviceCategories.length,
         separatorBuilder: (_, _) => SizedBox(width: 8.w),
@@ -546,26 +565,57 @@ class _SearchTabState extends State<SearchTab> {
                 _selectedCategory = category;
               });
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.cardSelectedBg,
-                borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.borderUnselected,
-                ),
-              ),
-              child: Text(
-                category,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12.sp,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20.r),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.white.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.white.withValues(alpha: 0.5),
+                    ),
+                    boxShadow: isSelected ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ] : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Optional: add a small icon for the categories
+                      if (category == 'Plumbing') Icon(Icons.plumbing_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category == 'Cleaning') Icon(Icons.cleaning_services_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category == 'Electrical') Icon(Icons.electrical_services_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category == 'Painting') Icon(Icons.format_paint_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category == 'Gardening') Icon(Icons.yard_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category == 'HVAC') Icon(Icons.hvac_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category != 'All') SizedBox(width: 6.w),
+                      Text(
+                        category,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                          color: isSelected ? Colors.white : AppColors.textHeadline,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -581,11 +631,18 @@ class _SearchTabState extends State<SearchTab> {
   Widget _buildMapView(List<ServiceProvider> providers) {
     return Stack(
       children: [
-        // 1. Map Canvas Background
+        // 1. Live Google Map View
         Positioned.fill(
-          child: Container(
-            color: const Color(0xFFF3F4F1),
-            child: CustomPaint(painter: UberStyleMapPainter()),
+          child: GoogleMap(
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(37.7749, -122.4194),
+              zoom: 14.2,
+            ),
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            compassEnabled: false,
+            mapToolbarEnabled: false,
           ),
         ),
 
@@ -878,312 +935,202 @@ class _SearchTabState extends State<SearchTab> {
   // ---------------------------------------------------------------------------
   Widget _buildProviderDetailSheet(ServiceProvider provider) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+      margin: EdgeInsets.only(
+        left: 16.w, 
+        right: 16.w, 
+        bottom: 32.h,
       ),
-      padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 30.h),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2.r),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32.r),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(32.r),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.8),
+                width: 1.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            children: [
-              Container(
-                width: 56.r,
-                height: 56.r,
-                decoration: BoxDecoration(
-                  color: AppColors.cardSelectedBg,
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+            padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 24.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle Bar
+                Center(
+                  child: Container(
+                    width: 48.w,
+                    height: 5.h,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
                   ),
                 ),
-                child: Icon(
-                  provider.icon,
-                  color: AppColors.primary,
-                  size: 28.r,
-                ),
-              ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
+                SizedBox(height: 24.h),
+                
+                // Profile Section
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      provider.name,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textHeadline,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      '${provider.serviceType} Specialist • ${provider.distance}',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          size: 16.r,
-                          color: Colors.amber,
+                    Container(
+                      width: 64.r,
+                      height: 64.r,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardSelectedBg,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                          width: 2,
                         ),
-                        SizedBox(width: 4.w),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        provider.icon,
+                        color: AppColors.primary,
+                        size: 32.r,
+                      ),
+                    ),
+                    SizedBox(width: 16.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            provider.name,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textHeadline,
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            '${provider.serviceType} Specialist • ${provider.distance}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                size: 18.r,
+                                color: Colors.amber,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '${provider.rating} ',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textHeadline,
+                                ),
+                              ),
+                              Text(
+                                '(${provider.reviewsCount} reviews)',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                SizedBox(height: 24.h),
+                
+                // Rate and Action Row
+                Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          '${provider.rating} (${provider.reviewsCount} reviews)',
+                          'Rate',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        Text(
+                          provider.price,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
                     ),
+                    SizedBox(width: 24.w),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            DynamicIslandToast.showSuccess(context, 'Contacting ${provider.name}...');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Book Provider',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 15.sp,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          SizedBox(height: 20.h),
-          Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rate',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.sp,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  Text(
-                    provider.price,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(width: 20.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    DynamicIslandToast.showSuccess(context, 'Contacting ${provider.name}...');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                  ),
-                  child: Text(
-                    'Book Provider',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-// ---------------------------------------------------------------------------
-// MAP PAINTER MATCHING UBER STYLE DESIGN WITH ROADS, DASHED TRACKS & CARS
-// ---------------------------------------------------------------------------
-class UberStyleMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 1. Background Land
-    final landPaint = Paint()..color = const Color(0xFFF2F2EE);
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), landPaint);
-
-    // 2. Building footprint blocks
-    final buildingPaint = Paint()
-      ..color = const Color(0xFFE2E3DF)
-      ..style = PaintingStyle.fill;
-
-    final buildingBorderPaint = Paint()
-      ..color = const Color(0xFFD4D5D0)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final buildings = [
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(20.w, 80.h, 120.w, 90.h),
-        Radius.circular(12.r),
-      ),
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(160.w, 40.h, 140.w, 60.h),
-        Radius.circular(10.r),
-      ),
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(220.w, 140.h, 110.w, 120.h),
-        Radius.circular(14.r),
-      ),
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(40.w, 240.h, 100.w, 130.h),
-        Radius.circular(12.r),
-      ),
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width - 100.w, 20.h, 80.w, 150.h),
-        Radius.circular(10.r),
-      ),
-    ];
-
-    for (final b in buildings) {
-      canvas.drawRRect(b, buildingPaint);
-      canvas.drawRRect(b, buildingBorderPaint);
-    }
-
-    // 3. Roads
-    final roadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 18.w
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final roadOutlinePaint = Paint()
-      ..color = const Color(0xFFDCDEC8)
-      ..strokeWidth = 20.w
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final Path roadPath = Path();
-
-    // Main Diagonal Avenue
-    roadPath.moveTo(-20, size.height * 0.15);
-    roadPath.lineTo(size.width + 20, size.height * 0.55);
-
-    // Cross Street 1
-    roadPath.moveTo(size.width * 0.2, 0);
-    roadPath.lineTo(size.width * 0.85, size.height * 0.7);
-
-    // Horizontal Connectors
-    roadPath.moveTo(0, size.height * 0.35);
-    roadPath.lineTo(size.width, size.height * 0.35);
-
-    roadPath.moveTo(0, size.height * 0.18);
-    roadPath.lineTo(size.width, size.height * 0.18);
-
-    canvas.drawPath(roadPath, roadOutlinePaint);
-    canvas.drawPath(roadPath, roadPaint);
-
-    // 4. Dashed Navigation Route Lines
-    final dashPaint = Paint()
-      ..color = Colors.grey.shade600
-      ..strokeWidth = 2.w
-      ..style = PaintingStyle.stroke;
-
-    final Path dashPath = Path();
-    dashPath.moveTo(size.width * 0.15, size.height * 0.2);
-    dashPath.lineTo(size.width * 0.55, size.height * 0.38);
-
-    _drawDashedPath(canvas, dashPath, dashPaint, [6, 4]);
-
-    // 5. Draw Black Cars / Vehicles on Map
-    _drawCar(canvas, Offset(size.width * 0.82, size.height * 0.12), -0.4);
-    _drawCar(canvas, Offset(size.width * 0.76, size.height * 0.28), -0.4);
-    _drawCar(canvas, Offset(size.width * 0.28, size.height * 0.36), 0.5);
-  }
-
-  void _drawCar(Canvas canvas, Offset center, double angle) {
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle);
-
-    final carShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.2)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: const Offset(2, 3), width: 18.w, height: 32.h),
-        Radius.circular(6.r),
-      ),
-      carShadow,
-    );
-
-    final carBody = Paint()..color = const Color(0xFF1E1E1E);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset.zero, width: 18.w, height: 32.h),
-        Radius.circular(6.r),
-      ),
-      carBody,
-    );
-
-    final carRoof = Paint()..color = const Color(0xFF383838);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: const Offset(0, -1), width: 14.w, height: 18.h),
-        Radius.circular(4.r),
-      ),
-      carRoof,
-    );
-
-    final windshield = Paint()..color = const Color(0xFF888888);
-    canvas.drawRect(
-      Rect.fromCenter(center: const Offset(0, -6), width: 12.w, height: 3.h),
-      windshield,
-    );
-
-    canvas.restore();
-  }
-
-  void _drawDashedPath(
-    Canvas canvas,
-    Path path,
-    Paint paint,
-    List<double> dashArray,
-  ) {
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0.0;
-      bool draw = true;
-      while (distance < metric.length) {
-        final double length = draw ? dashArray[0] : dashArray[1];
-        if (draw) {
-          canvas.drawPath(
-            metric.extractPath(distance, distance + length),
-            paint,
-          );
-        }
-        distance += length;
-        draw = !draw;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

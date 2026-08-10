@@ -16,6 +16,7 @@ class UserProfile {
   final String languageCode;
   final bool pushNotificationsEnabled;
   final bool biometricsEnabled;
+  final bool isDarkMode;
   final String memberSinceYear;
 
   const UserProfile({
@@ -34,6 +35,7 @@ class UserProfile {
     required this.languageCode,
     required this.pushNotificationsEnabled,
     required this.biometricsEnabled,
+    this.isDarkMode = false,
     required this.memberSinceYear,
   });
 
@@ -55,6 +57,7 @@ class UserProfile {
     String? languageCode,
     bool? pushNotificationsEnabled,
     bool? biometricsEnabled,
+    bool? isDarkMode,
     String? memberSinceYear,
   }) {
     return UserProfile(
@@ -74,6 +77,7 @@ class UserProfile {
       pushNotificationsEnabled:
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       biometricsEnabled: biometricsEnabled ?? this.biometricsEnabled,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
       memberSinceYear: memberSinceYear ?? this.memberSinceYear,
     );
   }

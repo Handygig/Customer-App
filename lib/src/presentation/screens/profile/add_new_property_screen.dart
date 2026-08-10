@@ -12,7 +12,9 @@ import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.d
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AddNewPropertyScreen extends StatefulWidget {
-  const AddNewPropertyScreen({super.key});
+  final Property? propertyToEdit;
+
+  const AddNewPropertyScreen({super.key, this.propertyToEdit});
 
   @override
   State<AddNewPropertyScreen> createState() => _AddNewPropertyScreenState();
@@ -32,6 +34,28 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
   String? _selectedImagePath;
 
   final ProfileRepositoryImpl _repository = ProfileRepositoryImpl();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.propertyToEdit != null) {
+      final p = widget.propertyToEdit!;
+      _nameController.text = p.title;
+      _addressLine1Controller.text = p.address;
+      
+      if (p.type == PropertyType.office) {
+        _selectedType = 'Office';
+      } else if (p.type == PropertyType.apartment) {
+        _selectedType = 'Apartment';
+      } else if (p.type == PropertyType.villa) {
+        _selectedType = 'Other';
+      } else {
+        _selectedType = 'Home';
+      }
+      
+      _selectedImagePath = p.imagePath;
+    }
+  }
 
   @override
   void dispose() {
@@ -71,22 +95,28 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     if (_selectedType == 'Apartment') propType = PropertyType.apartment;
     if (_selectedType == 'Other') propType = PropertyType.villa;
 
+    final isEditing = widget.propertyToEdit != null;
     final newProperty = Property(
-      id: 'prop_${DateTime.now().millisecondsSinceEpoch}',
+      id: isEditing ? widget.propertyToEdit!.id : 'prop_${DateTime.now().millisecondsSinceEpoch}',
       title: name,
       address: fullAddress,
       type: propType,
-      bedrooms: 3,
-      areaSqft: 1850,
-      isPrimary: false,
+      bedrooms: isEditing ? widget.propertyToEdit!.bedrooms : 3,
+      areaSqft: isEditing ? widget.propertyToEdit!.areaSqft : 1850,
+      isPrimary: isEditing ? widget.propertyToEdit!.isPrimary : false,
       imagePath: _selectedImagePath,
     );
 
     HapticFeedback.mediumImpact();
-    await _repository.addProperty(newProperty);
+    
+    if (isEditing) {
+      await _repository.updateProperty(newProperty);
+    } else {
+      await _repository.addProperty(newProperty);
+    }
 
     if (mounted) {
-      DynamicIslandToast.showSuccess(context, 'New property added successfully!');
+      DynamicIslandToast.showSuccess(context, isEditing ? 'Property updated successfully!' : 'New property added successfully!');
       Navigator.of(context).pop();
     }
   }
@@ -285,7 +315,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Add New Property',
+          widget.propertyToEdit != null ? 'Edit Property' : 'Add New Property',
           style: GoogleFonts.plusJakartaSans(
             color: Colors.white,
             fontSize: 18.sp,
@@ -314,7 +344,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Register Property',
+                widget.propertyToEdit != null ? 'Edit Property' : 'Register Property',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w800,
@@ -323,7 +353,9 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
               ),
               SizedBox(height: 4.h),
               Text(
-                'Enter location and address details to add a new home or workspace.',
+                widget.propertyToEdit != null 
+                    ? 'Update location and address details for your property.' 
+                    : 'Enter location and address details to add a new home or workspace.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
                   color: AppColors.textSecondary,
@@ -656,7 +688,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                 ),
               ),
               child: Text(
-                'Save Property',
+                widget.propertyToEdit != null ? 'Save Changes' : 'Save Property',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,

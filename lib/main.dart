@@ -23,11 +23,18 @@ class CustomerApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
-          title: 'Customer App',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          home: const WelcomeScreen(),
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeModeNotifier,
+          builder: (context, mode, child) {
+            return MaterialApp(
+              title: 'Customer App',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: mode,
+              home: const WelcomeScreen(),
+            );
+          },
         );
       },
     );
