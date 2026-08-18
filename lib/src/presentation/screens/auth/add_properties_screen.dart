@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
@@ -38,6 +39,7 @@ class AddPropertiesScreen extends StatefulWidget {
 class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     with SingleTickerProviderStateMixin {
   final List<PropertyItem> _properties = [];
+  final ImagePicker _imagePicker = ImagePicker();
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _addressLine1Controller = TextEditingController();
@@ -206,13 +208,15 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
-        _addressLine1Controller.text = "Market Street";
-        _addressLine2Controller.text = "Suite 100";
-        _cityController.text = "San Francisco";
-        _provinceController.text = "CA";
-        _postalCodeController.text = "94103";
-        _selectedLatitude = result['latitude'] as double;
-        _selectedLongitude = result['longitude'] as double;
+        _addressLine1Controller.text =
+            (result['address_line_1'] ?? result['address'] ?? '').toString();
+        _addressLine2Controller.text =
+            (result['address_line_2'] ?? '').toString();
+        _cityController.text = (result['city'] ?? '').toString();
+        _provinceController.text = (result['province'] ?? '').toString();
+        _postalCodeController.text = (result['postal_code'] ?? '').toString();
+        _selectedLatitude = (result['latitude'] as num?)?.toDouble();
+        _selectedLongitude = (result['longitude'] as num?)?.toDouble();
       });
     }
   }
@@ -607,6 +611,47 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     );
   }
 
+  Future<void> _pickPropertyImage(ImageSource source) async {
+    try {
+      final image = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 88,
+        maxWidth: 1600,
+      );
+      if (image != null && mounted) {
+        setState(() {
+          _selectedImagePath = image.path;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        DynamicIslandToast.showError(context, 'Unable to open the image picker.');
+      }
+    }
+  }
+
+  Widget _buildSelectedPropertyImage() {
+    final path = _selectedImagePath;
+    if (path == null || path.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (path.startsWith('assets/')) {
+      return Image.asset(path, fit: BoxFit.cover);
+    }
+
+    return Image.file(
+      File(path),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        color: const Color(0xFFF4F6EE),
+        child: const Center(
+          child: Icon(Icons.image_not_supported_outlined),
+        ),
+      ),
+    );
+  }
+
   void _showImagePickerModal() {
     HapticFeedback.lightImpact();
     showModalBottomSheet(
@@ -671,9 +716,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                   ),
                   onTap: () {
                     Navigator.of(ctx).pop();
-                    setState(() {
-                      _selectedImagePath = AppAssets.propertiesHeader;
-                    });
+                    _pickPropertyImage(ImageSource.camera);
                   },
                 ),
                 ListTile(
@@ -696,9 +739,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                   ),
                   onTap: () {
                     Navigator.of(ctx).pop();
-                    setState(() {
-                      _selectedImagePath = AppAssets.welcomeHero;
-                    });
+                    _pickPropertyImage(ImageSource.gallery);
                   },
                 ),
                 SizedBox(height: 14.h),
@@ -1139,10 +1180,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.asset(
-                          _selectedImagePath!,
-                          fit: BoxFit.cover,
-                        ),
+                        _buildSelectedPropertyImage(),
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
