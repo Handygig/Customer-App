@@ -130,11 +130,11 @@ class _TopNotificationState extends State<_TopNotification>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: widget.backgroundColor.withOpacity(0.93),
+                color: widget.backgroundColor.withValues(alpha: 0.93),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
+                    color: Colors.black.withValues(alpha: 0.15),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -156,7 +156,11 @@ class _TopNotificationState extends State<_TopNotification>
                   ),
                   GestureDetector(
                     onTap: _dismiss,
-                    child: const Icon(Icons.close, color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ],
               ),

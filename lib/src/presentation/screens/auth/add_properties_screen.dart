@@ -657,7 +657,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     return Image.file(
       File(path),
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
+      errorBuilder: (_, _, _) => Container(
         color: const Color(0xFFF4F6EE),
         child: const Center(child: Icon(Icons.image_not_supported_outlined)),
       ),

@@ -15,12 +15,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final DeviceNameService _deviceNameService;
 
   AuthRemoteDataSourceImpl({
-    required FirebaseAuth firebaseAuth,
-    required Dio dio,
-    required DeviceNameService deviceNameService,
-  }) : _firebaseAuth = firebaseAuth,
-       _dio = dio,
-       _deviceNameService = deviceNameService;
+    required this._firebaseAuth,
+    required this._dio,
+    required this._deviceNameService,
+  });
 
   @override
   Future<OtpSessionEntity> sendOtp({
@@ -212,7 +210,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw const AuthException('The server returned an invalid response.');
     }
 
-    final map = Map<String, dynamic>.from(raw as Map);
+    final map = Map<String, dynamic>.from(raw);
     final nested = map['data'];
     if (nested is Map) {
       return Map<String, dynamic>.from(nested);

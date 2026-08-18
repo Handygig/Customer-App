@@ -89,7 +89,7 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
                   p.postalCode,
                   p.country,
                 ]
-                .where((part) => part != null && part!.trim().isNotEmpty)
+                .where((part) => part != null && part.trim().isNotEmpty)
                 .map((part) => part!.trim())
                 .toSet()
                 .toList();
