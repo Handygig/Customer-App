@@ -7,10 +7,7 @@ import 'package:customer_app/core/constants/app_colors.dart';
 class CameraPreviewScreen extends StatefulWidget {
   final Function(String photoName, String caption) onPhotoCaptured;
 
-  const CameraPreviewScreen({
-    super.key,
-    required this.onPhotoCaptured,
-  });
+  const CameraPreviewScreen({super.key, required this.onPhotoCaptured});
 
   @override
   State<CameraPreviewScreen> createState() => _CameraPreviewScreenState();
@@ -45,7 +42,8 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
 
   void _takeInstantPhoto() {
     HapticFeedback.heavyImpact();
-    final randomIndex = DateTime.now().millisecondsSinceEpoch % _samplePhotos.length;
+    final randomIndex =
+        DateTime.now().millisecondsSinceEpoch % _samplePhotos.length;
     setState(() {
       _capturedPhotoLabel = _samplePhotos[randomIndex];
       _isCaptured = true;
@@ -77,7 +75,9 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
           children: [
             // Camera Viewfinder / Photo Preview Background
             Positioned.fill(
-              child: _isCaptured ? _buildCapturedPhotoPreview() : _buildLiveCameraViewfinder(),
+              child: _isCaptured
+                  ? _buildCapturedPhotoPreview()
+                  : _buildLiveCameraViewfinder(),
             ),
 
             // Top Action Controls Bar
@@ -100,7 +100,11 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
                         color: Colors.black.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.close_rounded, color: Colors.white, size: 22.r),
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                        size: 22.r,
+                      ),
                     ),
                   ),
 
@@ -127,7 +131,9 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
                               _isFlashOn
                                   ? Icons.flash_on_rounded
                                   : Icons.flash_off_rounded,
-                              color: _isFlashOn ? AppColors.primaryDark : Colors.white,
+                              color: _isFlashOn
+                                  ? AppColors.primaryDark
+                                  : Colors.white,
                               size: 20.r,
                             ),
                           ),
@@ -204,7 +210,9 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
               bottom: 0,
               left: 0,
               right: 0,
-              child: _isCaptured ? _buildWhatsAppCaptionBar() : _buildCameraShutterBar(),
+              child: _isCaptured
+                  ? _buildWhatsAppCaptionBar()
+                  : _buildCameraShutterBar(),
             ),
           ],
         ),
@@ -342,10 +350,7 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
         gradient: LinearGradient(
           begin: Alignment.bottomCenter,
           end: Alignment.topCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.9),
-            Colors.transparent,
-          ],
+          colors: [Colors.black.withValues(alpha: 0.9), Colors.transparent],
         ),
       ),
       child: Row(
@@ -382,9 +387,7 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
         16.w,
         MediaQuery.of(context).padding.bottom + 14.h,
       ),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.85),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.85)),
       child: Row(
         children: [
           Expanded(

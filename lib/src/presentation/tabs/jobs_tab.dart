@@ -138,9 +138,13 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
     }
 
     final waitingCount = _allJobs.where((j) => j['type'] == 'waiting').length;
-    final toApproveCount = _allJobs.where((j) => j['type'] == 'to_approve').length;
+    final toApproveCount = _allJobs
+        .where((j) => j['type'] == 'to_approve')
+        .length;
     final ongoingCount = _allJobs.where((j) => j['type'] == 'ongoing').length;
-    final completedCount = _allJobs.where((j) => j['type'] == 'completed').length;
+    final completedCount = _allJobs
+        .where((j) => j['type'] == 'completed')
+        .length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBFBFB),
@@ -197,7 +201,10 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                         isScrollable: true,
                         tabAlignment: TabAlignment.start,
                         indicatorSize: TabBarIndicatorSize.tab,
-                        labelPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 2.h),
+                        labelPadding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 2.h,
+                        ),
                         indicator: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -222,7 +229,9 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                           ],
                         ),
                         labelColor: AppColors.primaryDark,
-                        unselectedLabelColor: Colors.white.withValues(alpha: 0.85),
+                        unselectedLabelColor: Colors.white.withValues(
+                          alpha: 0.85,
+                        ),
                         labelStyle: GoogleFonts.plusJakartaSans(
                           fontSize: 12.5.sp,
                           fontWeight: FontWeight.w700,
@@ -271,7 +280,11 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assignment_outlined, size: 64.r, color: AppColors.borderUnselected),
+            Icon(
+              Icons.assignment_outlined,
+              size: 64.r,
+              color: AppColors.borderUnselected,
+            ),
             SizedBox(height: 12.h),
             Text(
               'No jobs in this category',
@@ -298,7 +311,9 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
         }
       },
       child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
         padding: EdgeInsets.fromLTRB(18.w, 20.h, 18.w, 120.h),
         itemCount: jobs.length,
         separatorBuilder: (context, index) => SizedBox(height: 16.h),
@@ -315,139 +330,133 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
       onTap: () {
         HapticFeedback.lightImpact();
         Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => JobDetailsScreen(job: job),
-          ),
+          MaterialPageRoute(builder: (context) => JobDetailsScreen(job: job)),
         );
       },
       child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: const Color(0xFFE8ECD8),
-          width: 1.2,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: const Color(0xFFE8ECD8), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryDark.withValues(alpha: 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryDark.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(18.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Icon Box
-              Container(
-                width: 46.r,
-                height: 46.r,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F6E6),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Center(
-                  child: Icon(
-                    job['icon'] as IconData,
-                    color: AppColors.primaryDark,
-                    size: 22.r,
+        padding: EdgeInsets.all(18.r),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon Box
+                Container(
+                  width: 46.r,
+                  height: 46.r,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F6E6),
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      job['icon'] as IconData,
+                      color: AppColors.primaryDark,
+                      size: 22.r,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(width: 14.w),
+                SizedBox(width: 14.w),
 
-              // Title and Subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      job['service'] as String,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 15.5.sp,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryDark,
-                        height: 1.25,
+                // Title and Subtitle
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        job['service'] as String,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15.5.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryDark,
+                          height: 1.25,
+                        ),
                       ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        '${job['id']} • ${job['property']}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8.w),
+
+                // Status Tag Badge
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 5.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: job['statusBg'] as Color? ?? const Color(0xFFF3F6E6),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    job['status'] as String,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w700,
+                      color: job['statusColor'] as Color,
                     ),
-                    SizedBox(height: 6.h),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            Divider(height: 1, thickness: 1, color: const Color(0xFFEFF2E4)),
+            SizedBox(height: 14.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 15.r,
+                      color: AppColors.primaryDark.withValues(alpha: 0.8),
+                    ),
+                    SizedBox(width: 8.w),
                     Text(
-                      '${job['id']} • ${job['property']}',
+                      job['date'] as String,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
                       ),
                     ),
                   ],
                 ),
-              ),
-              SizedBox(width: 8.w),
-
-              // Status Tag Badge
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                decoration: BoxDecoration(
-                  color: job['statusBg'] as Color? ?? const Color(0xFFF3F6E6),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  job['status'] as String,
+                Text(
+                  job['price'] as String,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w700,
-                    color: job['statusColor'] as Color,
+                    fontSize: 17.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryDark,
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: const Color(0xFFEFF2E4),
-          ),
-          SizedBox(height: 14.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 15.r,
-                    color: AppColors.primaryDark.withValues(alpha: 0.8),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    job['date'] as String,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryDark,
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                job['price'] as String,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 17.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primaryDark,
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

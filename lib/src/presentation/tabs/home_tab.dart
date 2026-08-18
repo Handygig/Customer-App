@@ -12,11 +12,7 @@ class HomeTab extends StatefulWidget {
   final VoidCallback? onAddPropertyTap;
   final Function(int index)? onNavigateTab;
 
-  const HomeTab({
-    super.key,
-    this.onAddPropertyTap,
-    this.onNavigateTab,
-  });
+  const HomeTab({super.key, this.onAddPropertyTap, this.onNavigateTab});
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -29,7 +25,8 @@ class _HomeTabState extends State<HomeTab> {
   final PageController _offersPageController = PageController();
   final PageController _propertiesPageController = PageController(
     viewportFraction: 0.78,
-    initialPage: 999, // 999 is a multiple of 3 (999 % 3 == 0) for seamless infinite looping
+    initialPage:
+        999, // 999 is a multiple of 3 (999 % 3 == 0) for seamless infinite looping
   );
 
   // Mock properties data with high quality cover image assets
@@ -106,8 +103,8 @@ class _HomeTabState extends State<HomeTab> {
       'code': 'CLEAN30',
       'gradient': [
         AppColors.primaryDark, // #3D4127
-        AppColors.primary,     // #636B2F
-        AppColors.sage,        // #BAC095
+        AppColors.primary, // #636B2F
+        AppColors.sage, // #BAC095
       ],
       'accent': AppColors.accentLime, // #D4DE95
       'icon': Icons.auto_awesome_rounded,
@@ -119,9 +116,9 @@ class _HomeTabState extends State<HomeTab> {
       'description': 'Book 2 garden trimming sessions & get free soil analysis',
       'code': 'GARDENFREE',
       'gradient': [
-        AppColors.primary,     // #636B2F
+        AppColors.primary, // #636B2F
         AppColors.primaryDark, // #3D4127
-        AppColors.sage,        // #BAC095
+        AppColors.sage, // #BAC095
       ],
       'accent': AppColors.accentLime,
       'icon': Icons.yard_rounded,
@@ -201,7 +198,11 @@ class _HomeTabState extends State<HomeTab> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
             SizedBox(width: 8.w),
             Text(
               'Coupon "$code" copied to clipboard!',
@@ -242,46 +243,50 @@ class _HomeTabState extends State<HomeTab> {
                 HapticFeedback.mediumImpact();
                 await Future.delayed(const Duration(milliseconds: 1200));
                 if (context.mounted) {
-                  DynamicIslandToast.showSuccess(context, 'Dashboard Refreshed');
+                  DynamicIslandToast.showSuccess(
+                    context,
+                    'Dashboard Refreshed',
+                  );
                 }
               },
               child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 16.h),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 16.h),
 
-                  // 1. Added Properties Carousel
-                  _buildCoverFlowPropertiesSection(),
+                    // 1. Added Properties Carousel
+                    _buildCoverFlowPropertiesSection(),
 
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  // 2. Explore Services (Horizontal Scrolling Section)
-                  _buildServiceCategoriesSection(),
+                    // 2. Explore Services (Horizontal Scrolling Section)
+                    _buildServiceCategoriesSection(),
 
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  // 3. Ongoing Jobs Section
-                  _buildOngoingJobsSection(),
+                    // 3. Ongoing Jobs Section
+                    _buildOngoingJobsSection(),
 
-                  SizedBox(height: 16.h),
+                    SizedBox(height: 16.h),
 
-                  // 4. Special Offers & Promos Section
-                  _buildOffersSection(),
+                    // 4. Special Offers & Promos Section
+                    _buildOffersSection(),
 
-                  // Bottom space for floating navigation bar
-                  SizedBox(height: 120.h),
-                ],
+                    // Bottom space for floating navigation bar
+                    SizedBox(height: 120.h),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
       ),
     );
   }
-
 
   // ---------------------------------------------------------------------------
   // 1. TOP HEADER & INTEGRATED SEARCH BAR (LIGHT MODE)
@@ -300,7 +305,9 @@ class _HomeTabState extends State<HomeTab> {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.isDark(context) ? Colors.black.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.06),
+            color: AppColors.isDark(context)
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -322,10 +329,7 @@ class _HomeTabState extends State<HomeTab> {
                       height: 44.r,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
+                        border: Border.all(color: AppColors.primary, width: 2),
                         color: AppColors.primary,
                       ),
                       child: Center(
@@ -377,9 +381,7 @@ class _HomeTabState extends State<HomeTab> {
                   decoration: BoxDecoration(
                     color: AppColors.cardSelectedColor(context),
                     borderRadius: BorderRadius.circular(14.r),
-                    border: Border.all(
-                      color: AppColors.borderColor(context),
-                    ),
+                    border: Border.all(color: AppColors.borderColor(context)),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -464,7 +466,6 @@ class _HomeTabState extends State<HomeTab> {
       ),
     );
   }
-
 
   // ---------------------------------------------------------------------------
   // 2. COVER FLOW ADDED PROPERTIES SECTION (MATCHING DESIGN REFERENCE)
@@ -630,7 +631,8 @@ class _HomeTabState extends State<HomeTab> {
               height: 7.h,
               decoration: BoxDecoration(
                 color: _selectedPropertyIndex == index
-                    ? AppColors.primary // #636B2F
+                    ? AppColors
+                          .primary // #636B2F
                     : AppColors.sage.withValues(alpha: 0.5), // #BAC095
                 borderRadius: BorderRadius.circular(6.r),
               ),
@@ -678,7 +680,11 @@ class _HomeTabState extends State<HomeTab> {
                 return Container(
                   color: (prop['color'] as Color?) ?? AppColors.primary,
                   child: const Center(
-                    child: Icon(Icons.home_work_rounded, size: 64, color: Colors.white54),
+                    child: Icon(
+                      Icons.home_work_rounded,
+                      size: 64,
+                      color: Colors.white54,
+                    ),
                   ),
                 );
               },
@@ -689,9 +695,7 @@ class _HomeTabState extends State<HomeTab> {
               Positioned.fill(
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5),
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.15),
-                  ),
+                  child: Container(color: Colors.black.withValues(alpha: 0.15)),
                 ),
               ),
 
@@ -720,7 +724,10 @@ class _HomeTabState extends State<HomeTab> {
                   // Type Badge (#636B2F Palette)
                   if (isSelected && type.isNotEmpty) ...[
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary, // #636B2F Palette Primary
                         borderRadius: BorderRadius.circular(10.r),
@@ -783,7 +790,10 @@ class _HomeTabState extends State<HomeTab> {
                         widget.onNavigateTab?.call(2);
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 8.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10.r),
@@ -826,7 +836,6 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-
   // ---------------------------------------------------------------------------
   // 3. ONGOING JOBS SECTION
   // ---------------------------------------------------------------------------
@@ -860,7 +869,10 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(width: 8.w),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 2.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10.r),
@@ -920,12 +932,7 @@ class _HomeTabState extends State<HomeTab> {
       _ => 2,
     };
 
-    final steps = [
-      'Requested',
-      'Approved',
-      'In Progress',
-      'Completed',
-    ];
+    final steps = ['Requested', 'Approved', 'In Progress', 'Completed'];
 
     return Container(
       decoration: BoxDecoration(
@@ -1083,13 +1090,18 @@ class _HomeTabState extends State<HomeTab> {
                   );
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 8.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.buttonBackground,
                     borderRadius: BorderRadius.circular(10.r),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.buttonBackground.withValues(alpha: 0.3),
+                        color: AppColors.buttonBackground.withValues(
+                          alpha: 0.3,
+                        ),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -1107,9 +1119,9 @@ class _HomeTabState extends State<HomeTab> {
               ),
             ],
           ),
-          
+
           SizedBox(height: 18.h),
-          
+
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1140,8 +1152,8 @@ class _HomeTabState extends State<HomeTab> {
                                 shape: BoxShape.circle,
                                 color: isPassed
                                     ? (isCurrent
-                                        ? AppColors.primary
-                                        : AppColors.primaryDark)
+                                          ? AppColors.primary
+                                          : AppColors.primaryDark)
                                     : AppColors.borderColor(context),
                                 border: isCurrent
                                     ? Border.all(
@@ -1162,7 +1174,9 @@ class _HomeTabState extends State<HomeTab> {
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 10.sp,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.mutedTextColor(context),
+                                          color: AppColors.mutedTextColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
                               ),
@@ -1173,8 +1187,9 @@ class _HomeTabState extends State<HomeTab> {
                               textAlign: TextAlign.center,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 9.sp,
-                                fontWeight:
-                                    isPassed ? FontWeight.w700 : FontWeight.w500,
+                                fontWeight: isPassed
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                                 color: isPassed
                                     ? AppColors.headlineColor(context)
                                     : AppColors.mutedTextColor(context),
@@ -1324,7 +1339,10 @@ class _HomeTabState extends State<HomeTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8.r),
@@ -1392,7 +1410,10 @@ class _HomeTabState extends State<HomeTab> {
                   GestureDetector(
                     onTap: () => _copyCouponCode(offer['code'] as String),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 5.h,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(8.r),
@@ -1428,7 +1449,10 @@ class _HomeTabState extends State<HomeTab> {
                       widget.onNavigateTab?.call(2);
                     },
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: accentColor,
                         borderRadius: BorderRadius.circular(10.r),
@@ -1527,12 +1551,12 @@ class _HomeTabState extends State<HomeTab> {
                   HapticFeedback.lightImpact();
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => AllServicesScreen(initialCategory: titleStr),
+                      builder: (context) =>
+                          AllServicesScreen(initialCategory: titleStr),
                     ),
                   );
                 },
                 child: Container(
-
                   width: 110.w,
                   decoration: BoxDecoration(
                     color: AppColors.cardColor(context),
@@ -1546,7 +1570,10 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ],
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 10.h,
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1559,7 +1586,8 @@ class _HomeTabState extends State<HomeTab> {
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
                             return Icon(
-                              (cat['icon'] as IconData?) ?? Icons.design_services_rounded,
+                              (cat['icon'] as IconData?) ??
+                                  Icons.design_services_rounded,
                               color: AppColors.primary,
                               size: 36.r,
                             );
@@ -1588,8 +1616,6 @@ class _HomeTabState extends State<HomeTab> {
       ],
     );
   }
-
-
 
   // ---------------------------------------------------------------------------
   // TRACK JOB DETAILS BOTTOM MODAL
@@ -1642,9 +1668,14 @@ class _HomeTabState extends State<HomeTab> {
                     ],
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: (job['statusColor'] as Color).withValues(alpha: 0.12),
+                      color: (job['statusColor'] as Color).withValues(
+                        alpha: 0.12,
+                      ),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Text(
@@ -1669,7 +1700,9 @@ class _HomeTabState extends State<HomeTab> {
                   children: [
                     CircleAvatar(
                       radius: 20.r,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.15,
+                      ),
                       child: Icon(
                         Icons.person_rounded,
                         color: AppColors.primary,
@@ -1700,14 +1733,20 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.phone_rounded, color: AppColors.primary),
+                      icon: const Icon(
+                        Icons.phone_rounded,
+                        color: AppColors.primary,
+                      ),
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         Navigator.pop(context);
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.chat_bubble_rounded, color: AppColors.primary),
+                      icon: const Icon(
+                        Icons.chat_bubble_rounded,
+                        color: AppColors.primary,
+                      ),
                       onPressed: () {
                         HapticFeedback.lightImpact();
                         Navigator.pop(context);

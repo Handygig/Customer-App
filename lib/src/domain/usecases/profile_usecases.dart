@@ -15,7 +15,8 @@ class UpdateUserProfileUseCase {
   final ProfileRepository repository;
   UpdateUserProfileUseCase(this.repository);
 
-  Future<void> call(UserProfile profile) => repository.updateUserProfile(profile);
+  Future<void> call(UserProfile profile) =>
+      repository.updateUserProfile(profile);
 }
 
 class ManagePaymentCardsUseCase {
@@ -24,8 +25,10 @@ class ManagePaymentCardsUseCase {
 
   Stream<List<PaymentCard>> watch() => repository.watchPaymentCards();
   Future<void> addCard(PaymentCard card) => repository.addPaymentCard(card);
-  Future<void> deleteCard(String cardId) => repository.deletePaymentCard(cardId);
-  Future<void> setDefaultCard(String cardId) => repository.setDefaultPaymentCard(cardId);
+  Future<void> deleteCard(String cardId) =>
+      repository.deletePaymentCard(cardId);
+  Future<void> setDefaultCard(String cardId) =>
+      repository.setDefaultPaymentCard(cardId);
 }
 
 class ManagePropertiesUseCase {
@@ -33,8 +36,10 @@ class ManagePropertiesUseCase {
   ManagePropertiesUseCase(this.repository);
 
   Stream<List<Property>> watch() => repository.watchProperties();
-  Future<void> addProperty(Property property) => repository.addProperty(property);
-  Future<void> deleteProperty(String propertyId) => repository.deleteProperty(propertyId);
+  Future<void> addProperty(Property property) =>
+      repository.addProperty(property);
+  Future<void> deleteProperty(String propertyId) =>
+      repository.deleteProperty(propertyId);
 }
 
 class ManageSettingsUseCase {
@@ -44,8 +49,11 @@ class ManageSettingsUseCase {
   Future<bool> changePassword(String current, String next) =>
       repository.changePassword(currentPassword: current, newPassword: next);
 
-  Future<void> toggle2FA(bool enabled) => repository.toggleTwoFactorAuth(enabled);
+  Future<void> toggle2FA(bool enabled) =>
+      repository.toggleTwoFactorAuth(enabled);
   Future<void> setLanguage(String code) => repository.updateLanguage(code);
-  Future<void> toggleNotifications(bool enabled) => repository.toggleNotifications(enabled);
-  Future<void> toggleBiometrics(bool enabled) => repository.toggleBiometrics(enabled);
+  Future<void> toggleNotifications(bool enabled) =>
+      repository.toggleNotifications(enabled);
+  Future<void> toggleBiometrics(bool enabled) =>
+      repository.toggleBiometrics(enabled);
 }

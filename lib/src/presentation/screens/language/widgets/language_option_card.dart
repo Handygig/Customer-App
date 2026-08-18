@@ -24,10 +24,14 @@ class LanguageOptionCard extends StatelessWidget {
       curve: Curves.easeInOut,
       margin: EdgeInsets.only(bottom: 14.h),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.cardSelectedBg : AppColors.cardUnselectedBg,
+        color: isSelected
+            ? AppColors.cardSelectedBg
+            : AppColors.cardUnselectedBg,
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: isSelected ? AppColors.borderSelected : AppColors.borderUnselected,
+          color: isSelected
+              ? AppColors.borderSelected
+              : AppColors.borderUnselected,
           width: isSelected ? 1.6 : 1.2,
         ),
         boxShadow: isSelected
@@ -79,8 +83,12 @@ class LanguageOptionCard extends StatelessWidget {
                         language.englishName,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13.5.sp,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? AppColors.primaryAccent : AppColors.textMuted,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.primaryAccent
+                              : AppColors.textMuted,
                         ),
                       ),
                     ],
@@ -105,17 +113,15 @@ class LanguageOptionCard extends StatelessWidget {
         shape: BoxShape.circle,
         color: isSelected ? AppColors.radioSelected : Colors.transparent,
         border: Border.all(
-          color: isSelected ? AppColors.radioSelected : AppColors.radioUnselected,
+          color: isSelected
+              ? AppColors.radioSelected
+              : AppColors.radioUnselected,
           width: isSelected ? 0 : 1.8,
         ),
       ),
       child: isSelected
           ? const Center(
-              child: Icon(
-                Icons.check_rounded,
-                size: 16,
-                color: Colors.white,
-              ),
+              child: Icon(Icons.check_rounded, size: 16, color: Colors.white),
             )
           : null,
     );

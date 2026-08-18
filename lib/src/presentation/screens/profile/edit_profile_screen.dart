@@ -27,7 +27,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _firstNameController = TextEditingController(text: widget.profile.firstName);
+    _firstNameController = TextEditingController(
+      text: widget.profile.firstName,
+    );
     _lastNameController = TextEditingController(text: widget.profile.lastName);
     _emailController = TextEditingController(text: widget.profile.email);
     _phoneController = TextEditingController(text: widget.profile.phone);
@@ -50,7 +52,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final phone = _phoneController.text.trim();
 
     if (first.isEmpty || last.isEmpty || email.isEmpty) {
-      DynamicIslandToast.showError(context, 'Please fill in all required fields.');
+      DynamicIslandToast.showError(
+        context,
+        'Please fill in all required fields.',
+      );
       return;
     }
 
@@ -81,7 +86,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(

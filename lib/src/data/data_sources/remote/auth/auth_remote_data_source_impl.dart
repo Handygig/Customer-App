@@ -18,9 +18,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required FirebaseAuth firebaseAuth,
     required Dio dio,
     required DeviceNameService deviceNameService,
-  })  : _firebaseAuth = firebaseAuth,
-        _dio = dio,
-        _deviceNameService = deviceNameService;
+  }) : _firebaseAuth = firebaseAuth,
+       _dio = dio,
+       _deviceNameService = deviceNameService;
 
   @override
   Future<OtpSessionEntity> sendOtp({
@@ -71,7 +71,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw AuthException(_firebaseMessage(error));
     } catch (error) {
       if (error is AuthException) rethrow;
-      throw AuthException('Unable to send the verification code. Please try again.');
+      throw AuthException(
+        'Unable to send the verification code. Please try again.',
+      );
     }
   }
 

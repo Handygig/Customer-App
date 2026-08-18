@@ -225,7 +225,8 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.primary,
-                                            decoration: TextDecoration.underline,
+                                            decoration:
+                                                TextDecoration.underline,
                                           ),
                                         ),
                                         const TextSpan(text: ' & '),
@@ -234,7 +235,8 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.primary,
-                                            decoration: TextDecoration.underline,
+                                            decoration:
+                                                TextDecoration.underline,
                                           ),
                                         ),
                                       ],
@@ -280,8 +282,8 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
           color: _isFocused
               ? AppColors.primary
               : (_isValidNumber
-                  ? AppColors.primary.withValues(alpha: 0.6)
-                  : AppColors.borderUnselected),
+                    ? AppColors.primary.withValues(alpha: 0.6)
+                    : AppColors.borderUnselected),
           width: _isFocused ? 2 : 1.2,
         ),
         boxShadow: _isFocused

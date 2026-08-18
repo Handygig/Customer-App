@@ -69,40 +69,30 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       duration: const Duration(milliseconds: 700),
     );
 
-    _sheetSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.25),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
-      ),
-    );
+    _sheetSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.25), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _sheetFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _sheetFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: const Interval(0.0, 0.60, curve: Curves.easeOut),
       ),
     );
 
-    _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.12),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _contentSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.12), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _contentFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _contentFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: const Interval(0.20, 0.85, curve: Curves.easeOut),
@@ -132,7 +122,11 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     final province = _provinceController.text.trim();
     final postalCode = _postalCodeController.text.trim();
 
-    if (name.isEmpty || line1.isEmpty || city.isEmpty || province.isEmpty || postalCode.isEmpty) {
+    if (name.isEmpty ||
+        line1.isEmpty ||
+        city.isEmpty ||
+        province.isEmpty ||
+        postalCode.isEmpty) {
       DynamicIslandToast.showError(context, 'Please fill all required fields.');
       return;
     }
@@ -142,20 +136,22 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       return;
     }
 
-    final combinedAddress = line2.isNotEmpty 
+    final combinedAddress = line2.isNotEmpty
         ? '$line1, $line2, $city, $province, $postalCode'
         : '$line1, $city, $province, $postalCode';
 
     HapticFeedback.mediumImpact();
     setState(() {
-      _properties.add(PropertyItem(
-        name: name,
-        address: combinedAddress,
-        type: _selectedType,
-        latitude: _selectedLatitude,
-        longitude: _selectedLongitude,
-        imagePath: _selectedImagePath,
-      ));
+      _properties.add(
+        PropertyItem(
+          name: name,
+          address: combinedAddress,
+          type: _selectedType,
+          latitude: _selectedLatitude,
+          longitude: _selectedLongitude,
+          imagePath: _selectedImagePath,
+        ),
+      );
       _nameController.clear();
       _addressLine1Controller.clear();
       _addressLine2Controller.clear();
@@ -184,34 +180,32 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
   void _handleFinish() {
     HapticFeedback.mediumImpact();
-    _finishRegistration('Registration finished. Added ${_properties.length} properties.');
+    _finishRegistration(
+      'Registration finished. Added ${_properties.length} properties.',
+    );
   }
 
   void _finishRegistration(String message) {
     DynamicIslandToast.showSuccess(context, 'Account setup completed!');
 
     Navigator.of(context).pushAndRemoveUntil(
-      CupertinoPageRoute(
-        builder: (context) => const MainNavigationScreen(),
-      ),
+      CupertinoPageRoute(builder: (context) => const MainNavigationScreen()),
       (route) => false,
     );
   }
 
   void _openMapSelector() async {
     HapticFeedback.lightImpact();
-    final result = await Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => const MapSelectorScreen(),
-      ),
-    );
+    final result = await Navigator.of(
+      context,
+    ).push(CupertinoPageRoute(builder: (context) => const MapSelectorScreen()));
 
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _addressLine1Controller.text =
             (result['address_line_1'] ?? result['address'] ?? '').toString();
-        _addressLine2Controller.text =
-            (result['address_line_2'] ?? '').toString();
+        _addressLine2Controller.text = (result['address_line_2'] ?? '')
+            .toString();
         _cityController.text = (result['city'] ?? '').toString();
         _provinceController.text = (result['province'] ?? '').toString();
         _postalCodeController.text = (result['postal_code'] ?? '').toString();
@@ -315,8 +309,9 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         splashColor: AppColors.primary.withValues(alpha: 0.15),
-                        highlightColor:
-                            AppColors.primary.withValues(alpha: 0.08),
+                        highlightColor: AppColors.primary.withValues(
+                          alpha: 0.08,
+                        ),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.of(context).maybePop();
@@ -372,8 +367,9 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                         onTap: _handleSkip,
                         borderRadius: BorderRadius.circular(20.r),
                         splashColor: AppColors.primary.withValues(alpha: 0.15),
-                        highlightColor:
-                            AppColors.primary.withValues(alpha: 0.08),
+                        highlightColor: AppColors.primary.withValues(
+                          alpha: 0.08,
+                        ),
                         child: Padding(
                           padding: EdgeInsets.symmetric(horizontal: 18.w),
                           child: Center(
@@ -427,10 +423,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                           // 1. Grabber Pill (Static)
                           Center(
                             child: Container(
-                              margin: EdgeInsets.only(
-                                top: 12.h,
-                                bottom: 6.h,
-                              ),
+                              margin: EdgeInsets.only(top: 12.h, bottom: 6.h),
                               width: 38.w,
                               height: 4.h,
                               decoration: BoxDecoration(
@@ -507,9 +500,13 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                                         _buildAddPropertyForm()
                                       else ...[
                                         // Properties list
-                                        ..._properties.asMap().entries.map((entry) {
+                                        ..._properties.asMap().entries.map((
+                                          entry,
+                                        ) {
                                           return _buildPropertyCard(
-                                              entry.value, entry.key);
+                                            entry.value,
+                                            entry.key,
+                                          );
                                         }),
 
                                         // Dashed Add New Button Card
@@ -534,68 +531,82 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                             child: SlideTransition(
                               position: _contentSlideAnimation,
                               child: FadeTransition(
-                                  opacity: _contentFadeAnimation,
-                                  child: _isAddingNew
-                                      ? Row(
-                                          children: [
-                                            Expanded(
-                                              child: SizedBox(
-                                                height: 52.h,
-                                                child: OutlinedButton(
-                                                  onPressed: () {
-                                                    HapticFeedback.lightImpact();
-                                                    setState(() {
-                                                      _isAddingNew = false;
-                                                    });
-                                                  },
-                                                  style: OutlinedButton.styleFrom(
-                                                    foregroundColor: AppColors.textHeadline,
-                                                    side: const BorderSide(
-                                                      color: AppColors.borderUnselected,
-                                                      width: 1.5,
-                                                    ),
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(26.r),
-                                                    ),
+                                opacity: _contentFadeAnimation,
+                                child: _isAddingNew
+                                    ? Row(
+                                        children: [
+                                          Expanded(
+                                            child: SizedBox(
+                                              height: 52.h,
+                                              child: OutlinedButton(
+                                                onPressed: () {
+                                                  HapticFeedback.lightImpact();
+                                                  setState(() {
+                                                    _isAddingNew = false;
+                                                  });
+                                                },
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor:
+                                                      AppColors.textHeadline,
+                                                  side: const BorderSide(
+                                                    color: AppColors
+                                                        .borderUnselected,
+                                                    width: 1.5,
                                                   ),
-                                                  child: Text(
-                                                    'Cancel',
-                                                    style: GoogleFonts.plusJakartaSans(
-                                                      fontSize: 16.sp,
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          26.r,
+                                                        ),
                                                   ),
+                                                ),
+                                                child: Text(
+                                                  'Cancel',
+                                                  style:
+                                                      GoogleFonts.plusJakartaSans(
+                                                        fontSize: 16.sp,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
                                                 ),
                                               ),
                                             ),
-                                            SizedBox(width: 12.w),
-                                            Expanded(
-                                              flex: 2,
-                                              child: SizedBox(
-                                                height: 52.h,
-                                                child: ElevatedButton(
-                                                  onPressed: _addNewProperty,
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor: AppColors.buttonBackground,
-                                                    foregroundColor: Colors.white,
-                                                    elevation: 0,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius: BorderRadius.circular(26.r),
-                                                    ),
+                                          ),
+                                          SizedBox(width: 12.w),
+                                          Expanded(
+                                            flex: 2,
+                                            child: SizedBox(
+                                              height: 52.h,
+                                              child: ElevatedButton(
+                                                onPressed: _addNewProperty,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: AppColors
+                                                      .buttonBackground,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          26.r,
+                                                        ),
                                                   ),
-                                                  child: Text(
-                                                    'Save Location',
-                                                    style: GoogleFonts.plusJakartaSans(
-                                                      fontSize: 16.sp,
-                                                      fontWeight: FontWeight.w700,
-                                                    ),
-                                                  ),
+                                                ),
+                                                child: Text(
+                                                  'Save Location',
+                                                  style:
+                                                      GoogleFonts.plusJakartaSans(
+                                                        fontSize: 16.sp,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        )
-                                      : _buildSubmitButton()),
+                                          ),
+                                        ],
+                                      )
+                                    : _buildSubmitButton(),
+                              ),
                             ),
                           ),
                         ],
@@ -625,7 +636,10 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       }
     } catch (_) {
       if (mounted) {
-        DynamicIslandToast.showError(context, 'Unable to open the image picker.');
+        DynamicIslandToast.showError(
+          context,
+          'Unable to open the image picker.',
+        );
       }
     }
   }
@@ -645,9 +659,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Container(
         color: const Color(0xFFF4F6EE),
-        child: const Center(
-          child: Icon(Icons.image_not_supported_outlined),
-        ),
+        child: const Center(child: Icon(Icons.image_not_supported_outlined)),
       ),
     );
   }
@@ -704,7 +716,11 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                       color: AppColors.cardSelectedBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 20.r),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                      size: 20.r,
+                    ),
                   ),
                   title: Text(
                     'Take Photo (Camera)',
@@ -727,7 +743,11 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                       color: AppColors.cardSelectedBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 20.r),
+                    child: Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.primary,
+                      size: 20.r,
+                    ),
                   ),
                   title: Text(
                     'Choose from Gallery',
@@ -756,11 +776,23 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildPresetThumbnail(ctx, AppAssets.propertyVilla, 'Villa / House'),
+                      _buildPresetThumbnail(
+                        ctx,
+                        AppAssets.propertyVilla,
+                        'Villa / House',
+                      ),
                       SizedBox(width: 12.w),
-                      _buildPresetThumbnail(ctx, AppAssets.propertyApartment, 'Apartment'),
+                      _buildPresetThumbnail(
+                        ctx,
+                        AppAssets.propertyApartment,
+                        'Apartment',
+                      ),
                       SizedBox(width: 12.w),
-                      _buildPresetThumbnail(ctx, AppAssets.propertyCottage, 'Cottage'),
+                      _buildPresetThumbnail(
+                        ctx,
+                        AppAssets.propertyCottage,
+                        'Cottage',
+                      ),
                     ],
                   ),
                 ),
@@ -773,7 +805,11 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     );
   }
 
-  Widget _buildPresetThumbnail(BuildContext modalContext, String assetPath, String title) {
+  Widget _buildPresetThumbnail(
+    BuildContext modalContext,
+    String assetPath,
+    String title,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.of(modalContext).pop();
@@ -821,10 +857,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: AppColors.borderUnselected,
-          width: 1.2,
-        ),
+        border: Border.all(color: AppColors.borderUnselected, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -842,30 +875,44 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
               height: 62.h,
               child: item.imagePath != null && item.imagePath!.isNotEmpty
                   ? (item.imagePath!.startsWith('assets/')
-                      ? Image.asset(
-                          item.imagePath!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: const Color(0xFFF4F6EE),
-                            child: Center(
-                              child: Icon(typeIcon, color: AppColors.primary, size: 24.r),
-                            ),
-                          ),
-                        )
-                      : Image.file(
-                          File(item.imagePath!),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: const Color(0xFFF4F6EE),
-                            child: Center(
-                              child: Icon(typeIcon, color: AppColors.primary, size: 24.r),
-                            ),
-                          ),
-                        ))
+                        ? Image.asset(
+                            item.imagePath!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: const Color(0xFFF4F6EE),
+                                  child: Center(
+                                    child: Icon(
+                                      typeIcon,
+                                      color: AppColors.primary,
+                                      size: 24.r,
+                                    ),
+                                  ),
+                                ),
+                          )
+                        : Image.file(
+                            File(item.imagePath!),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: const Color(0xFFF4F6EE),
+                                  child: Center(
+                                    child: Icon(
+                                      typeIcon,
+                                      color: AppColors.primary,
+                                      size: 24.r,
+                                    ),
+                                  ),
+                                ),
+                          ))
                   : Container(
                       color: const Color(0xFFF4F6EE),
                       child: Center(
-                        child: Icon(typeIcon, color: AppColors.primary, size: 24.r),
+                        child: Icon(
+                          typeIcon,
+                          color: AppColors.primary,
+                          size: 24.r,
+                        ),
                       ),
                     ),
             ),
@@ -891,7 +938,10 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                     ),
                     SizedBox(width: 6.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 7.w,
+                        vertical: 2.h,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF4F6EE),
                         borderRadius: BorderRadius.circular(6.r),
@@ -1031,10 +1081,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
             decoration: BoxDecoration(
               color: const Color(0xFFF0F2EC),
               borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(
-                color: AppColors.borderUnselected,
-                width: 1.2,
-              ),
+              border: Border.all(color: AppColors.borderUnselected, width: 1.2),
               image: const DecorationImage(
                 image: AssetImage(AppAssets.languageHeader),
                 fit: BoxFit.cover,
@@ -1060,7 +1107,10 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                       ),
                       SizedBox(height: 4.h),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12.w,
+                          vertical: 6.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12.r),
@@ -1202,8 +1252,11 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: Icon(Icons.edit_rounded,
-                                  size: 18.r, color: AppColors.primaryDark),
+                              icon: Icon(
+                                Icons.edit_rounded,
+                                size: 18.r,
+                                color: AppColors.primaryDark,
+                              ),
                               onPressed: _showImagePickerModal,
                             ),
                           ),
@@ -1219,8 +1272,11 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                                   color: AppColors.accentLime,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(Icons.check_rounded,
-                                    size: 14.r, color: AppColors.primaryDark),
+                                child: Icon(
+                                  Icons.check_rounded,
+                                  size: 14.r,
+                                  color: AppColors.primaryDark,
+                                ),
                               ),
                               SizedBox(width: 8.w),
                               Text(
@@ -1344,19 +1400,12 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
           decoration: BoxDecoration(
             color: const Color(0xFFF6F8F3),
             borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: AppColors.borderUnselected,
-              width: 1.2,
-            ),
+            border: Border.all(color: AppColors.borderUnselected, width: 1.2),
           ),
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
             children: [
-              Icon(
-                prefixIcon,
-                size: 20.r,
-                color: AppColors.textSecondary,
-              ),
+              Icon(prefixIcon, size: 20.r, color: AppColors.textSecondary),
               SizedBox(width: 10.w),
               Expanded(
                 child: TextField(

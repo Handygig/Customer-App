@@ -71,7 +71,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _messages = [
       ChatMessage(
         id: '1',
-        text: 'Hello! I am assigned to your booking for ${widget.serviceTitle}.',
+        text:
+            'Hello! I am assigned to your booking for ${widget.serviceTitle}.',
         isMe: false,
         timestamp: '02:05 PM',
       ),
@@ -93,7 +94,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       ChatMessage(
         id: '4',
-        text: 'Yes, absolutely! I bring eco-friendly sanitization solutions and industrial equipment.',
+        text:
+            'Yes, absolutely! I bring eco-friendly sanitization solutions and industrial equipment.',
         isMe: false,
         timestamp: '02:09 PM',
       ),
@@ -105,7 +107,8 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       ChatMessage(
         id: '6',
-        text: 'Perfect! I am currently en route and should arrive in about 10 minutes. 🚗',
+        text:
+            'Perfect! I am currently en route and should arrive in about 10 minutes. 🚗',
         isMe: false,
         timestamp: '02:12 PM',
       ),
@@ -283,7 +286,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Icons.close_rounded, size: 20.r, color: AppColors.textMuted),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 20.r,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
@@ -518,7 +525,10 @@ class _ChatScreenState extends State<ChatScreen> {
           IconButton(
             onPressed: () {
               HapticFeedback.lightImpact();
-              DynamicIslandToast.showSuccess(context, 'Calling ${widget.providerName}...');
+              DynamicIslandToast.showSuccess(
+                context,
+                'Calling ${widget.providerName}...',
+              );
             },
             icon: Container(
               width: 38.r,
@@ -599,8 +609,9 @@ class _ChatScreenState extends State<ChatScreen> {
     return Padding(
       padding: EdgeInsets.only(bottom: 14.h),
       child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
@@ -620,7 +631,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
           Flexible(
             child: Container(
-              padding: EdgeInsets.all(msg.type == MessageType.image ? 6.r : 14.r),
+              padding: EdgeInsets.all(
+                msg.type == MessageType.image ? 6.r : 14.r,
+              ),
               decoration: BoxDecoration(
                 color: isMe ? AppColors.primaryDark : Colors.white,
                 borderRadius: BorderRadius.only(
@@ -641,8 +654,9 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
               child: Column(
-                crossAxisAlignment:
-                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: isMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
                 children: [
                   if (msg.type == MessageType.image)
                     _buildImageBubbleContent(msg)
@@ -697,8 +711,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildImageBubbleContent(ChatMessage msg) {
     return Column(
-      crossAxisAlignment:
-          msg.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: msg.isMe
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(14.r),
@@ -715,7 +730,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       Icon(
                         Icons.image_rounded,
                         size: 42.r,
-                        color: msg.isMe ? AppColors.accentLime : AppColors.primaryDark,
+                        color: msg.isMe
+                            ? AppColors.accentLime
+                            : AppColors.primaryDark,
                       ),
                       SizedBox(height: 6.h),
                       Text(
@@ -723,7 +740,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           fontWeight: FontWeight.w700,
-                          color: msg.isMe ? Colors.white : AppColors.primaryDark,
+                          color: msg.isMe
+                              ? Colors.white
+                              : AppColors.primaryDark,
                         ),
                       ),
                     ],
@@ -733,14 +752,21 @@ class _ChatScreenState extends State<ChatScreen> {
                   top: 8.r,
                   right: 8.r,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.crop_original_rounded, size: 12.r, color: Colors.white),
+                        Icon(
+                          Icons.crop_original_rounded,
+                          size: 12.r,
+                          color: Colors.white,
+                        ),
                         SizedBox(width: 4.w),
                         Text(
                           'PHOTO',
@@ -794,7 +820,9 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: Center(
                 child: Icon(
-                  msg.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  msg.isPlaying
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
                   color: isMe ? AppColors.primaryDark : Colors.white,
                   size: 22.r,
                 ),
@@ -809,15 +837,34 @@ class _ChatScreenState extends State<ChatScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: List.generate(14, (index) {
-                    final heights = [10.h, 16.h, 24.h, 14.h, 20.h, 28.h, 18.h, 12.h, 22.h, 16.h, 26.h, 14.h, 20.h, 12.h];
+                    final heights = [
+                      10.h,
+                      16.h,
+                      24.h,
+                      14.h,
+                      20.h,
+                      28.h,
+                      18.h,
+                      12.h,
+                      22.h,
+                      16.h,
+                      26.h,
+                      14.h,
+                      20.h,
+                      12.h,
+                    ];
                     final isPlayed = index < (msg.isPlaying ? 8 : 4);
                     return Container(
                       width: 3.w,
                       height: heights[index % heights.length],
                       decoration: BoxDecoration(
                         color: isMe
-                            ? (isPlayed ? AppColors.accentLime : Colors.white.withValues(alpha: 0.4))
-                            : (isPlayed ? AppColors.primaryDark : const Color(0xFFC7D0A8)),
+                            ? (isPlayed
+                                  ? AppColors.accentLime
+                                  : Colors.white.withValues(alpha: 0.4))
+                            : (isPlayed
+                                  ? AppColors.primaryDark
+                                  : const Color(0xFFC7D0A8)),
                         borderRadius: BorderRadius.circular(2.r),
                       ),
                     );
@@ -832,7 +879,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w700,
-                        color: isMe ? Colors.white.withValues(alpha: 0.9) : AppColors.primaryDark,
+                        color: isMe
+                            ? Colors.white.withValues(alpha: 0.9)
+                            : AppColors.primaryDark,
                       ),
                     ),
                     Icon(

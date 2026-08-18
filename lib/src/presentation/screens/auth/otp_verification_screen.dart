@@ -35,8 +35,10 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<TextEditingController> _controllers =
-      List.generate(6, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   late String _verificationId;
@@ -105,7 +107,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     });
   }
 
-  String get _otpCode => _controllers.map((controller) => controller.text).join();
+  String get _otpCode =>
+      _controllers.map((controller) => controller.text).join();
 
   void _onDigitEntered(int index, String value) {
     if (value.isNotEmpty) {
@@ -133,22 +136,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     HapticFeedback.mediumImpact();
     _submittedCode = code;
     context.read<AuthBloc>().add(
-          VerifyOtpRequested(
-            verificationId: _verificationId,
-            smsCode: code,
-          ),
-        );
+      VerifyOtpRequested(verificationId: _verificationId, smsCode: code),
+    );
   }
 
   void _resendOtp() {
     if (!_canResend) return;
     HapticFeedback.lightImpact();
     context.read<AuthBloc>().add(
-          ResendOtpRequested(
-            phoneNumber: widget.phoneNumber,
-            forceResendingToken: _forceResendingToken,
-          ),
-        );
+      ResendOtpRequested(
+        phoneNumber: widget.phoneNumber,
+        forceResendingToken: _forceResendingToken,
+      ),
+    );
   }
 
   void _clearOtpAfterError() {
@@ -189,16 +189,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
           if (needsProfile) {
             Navigator.of(context).pushAndRemoveUntil(
-              CupertinoPageRoute(
-                builder: (_) => const CustomerDetailsScreen(),
-              ),
+              CupertinoPageRoute(builder: (_) => const CustomerDetailsScreen()),
               (route) => route.isFirst,
             );
           } else {
             Navigator.of(context).pushAndRemoveUntil(
-              CupertinoPageRoute(
-                builder: (_) => const MainNavigationScreen(),
-              ),
+              CupertinoPageRoute(builder: (_) => const MainNavigationScreen()),
               (_) => false,
             );
           }
@@ -264,7 +260,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     Expanded(
                                       child: Text.rich(
                                         TextSpan(
-                                          text: 'Enter the 6-digit code sent to ',
+                                          text:
+                                              'Enter the 6-digit code sent to ',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 14.sp,
                                             fontWeight: FontWeight.w500,
@@ -274,10 +271,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                           children: [
                                             TextSpan(
                                               text: widget.phoneNumber,
-                                              style: GoogleFonts.plusJakartaSans(
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.textHeadline,
-                                              ),
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                    fontWeight: FontWeight.w700,
+                                                    color:
+                                                        AppColors.textHeadline,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -291,10 +290,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                           vertical: 4.h,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary
-                                              .withValues(alpha: 0.08),
-                                          borderRadius:
-                                              BorderRadius.circular(10.r),
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            10.r,
+                                          ),
                                         ),
                                         child: Text(
                                           'Edit',
@@ -322,8 +323,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                   child: _canResend
                                       ? InkWell(
                                           onTap: resending ? null : _resendOtp,
-                                          borderRadius:
-                                              BorderRadius.circular(8.r),
+                                          borderRadius: BorderRadius.circular(
+                                            8.r,
+                                          ),
                                           child: Padding(
                                             padding: EdgeInsets.symmetric(
                                               horizontal: 8.w,
@@ -335,10 +337,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                                   : 'Didn\'t receive code? Resend Code',
                                               style:
                                                   GoogleFonts.plusJakartaSans(
-                                                fontSize: 13.5.sp,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.primary,
-                                              ),
+                                                    fontSize: 13.5.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.primary,
+                                                  ),
                                             ),
                                           ),
                                         )
@@ -397,8 +399,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           color: focused
               ? AppColors.primary
               : (hasValue
-                  ? AppColors.primary.withValues(alpha: 0.5)
-                  : AppColors.borderUnselected),
+                    ? AppColors.primary.withValues(alpha: 0.5)
+                    : AppColors.borderUnselected),
           width: focused ? 2 : 1.2,
         ),
         boxShadow: focused

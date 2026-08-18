@@ -20,7 +20,10 @@ class RewardsReferralScreen extends StatelessWidget {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -37,7 +40,8 @@ class RewardsReferralScreen extends StatelessWidget {
         stream: repository.watchUserProfile(),
         builder: (context, snapshot) {
           final profile = snapshot.data;
-          if (profile == null) return const Center(child: CircularProgressIndicator());
+          if (profile == null)
+            return const Center(child: CircularProgressIndicator());
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(20.w),
@@ -67,15 +71,21 @@ class RewardsReferralScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 6.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accentLime,
                               borderRadius: BorderRadius.circular(20.r),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.stars_rounded,
-                                    color: AppColors.primaryDark, size: 16.r),
+                                Icon(
+                                  Icons.stars_rounded,
+                                  color: AppColors.primaryDark,
+                                  size: 16.r,
+                                ),
                                 SizedBox(width: 6.w),
                                 Text(
                                   profile.membershipTier.toUpperCase(),
@@ -134,8 +144,11 @@ class RewardsReferralScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.card_giftcard_rounded,
-                              color: AppColors.primary, size: 28.r),
+                          Icon(
+                            Icons.card_giftcard_rounded,
+                            color: AppColors.primary,
+                            size: 28.r,
+                          ),
                           SizedBox(width: 12.w),
                           Expanded(
                             child: Column(
@@ -164,7 +177,10 @@ class RewardsReferralScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 18.h),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 12.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(14.r),
@@ -186,13 +202,20 @@ class RewardsReferralScreen extends StatelessWidget {
                               onTap: () {
                                 HapticFeedback.mediumImpact();
                                 Clipboard.setData(
-                                    ClipboardData(text: profile.referralCode));
-                                DynamicIslandToast.showSuccess(context, 'Referral code copied to clipboard!');
+                                  ClipboardData(text: profile.referralCode),
+                                );
+                                DynamicIslandToast.showSuccess(
+                                  context,
+                                  'Referral code copied to clipboard!',
+                                );
                               },
                               child: Row(
                                 children: [
-                                  Icon(Icons.copy_rounded,
-                                      color: AppColors.primary, size: 18.r),
+                                  Icon(
+                                    Icons.copy_rounded,
+                                    color: AppColors.primary,
+                                    size: 18.r,
+                                  ),
                                   SizedBox(width: 4.w),
                                   Text(
                                     'Copy',

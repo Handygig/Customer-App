@@ -34,31 +34,35 @@ class _AuthAnimatedSheetState extends State<AuthAnimatedSheet>
       duration: const Duration(milliseconds: 700),
     );
 
-    _sheetSlide = Tween<Offset>(
-      begin: const Offset(0, 0.25),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0, 0.85, curve: Curves.easeOutCubic),
-    ));
+    _sheetSlide = Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _sheetFade = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0, 0.60, curve: Curves.easeOut),
-    ));
+    _sheetFade = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0, 0.60, curve: Curves.easeOut),
+      ),
+    );
 
-    _contentSlide = Tween<Offset>(
-      begin: const Offset(0, 0.12),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.20, 1, curve: Curves.easeOutCubic),
-    ));
+    _contentSlide =
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.20, 1, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _contentFade = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.20, 0.85, curve: Curves.easeOut),
-    ));
+    _contentFade = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.20, 0.85, curve: Curves.easeOut),
+      ),
+    );
 
     _controller.forward();
   }

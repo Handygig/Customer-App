@@ -45,7 +45,8 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
         permission = await Geolocator.requestPermission();
       }
 
-      final allowed = permission == LocationPermission.always ||
+      final allowed =
+          permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
       if (!mounted) return;
       setState(() => _myLocationEnabled = allowed);
@@ -79,18 +80,19 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         _selectedPlacemark = p;
-        final parts = <String?>[
-          p.street,
-          p.subLocality,
-          p.locality,
-          p.administrativeArea,
-          p.postalCode,
-          p.country,
-        ]
-            .where((part) => part != null && part!.trim().isNotEmpty)
-            .map((part) => part!.trim())
-            .toSet()
-            .toList();
+        final parts =
+            <String?>[
+                  p.street,
+                  p.subLocality,
+                  p.locality,
+                  p.administrativeArea,
+                  p.postalCode,
+                  p.country,
+                ]
+                .where((part) => part != null && part!.trim().isNotEmpty)
+                .map((part) => part!.trim())
+                .toSet()
+                .toList();
 
         setState(() {
           _selectedAddress = parts.isEmpty
@@ -236,12 +238,7 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
                 ),
               ),
             ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildBottomCard(),
-            ),
+            Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomCard()),
           ],
         ),
       ),
@@ -387,8 +384,9 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
                             height: 14.r,
                             child: const CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation(
+                                AppColors.primary,
+                              ),
                             ),
                           ),
                         )

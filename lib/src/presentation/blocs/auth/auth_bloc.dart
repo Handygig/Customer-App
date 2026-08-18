@@ -24,13 +24,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required LoginWithFirebaseUsecase loginWithFirebase,
     required CompleteProfileUsecase completeProfile,
     required LogoutUsecase logout,
-  })  : _sendOtp = sendOtp,
-        _resendOtp = resendOtp,
-        _verifyOtpAndRegister = verifyOtpAndRegister,
-        _loginWithFirebase = loginWithFirebase,
-        _completeProfile = completeProfile,
-        _logout = logout,
-        super(const AuthInitial()) {
+  }) : _sendOtp = sendOtp,
+       _resendOtp = resendOtp,
+       _verifyOtpAndRegister = verifyOtpAndRegister,
+       _loginWithFirebase = loginWithFirebase,
+       _completeProfile = completeProfile,
+       _logout = logout,
+       super(const AuthInitial()) {
     on<SendOtpRequested>(_onSendOtp);
     on<ResendOtpRequested>(_onResendOtp);
     on<VerifyOtpRequested>(_onVerifyOtp);
@@ -48,10 +48,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final session = await _sendOtp(event.phoneNumber);
       emit(AuthOtpSent(phoneNumber: event.phoneNumber, session: session));
     } catch (error) {
-      emit(AuthFailure(
-        operation: AuthOperation.sendOtp,
-        message: _message(error),
-      ));
+      emit(
+        AuthFailure(operation: AuthOperation.sendOtp, message: _message(error)),
+      );
     }
   }
 
@@ -67,10 +66,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthOtpResent(phoneNumber: event.phoneNumber, session: session));
     } catch (error) {
-      emit(AuthFailure(
-        operation: AuthOperation.resendOtp,
-        message: _message(error),
-      ));
+      emit(
+        AuthFailure(
+          operation: AuthOperation.resendOtp,
+          message: _message(error),
+        ),
+      );
     }
   }
 
@@ -86,10 +87,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthAuthenticated(result));
     } catch (error) {
-      emit(AuthFailure(
-        operation: AuthOperation.verifyOtp,
-        message: _message(error),
-      ));
+      emit(
+        AuthFailure(
+          operation: AuthOperation.verifyOtp,
+          message: _message(error),
+        ),
+      );
     }
   }
 
@@ -101,10 +104,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       emit(AuthAuthenticated(await _loginWithFirebase()));
     } catch (error) {
-      emit(AuthFailure(
-        operation: AuthOperation.login,
-        message: _message(error),
-      ));
+      emit(
+        AuthFailure(operation: AuthOperation.login, message: _message(error)),
+      );
     }
   }
 
@@ -123,26 +125,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthProfileCompleted(user));
     } catch (error) {
-      emit(AuthFailure(
-        operation: AuthOperation.completeProfile,
-        message: _message(error),
-      ));
+      emit(
+        AuthFailure(
+          operation: AuthOperation.completeProfile,
+          message: _message(error),
+        ),
+      );
     }
   }
 
-  Future<void> _onLogout(
-    LogoutRequested event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading(AuthOperation.logout));
     try {
       await _logout();
       emit(const AuthLoggedOut());
     } catch (error) {
-      emit(AuthFailure(
-        operation: AuthOperation.logout,
-        message: _message(error),
-      ));
+      emit(
+        AuthFailure(operation: AuthOperation.logout, message: _message(error)),
+      );
     }
   }
 

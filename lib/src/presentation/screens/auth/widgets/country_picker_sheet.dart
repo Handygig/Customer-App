@@ -109,69 +109,67 @@ class _CountryPickerSheetState extends State<CountryPickerSheet> {
               child: widget.loading
                   ? const Center(child: CircularProgressIndicator())
                   : filtered.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No country found',
+                  ? Center(
+                      child: Text(
+                        'No country found',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) =>
+                          Divider(height: 1, color: Colors.grey.shade200),
+                      itemBuilder: (_, index) {
+                        final country = filtered[index];
+                        final selected =
+                            country.code == widget.selectedCountry.code &&
+                            country.name == widget.selectedCountry.name;
+
+                        return ListTile(
+                          onTap: () => Navigator.of(context).pop(country),
+                          leading: Text(
+                            country.flag,
+                            style: TextStyle(fontSize: 24.sp),
+                          ),
+                          title: Text(
+                            country.name,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14.sp,
-                              color: AppColors.textSecondary,
+                              fontSize: 15.sp,
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: selected
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
                             ),
                           ),
-                        )
-                      : ListView.separated(
-                          itemCount: filtered.length,
-                          separatorBuilder: (_, __) => Divider(
-                            height: 1,
-                            color: Colors.grey.shade200,
-                          ),
-                          itemBuilder: (_, index) {
-                            final country = filtered[index];
-                            final selected =
-                                country.code == widget.selectedCountry.code &&
-                                    country.name == widget.selectedCountry.name;
-
-                            return ListTile(
-                              onTap: () => Navigator.of(context).pop(country),
-                              leading: Text(
-                                country.flag,
-                                style: TextStyle(fontSize: 24.sp),
-                              ),
-                              title: Text(
-                                country.name,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                country.code,
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 15.sp,
-                                  fontWeight: selected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: selected
-                                      ? AppColors.primary
-                                      : AppColors.textPrimary,
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    country.code,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  if (selected) ...[
-                                    SizedBox(width: 8.w),
-                                    Icon(
-                                      Icons.check_circle_rounded,
-                                      color: AppColors.primary,
-                                      size: 20.r,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                              if (selected) ...[
+                                SizedBox(width: 8.w),
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppColors.primary,
+                                  size: 20.r,
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

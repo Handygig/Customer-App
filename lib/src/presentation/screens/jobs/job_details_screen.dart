@@ -9,25 +9,25 @@ import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart'
 class JobDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> job;
 
-  const JobDetailsScreen({
-    super.key,
-    required this.job,
-  });
+  const JobDetailsScreen({super.key, required this.job});
 
   @override
   Widget build(BuildContext context) {
     final String jobId = job['id'] as String? ?? 'JOB-0000';
     final String service = job['service'] as String? ?? 'Service Details';
     final String property = job['property'] as String? ?? 'Primary Location';
-    final String providerName = job['provider'] as String? ?? 'Assigned Professional';
+    final String providerName =
+        job['provider'] as String? ?? 'Assigned Professional';
     final String rating = job['rating'] as String? ?? '4.9 ★';
     final String price = job['price'] as String? ?? '\$0.00';
     final String date = job['date'] as String? ?? 'Scheduled Date';
     final String status = job['status'] as String? ?? 'Pending';
     final String type = job['type'] as String? ?? 'ongoing';
-    final Color statusColor = job['statusColor'] as Color? ?? AppColors.primaryDark;
+    final Color statusColor =
+        job['statusColor'] as Color? ?? AppColors.primaryDark;
     final Color statusBg = job['statusBg'] as Color? ?? const Color(0xFFF3F6E6);
-    final IconData icon = job['icon'] as IconData? ?? Icons.cleaning_services_rounded;
+    final IconData icon =
+        job['icon'] as IconData? ?? Icons.cleaning_services_rounded;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -50,12 +50,20 @@ class JobDetailsScreen extends StatelessWidget {
                   HapticFeedback.mediumImpact();
                   await Future.delayed(const Duration(milliseconds: 1000));
                   if (context.mounted) {
-                    DynamicIslandToast.showSuccess(context, 'Refreshed task details');
+                    DynamicIslandToast.showSuccess(
+                      context,
+                      'Refreshed task details',
+                    );
                   }
                 },
                 child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 20.h,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -63,33 +71,33 @@ class JobDetailsScreen extends StatelessWidget {
                       _buildJobOverviewCard(service, property, date, icon),
                       SizedBox(height: 20.h),
 
-                    // Job Progress Timeline
-                    _buildProgressTimeline(type),
-                    SizedBox(height: 20.h),
+                      // Job Progress Timeline
+                      _buildProgressTimeline(type),
+                      SizedBox(height: 20.h),
 
-                    // Provider Details Section
-                    _buildProviderDetailsSection(
-                      context,
-                      providerName,
-                      rating,
-                      type,
-                      service,
-                      jobId,
-                    ),
-                    SizedBox(height: 20.h),
+                      // Provider Details Section
+                      _buildProviderDetailsSection(
+                        context,
+                        providerName,
+                        rating,
+                        type,
+                        service,
+                        jobId,
+                      ),
+                      SizedBox(height: 20.h),
 
-                    // Price & Payment Details Section
-                    _buildPriceBreakdownSection(price, type),
-                    SizedBox(height: 20.h),
+                      // Price & Payment Details Section
+                      _buildPriceBreakdownSection(price, type),
+                      SizedBox(height: 20.h),
 
-                    // Location & Property Details
-                    _buildLocationCard(property),
-                    SizedBox(height: 30.h),
-                  ],
+                      // Location & Property Details
+                      _buildLocationCard(property),
+                      SizedBox(height: 30.h),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
 
             // Bottom Action Footer
             _buildBottomActionBar(context, type, providerName, service, jobId),
@@ -189,7 +197,10 @@ class JobDetailsScreen extends StatelessWidget {
                   ],
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 7.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 7.h,
+                  ),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(10.r),
@@ -249,11 +260,7 @@ class JobDetailsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Center(
-                  child: Icon(
-                    icon,
-                    color: AppColors.primaryDark,
-                    size: 26.r,
-                  ),
+                  child: Icon(icon, color: AppColors.primaryDark, size: 26.r),
                 ),
               ),
               SizedBox(width: 16.w),
@@ -327,12 +334,7 @@ class JobDetailsScreen extends StatelessWidget {
       _ => 2,
     };
 
-    final steps = [
-      'Requested',
-      'Approved',
-      'In Progress',
-      'Completed',
-    ];
+    final steps = ['Requested', 'Approved', 'In Progress', 'Completed'];
 
     return Container(
       width: double.infinity,
@@ -379,8 +381,8 @@ class JobDetailsScreen extends StatelessWidget {
                             shape: BoxShape.circle,
                             color: isPassed
                                 ? (isCurrent
-                                    ? AppColors.primary
-                                    : AppColors.primaryDark)
+                                      ? AppColors.primary
+                                      : AppColors.primaryDark)
                                 : const Color(0xFFE2E6D5),
                             border: isCurrent
                                 ? Border.all(
@@ -412,8 +414,9 @@ class JobDetailsScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5.sp,
-                            fontWeight:
-                                isPassed ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isPassed
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                             color: isPassed
                                 ? AppColors.primaryDark
                                 : AppColors.textMuted,
@@ -519,10 +522,10 @@ class JobDetailsScreen extends StatelessWidget {
                 child: Text(
                   isAssigned
                       ? providerName
-                          .split(' ')
-                          .map((e) => e[0])
-                          .take(2)
-                          .join('')
+                            .split(' ')
+                            .map((e) => e[0])
+                            .take(2)
+                            .join('')
                       : '?',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 16.sp,
@@ -627,7 +630,10 @@ class JobDetailsScreen extends StatelessWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primaryDark,
-                      side: const BorderSide(color: Color(0xFFC7D0A8), width: 1.2),
+                      side: const BorderSide(
+                        color: Color(0xFFC7D0A8),
+                        width: 1.2,
+                      ),
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
@@ -680,7 +686,10 @@ class JobDetailsScreen extends StatelessWidget {
             ),
           ),
           SizedBox(height: 16.h),
-          _buildPriceRow('Base Service Rate', '\$${basePrice.toStringAsFixed(2)}'),
+          _buildPriceRow(
+            'Base Service Rate',
+            '\$${basePrice.toStringAsFixed(2)}',
+          ),
           SizedBox(height: 10.h),
           _buildPriceRow('Service & Safety Fee', '\$5.00'),
           SizedBox(height: 10.h),
@@ -855,7 +864,12 @@ class JobDetailsScreen extends StatelessWidget {
   ) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20.w, 14.h, 20.w, MediaQuery.of(context).padding.bottom + 14.h),
+      padding: EdgeInsets.fromLTRB(
+        20.w,
+        14.h,
+        20.w,
+        MediaQuery.of(context).padding.bottom + 14.h,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -868,261 +882,297 @@ class JobDetailsScreen extends StatelessWidget {
       ),
       child: switch (type) {
         'to_approve' => Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    side: const BorderSide(color: Color(0xFFDC2626)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  side: const BorderSide(color: Color(0xFFDC2626)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  child: Text(
-                    'Decline',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFDC2626),
-                    ),
+                ),
+                child: Text(
+                  'Decline',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFDC2626),
                   ),
                 ),
               ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    DynamicIslandToast.showSuccess(context, 'Estimate Approved Successfully!');
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryDark,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  DynamicIslandToast.showSuccess(
+                    context,
+                    'Estimate Approved Successfully!',
+                  );
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryDark,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
-                  child: Text(
-                    'Approve',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
+                ),
+                child: Text(
+                  'Approve',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
         'completed' => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Rate Provider Banner Trigger Card
-              GestureDetector(
-                onTap: () => _showRateProviderModal(context, job),
-                child: Container(
-                  margin: EdgeInsets.only(bottom: 12.h),
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: const Color(0xFFFFE082), width: 1.2),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8.r),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFFF3C4),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.star_rounded, color: const Color(0xFFD97706), size: 20.r),
-                      ),
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'How was ${job['provider'] as String? ?? 'this Pro'}?',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 13.5.sp,
-                                fontWeight: FontWeight.w800,
-                                color: const Color(0xFF92400E),
-                              ),
-                            ),
-                            SizedBox(height: 2.h),
-                            Text(
-                              'Tap to rate & review your service',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11.5.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFFB45309),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.arrow_forward_ios_rounded, color: const Color(0xFFD97706), size: 14.r),
-                    ],
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Rate Provider Banner Trigger Card
+            GestureDetector(
+              onTap: () => _showRateProviderModal(context, job),
+              child: Container(
+                margin: EdgeInsets.only(bottom: 12.h),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(
+                    color: const Color(0xFFFFE082),
+                    width: 1.2,
                   ),
                 ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(8.r),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFF3C4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.star_rounded,
+                        color: const Color(0xFFD97706),
+                        size: 20.r,
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'How was ${job['provider'] as String? ?? 'this Pro'}?',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF92400E),
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Tap to rate & review your service',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFB45309),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: const Color(0xFFD97706),
+                      size: 14.r,
+                    ),
+                  ],
+                ),
               ),
+            ),
 
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showReceiptPreviewModal(context, job),
-                      icon: Icon(Icons.receipt_long_rounded, size: 16.r),
-                      label: Text(
-                        'Receipt',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showReceiptPreviewModal(context, job),
+                    icon: Icon(Icons.receipt_long_rounded, size: 16.r),
+                    label: Text(
+                      'Receipt',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
                       ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryDark,
-                        side: const BorderSide(color: Color(0xFFC7D0A8), width: 1.2),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryDark,
+                      side: const BorderSide(
+                        color: Color(0xFFC7D0A8),
+                        width: 1.2,
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                   ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _showRateProviderModal(context, job),
-                      icon: Icon(Icons.star_rounded, size: 16.r, color: const Color(0xFFD97706)),
-                      label: Text(
-                        'Rate Pro',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF92400E),
-                        ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showRateProviderModal(context, job),
+                    icon: Icon(
+                      Icons.star_rounded,
+                      size: 16.r,
+                      color: const Color(0xFFD97706),
+                    ),
+                    label: Text(
+                      'Rate Pro',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF92400E),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFFBEB),
-                        foregroundColor: const Color(0xFF92400E),
-                        side: const BorderSide(color: Color(0xFFFFE082), width: 1.2),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFFBEB),
+                      foregroundColor: const Color(0xFF92400E),
+                      side: const BorderSide(
+                        color: Color(0xFFFFE082),
+                        width: 1.2,
+                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
                     ),
                   ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        DynamicIslandToast.showSuccess(context, 'Rebooking Service...');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryDark,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14.r),
-                        ),
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      DynamicIslandToast.showSuccess(
+                        context,
+                        'Rebooking Service...',
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryDark,
+                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
-                      child: Text(
-                        'Book Again',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
+                    ),
+                    child: Text(
+                      'Book Again',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
+        ),
         _ => Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    HapticFeedback.mediumImpact();
-                    DynamicIslandToast.showSuccess(context, 'Calling $providerName...');
-                  },
-                  icon: Icon(Icons.call_rounded, size: 18.r),
-                  label: Text(
-                    'Call Provider',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5.sp,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryDark,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                    elevation: 0,
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  DynamicIslandToast.showSuccess(
+                    context,
+                    'Calling $providerName...',
+                  );
+                },
+                icon: Icon(Icons.call_rounded, size: 18.r),
+                label: Text(
+                  'Call Provider',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryDark,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  elevation: 0,
+                ),
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          providerName: providerName,
-                          serviceTitle: service,
-                          jobId: jobId,
-                        ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(
+                        providerName: providerName,
+                        serviceTitle: service,
+                        jobId: jobId,
                       ),
-                    );
-                  },
-                  icon: Icon(Icons.chat_bubble_outline_rounded, size: 18.r),
-                  label: Text(
-                    'Message Pro',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13.5.sp,
-                      fontWeight: FontWeight.w700,
                     ),
+                  );
+                },
+                icon: Icon(Icons.chat_bubble_outline_rounded, size: 18.r),
+                label: Text(
+                  'Message Pro',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w700,
                   ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primaryDark,
-                    side: const BorderSide(color: Color(0xFFC7D0A8), width: 1.2),
-                    padding: EdgeInsets.symmetric(vertical: 14.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryDark,
+                  side: const BorderSide(color: Color(0xFFC7D0A8), width: 1.2),
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
       },
     );
   }
 
-  void _showReceiptPreviewModal(BuildContext context, Map<String, dynamic> job) {
+  void _showReceiptPreviewModal(
+    BuildContext context,
+    Map<String, dynamic> job,
+  ) {
     HapticFeedback.mediumImpact();
     final String jobId = job['id'] as String? ?? 'JOB-9788';
-    final String service = job['service'] as String? ?? 'Electrical Maintenance & Safety Inspection';
+    final String service =
+        job['service'] as String? ??
+        'Electrical Maintenance & Safety Inspection';
     final String provider = job['provider'] as String? ?? 'Apex Electricians';
     final String price = job['price'] as String? ?? '\$242.60';
     final String date = job['date'] as String? ?? 'Today, 2:30 PM';
-    final String property = job['property'] as String? ?? 'Silicon Valley Office';
+    final String property =
+        job['property'] as String? ?? 'Silicon Valley Office';
 
     showModalBottomSheet(
       context: context,
@@ -1166,7 +1216,11 @@ class JobDetailsScreen extends StatelessWidget {
                           color: AppColors.cardSelectedBg,
                           borderRadius: BorderRadius.circular(10.r),
                         ),
-                        child: Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 22.r),
+                        child: Icon(
+                          Icons.receipt_long_rounded,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
                       ),
                       SizedBox(width: 10.w),
                       Text(
@@ -1180,7 +1234,11 @@ class JobDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: Icon(Icons.close_rounded, color: AppColors.textMuted, size: 22.r),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: AppColors.textMuted,
+                      size: 22.r,
+                    ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
@@ -1199,7 +1257,10 @@ class JobDetailsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(color: const Color(0xFFE2E7D3), width: 1.2),
+                          border: Border.all(
+                            color: const Color(0xFFE2E7D3),
+                            width: 1.2,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.03),
@@ -1212,16 +1273,25 @@ class JobDetailsScreen extends StatelessWidget {
                           children: [
                             // Paid Stamp Badge
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 14.w,
+                                vertical: 6.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE8F5E9),
                                 borderRadius: BorderRadius.circular(20.r),
-                                border: Border.all(color: const Color(0xFFA5D6A7)),
+                                border: Border.all(
+                                  color: const Color(0xFFA5D6A7),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.check_circle_rounded, color: const Color(0xFF2E7D32), size: 16.r),
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color: const Color(0xFF2E7D32),
+                                    size: 16.r,
+                                  ),
                                   SizedBox(width: 6.w),
                                   Text(
                                     'PAID IN FULL',
@@ -1257,7 +1327,10 @@ class JobDetailsScreen extends StatelessWidget {
                             ),
                             SizedBox(height: 18.h),
 
-                            const Divider(color: Color(0xFFEFF2E4), thickness: 1),
+                            const Divider(
+                              color: Color(0xFFEFF2E4),
+                              thickness: 1,
+                            ),
                             SizedBox(height: 14.h),
 
                             // Details Key-Value pairs
@@ -1272,7 +1345,10 @@ class JobDetailsScreen extends StatelessWidget {
                             _buildReceiptRow('Address', property),
 
                             SizedBox(height: 14.h),
-                            const Divider(color: Color(0xFFEFF2E4), thickness: 1),
+                            const Divider(
+                              color: Color(0xFFEFF2E4),
+                              thickness: 1,
+                            ),
                             SizedBox(height: 14.h),
 
                             // Breakdown
@@ -1291,7 +1367,11 @@ class JobDetailsScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.credit_card_rounded, size: 18.r, color: AppColors.primary),
+                                  Icon(
+                                    Icons.credit_card_rounded,
+                                    size: 18.r,
+                                    color: AppColors.primary,
+                                  ),
                                   SizedBox(width: 8.w),
                                   Expanded(
                                     child: Text(
@@ -1322,7 +1402,10 @@ class JobDetailsScreen extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     HapticFeedback.mediumImpact();
-                    DynamicIslandToast.showSuccess(context, 'Receipt PDF downloaded successfully!');
+                    DynamicIslandToast.showSuccess(
+                      context,
+                      'Receipt PDF downloaded successfully!',
+                    );
                     Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.download_rounded, color: Colors.white),
@@ -1382,7 +1465,8 @@ class JobDetailsScreen extends StatelessWidget {
   void _showRateProviderModal(BuildContext context, Map<String, dynamic> job) {
     HapticFeedback.mediumImpact();
     final String provider = job['provider'] as String? ?? 'Apex Electricians';
-    final String service = job['service'] as String? ?? 'Electrical Maintenance';
+    final String service =
+        job['service'] as String? ?? 'Electrical Maintenance';
 
     int currentRating = 5;
     final Set<String> selectedTags = {'On-Time ⏰', 'Clean Work 🧹'};
@@ -1402,7 +1486,9 @@ class JobDetailsScreen extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(28.r),
+                  ),
                 ),
                 padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
                 child: SingleChildScrollView(
@@ -1436,7 +1522,11 @@ class JobDetailsScreen extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.close_rounded, color: AppColors.textMuted, size: 22.r),
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textMuted,
+                              size: 22.r,
+                            ),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                         ],
@@ -1457,7 +1547,11 @@ class JobDetailsScreen extends StatelessWidget {
                               radius: 24.r,
                               backgroundColor: AppColors.primaryDark,
                               child: Text(
-                                provider.split(' ').map((e) => e.isEmpty ? '' : e[0]).take(2).join(),
+                                provider
+                                    .split(' ')
+                                    .map((e) => e.isEmpty ? '' : e[0])
+                                    .take(2)
+                                    .join(),
                                 style: GoogleFonts.plusJakartaSans(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
@@ -1522,9 +1616,13 @@ class JobDetailsScreen extends StatelessWidget {
                             child: Padding(
                               padding: EdgeInsets.symmetric(horizontal: 4.w),
                               child: Icon(
-                                isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                                isSelected
+                                    ? Icons.star_rounded
+                                    : Icons.star_outline_rounded,
                                 size: 36.r,
-                                color: isSelected ? const Color(0xFFFFB800) : Colors.grey.shade300,
+                                color: isSelected
+                                    ? const Color(0xFFFFB800)
+                                    : Colors.grey.shade300,
                               ),
                             ),
                           );
@@ -1560,40 +1658,47 @@ class JobDetailsScreen extends StatelessWidget {
                       Wrap(
                         spacing: 8.w,
                         runSpacing: 8.h,
-                        children: [
-                          'On-Time ⏰',
-                          'Professional 👔',
-                          'Clean Work 🧹',
-                          'Fast Service ⚡',
-                          'Fair Price 🏷️',
-                          'Friendly 😊',
-                        ].map((tag) {
-                          final isSelected = selectedTags.contains(tag);
-                          return FilterChip(
-                            selected: isSelected,
-                            label: Text(tag),
-                            labelStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 12.sp,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? AppColors.primaryDark : AppColors.textHeadline,
-                            ),
-                            selectedColor: AppColors.cardSelectedBg,
-                            backgroundColor: Colors.grey.shade100,
-                            side: BorderSide(
-                              color: isSelected ? AppColors.primary : Colors.grey.shade300,
-                            ),
-                            onSelected: (val) {
-                              HapticFeedback.selectionClick();
-                              setModalState(() {
-                                if (val) {
-                                  selectedTags.add(tag);
-                                } else {
-                                  selectedTags.remove(tag);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
+                        children:
+                            [
+                              'On-Time ⏰',
+                              'Professional 👔',
+                              'Clean Work 🧹',
+                              'Fast Service ⚡',
+                              'Fair Price 🏷️',
+                              'Friendly 😊',
+                            ].map((tag) {
+                              final isSelected = selectedTags.contains(tag);
+                              return FilterChip(
+                                selected: isSelected,
+                                label: Text(tag),
+                                labelStyle: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12.sp,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? AppColors.primaryDark
+                                      : AppColors.textHeadline,
+                                ),
+                                selectedColor: AppColors.cardSelectedBg,
+                                backgroundColor: Colors.grey.shade100,
+                                side: BorderSide(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : Colors.grey.shade300,
+                                ),
+                                onSelected: (val) {
+                                  HapticFeedback.selectionClick();
+                                  setModalState(() {
+                                    if (val) {
+                                      selectedTags.add(tag);
+                                    } else {
+                                      selectedTags.remove(tag);
+                                    }
+                                  });
+                                },
+                              );
+                            }).toList(),
                       ),
 
                       SizedBox(height: 18.h),
@@ -1605,17 +1710,25 @@ class JobDetailsScreen extends StatelessWidget {
                         style: GoogleFonts.plusJakartaSans(fontSize: 13.sp),
                         decoration: InputDecoration(
                           hintText: 'Write a public review for $provider...',
-                          hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.textMuted, fontSize: 13.sp),
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: AppColors.textMuted,
+                            fontSize: 13.sp,
+                          ),
                           filled: true,
                           fillColor: const Color(0xFFFBFBFB),
                           contentPadding: EdgeInsets.all(14.w),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16.r),
-                            borderSide: const BorderSide(color: Color(0xFFE2E7D3)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE2E7D3),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16.r),
-                            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
                           ),
                         ),
                       ),

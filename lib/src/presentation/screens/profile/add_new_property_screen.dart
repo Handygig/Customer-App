@@ -42,7 +42,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
       final p = widget.propertyToEdit!;
       _nameController.text = p.title;
       _addressLine1Controller.text = p.address;
-      
+
       if (p.type == PropertyType.office) {
         _selectedType = 'Office';
       } else if (p.type == PropertyType.apartment) {
@@ -52,7 +52,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
       } else {
         _selectedType = 'Home';
       }
-      
+
       _selectedImagePath = p.imagePath;
     }
   }
@@ -76,8 +76,15 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     final province = _provinceController.text.trim();
     final postalCode = _postalCodeController.text.trim();
 
-    if (name.isEmpty || line1.isEmpty || city.isEmpty || province.isEmpty || postalCode.isEmpty) {
-      DynamicIslandToast.showError(context, 'Please fill in all required fields.');
+    if (name.isEmpty ||
+        line1.isEmpty ||
+        city.isEmpty ||
+        province.isEmpty ||
+        postalCode.isEmpty) {
+      DynamicIslandToast.showError(
+        context,
+        'Please fill in all required fields.',
+      );
       return;
     }
 
@@ -97,7 +104,9 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
 
     final isEditing = widget.propertyToEdit != null;
     final newProperty = Property(
-      id: isEditing ? widget.propertyToEdit!.id : 'prop_${DateTime.now().millisecondsSinceEpoch}',
+      id: isEditing
+          ? widget.propertyToEdit!.id
+          : 'prop_${DateTime.now().millisecondsSinceEpoch}',
       title: name,
       address: fullAddress,
       type: propType,
@@ -108,7 +117,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     );
 
     HapticFeedback.mediumImpact();
-    
+
     if (isEditing) {
       await _repository.updateProperty(newProperty);
     } else {
@@ -116,18 +125,21 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     }
 
     if (mounted) {
-      DynamicIslandToast.showSuccess(context, isEditing ? 'Property updated successfully!' : 'New property added successfully!');
+      DynamicIslandToast.showSuccess(
+        context,
+        isEditing
+            ? 'Property updated successfully!'
+            : 'New property added successfully!',
+      );
       Navigator.of(context).pop();
     }
   }
 
   void _openMapSelector() async {
     HapticFeedback.lightImpact();
-    final result = await Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => const MapSelectorScreen(),
-      ),
-    );
+    final result = await Navigator.of(
+      context,
+    ).push(CupertinoPageRoute(builder: (context) => const MapSelectorScreen()));
 
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
@@ -194,7 +206,11 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                       color: AppColors.cardSelectedBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.camera_alt_rounded, color: AppColors.primary, size: 20.r),
+                    child: Icon(
+                      Icons.camera_alt_rounded,
+                      color: AppColors.primary,
+                      size: 20.r,
+                    ),
                   ),
                   title: Text(
                     'Take Photo (Camera)',
@@ -219,7 +235,11 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                       color: AppColors.cardSelectedBg,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.photo_library_rounded, color: AppColors.primary, size: 20.r),
+                    child: Icon(
+                      Icons.photo_library_rounded,
+                      color: AppColors.primary,
+                      size: 20.r,
+                    ),
                   ),
                   title: Text(
                     'Choose from Gallery',
@@ -250,11 +270,23 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildPresetThumbnail(ctx, AppAssets.propertyVilla, 'Villa / House'),
+                      _buildPresetThumbnail(
+                        ctx,
+                        AppAssets.propertyVilla,
+                        'Villa / House',
+                      ),
                       SizedBox(width: 12.w),
-                      _buildPresetThumbnail(ctx, AppAssets.propertyApartment, 'Apartment'),
+                      _buildPresetThumbnail(
+                        ctx,
+                        AppAssets.propertyApartment,
+                        'Apartment',
+                      ),
                       SizedBox(width: 12.w),
-                      _buildPresetThumbnail(ctx, AppAssets.propertyCottage, 'Cottage'),
+                      _buildPresetThumbnail(
+                        ctx,
+                        AppAssets.propertyCottage,
+                        'Cottage',
+                      ),
                     ],
                   ),
                 ),
@@ -267,7 +299,11 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     );
   }
 
-  Widget _buildPresetThumbnail(BuildContext modalContext, String assetPath, String title) {
+  Widget _buildPresetThumbnail(
+    BuildContext modalContext,
+    String assetPath,
+    String title,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.of(modalContext).pop();
@@ -311,7 +347,10 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -344,7 +383,9 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.propertyToEdit != null ? 'Edit Property' : 'Register Property',
+                widget.propertyToEdit != null
+                    ? 'Edit Property'
+                    : 'Register Property',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w800,
@@ -353,8 +394,8 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
               ),
               SizedBox(height: 4.h),
               Text(
-                widget.propertyToEdit != null 
-                    ? 'Update location and address details for your property.' 
+                widget.propertyToEdit != null
+                    ? 'Update location and address details for your property.'
                     : 'Enter location and address details to add a new home or workspace.',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13.sp,
@@ -440,13 +481,17 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                             ),
                             SizedBox(height: 4.h),
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 6.h,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Text(
-                                _selectedLatitude != null && _selectedLongitude != null
+                                _selectedLatitude != null &&
+                                        _selectedLongitude != null
                                     ? 'Coordinates Selected'
                                     : 'Tap to pinpoint on map ➔',
                                 style: GoogleFonts.plusJakartaSans(
@@ -590,8 +635,11 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                                     shape: BoxShape.circle,
                                   ),
                                   child: IconButton(
-                                    icon: Icon(Icons.edit_rounded,
-                                        size: 18.r, color: AppColors.primaryDark),
+                                    icon: Icon(
+                                      Icons.edit_rounded,
+                                      size: 18.r,
+                                      color: AppColors.primaryDark,
+                                    ),
                                     onPressed: _showImagePickerModal,
                                   ),
                                 ),
@@ -607,8 +655,11 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                                         color: AppColors.accentLime,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: Icon(Icons.check_rounded,
-                                          size: 14.r, color: AppColors.primaryDark),
+                                      child: Icon(
+                                        Icons.check_rounded,
+                                        size: 14.r,
+                                        color: AppColors.primaryDark,
+                                      ),
                                     ),
                                     SizedBox(width: 8.w),
                                     Text(
@@ -631,7 +682,9 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                             Container(
                               padding: EdgeInsets.all(12.r),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.08,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -688,7 +741,9 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                 ),
               ),
               child: Text(
-                widget.propertyToEdit != null ? 'Save Changes' : 'Save Property',
+                widget.propertyToEdit != null
+                    ? 'Save Changes'
+                    : 'Save Property',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -767,19 +822,12 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFF6F8F3),
             borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: AppColors.borderUnselected,
-              width: 1.2,
-            ),
+            border: Border.all(color: AppColors.borderUnselected, width: 1.2),
           ),
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
             children: [
-              Icon(
-                prefixIcon,
-                size: 20.r,
-                color: AppColors.textSecondary,
-              ),
+              Icon(prefixIcon, size: 20.r, color: AppColors.textSecondary),
               SizedBox(width: 10.w),
               Expanded(
                 child: TextField(

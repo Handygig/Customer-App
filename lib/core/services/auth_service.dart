@@ -4,7 +4,10 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // 1. Request OTP
-  Future<void> verifyPhone(String phoneNumber, Function(String verificationId) onCodeSent) async {
+  Future<void> verifyPhone(
+    String phoneNumber,
+    Function(String verificationId) onCodeSent,
+  ) async {
     await _auth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       verificationCompleted: (PhoneAuthCredential credential) async {
@@ -28,8 +31,10 @@ class AuthService {
         verificationId: verificationId,
         smsCode: smsCode,
       );
-      UserCredential userCredential = await _auth.signInWithCredential(credential);
-      
+      UserCredential userCredential = await _auth.signInWithCredential(
+        credential,
+      );
+
       // Get the ID Token (JWT) to send to your Laravel backend
       String? idToken = await userCredential.user?.getIdToken(true);
       return idToken;

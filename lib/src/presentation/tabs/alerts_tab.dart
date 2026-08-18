@@ -70,7 +70,9 @@ class AlertsTab extends StatelessWidget {
               color: isUnread ? Colors.white : AppColors.cardSelectedBg,
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
-                color: isUnread ? AppColors.primary : AppColors.borderUnselected,
+                color: isUnread
+                    ? AppColors.primary
+                    : AppColors.borderUnselected,
                 width: isUnread ? 1.4 : 1,
               ),
               boxShadow: [
@@ -111,7 +113,9 @@ class AlertsTab extends StatelessWidget {
                               notif['title'] as String,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14.sp,
-                                fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
+                                fontWeight: isUnread
+                                    ? FontWeight.w800
+                                    : FontWeight.w600,
                                 color: AppColors.textHeadline,
                               ),
                             ),

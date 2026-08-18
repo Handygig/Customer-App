@@ -17,7 +17,7 @@ class DynamicIslandToast {
   static void _showToast(BuildContext context, String message, bool isError) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
-    
+
     HapticFeedback.mediumImpact();
 
     overlayEntry = OverlayEntry(
@@ -29,7 +29,7 @@ class DynamicIslandToast {
         },
       ),
     );
-    
+
     overlay.insert(overlayEntry);
   }
 }
@@ -47,10 +47,12 @@ class _DynamicIslandToastWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<_DynamicIslandToastWidget> createState() => _DynamicIslandToastWidgetState();
+  State<_DynamicIslandToastWidget> createState() =>
+      _DynamicIslandToastWidgetState();
 }
 
-class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> with SingleTickerProviderStateMixin {
+class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _widthAnimation;
@@ -59,7 +61,7 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
   late Animation<double> _tickAnimation;
   late Animation<double> _textOpacityAnimation;
   late Animation<Offset> _textSlideAnimation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -67,39 +69,61 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    
+
     // 1. Initial pop scaling of the whole island
     _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOutBack)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOutBack),
+      ),
     );
-    
+
     // 2. Width expansion (elastic stretch)
     _widthAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.1, 0.7, curve: Curves.elasticOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.1, 0.7, curve: Curves.elasticOut),
+      ),
     );
 
     // 3. Height expansion (pushing down)
     _heightAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.1, 0.6, curve: Curves.easeOutBack)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.1, 0.6, curve: Curves.easeOutBack),
+      ),
     );
 
     // 4. Elastic pop for the circle icon background
     _iconScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.7, curve: Curves.elasticOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.7, curve: Curves.elasticOut),
+      ),
     );
 
     // 5. Drawing the tick / cross mark smoothly
     _tickAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.9, curve: Curves.easeOutQuart)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.45, 0.9, curve: Curves.easeOutQuart),
+      ),
     );
 
     // 6. Text fading in and sliding slightly from the right
     _textOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.8, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 0.8, curve: Curves.easeOut),
+      ),
     );
-    _textSlideAnimation = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.4, 0.8, curve: Curves.easeOutCubic)),
-    );
+    _textSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.4, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _controller.forward();
 
@@ -133,10 +157,13 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
             animation: _controller,
             builder: (context, child) {
               // Base dynamic island width is ~120, height ~36
-              final width = 120.0 + (230.0 * _widthAnimation.value); 
-              final height = 36.0 + (96.0 * _heightAnimation.value); // ~132px total height
+              final width = 120.0 + (230.0 * _widthAnimation.value);
+              final height =
+                  36.0 + (96.0 * _heightAnimation.value); // ~132px total height
 
-              final Color glowColor = widget.isError ? Colors.redAccent : AppColors.accentLime;
+              final Color glowColor = widget.isError
+                  ? Colors.redAccent
+                  : AppColors.accentLime;
 
               return Transform.scale(
                 scale: _scaleAnimation.value,
@@ -146,20 +173,29 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
                   padding: EdgeInsets.only(
                     left: 20.w,
                     right: 20.w,
-                    top: 32.h * _heightAnimation.value, // Push content down below physical notch
+                    top:
+                        32.h *
+                        _heightAnimation
+                            .value, // Push content down below physical notch
                     bottom: 10.h * _heightAnimation.value,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.black,
-                    borderRadius: BorderRadius.circular(18.r + (24.r * _heightAnimation.value)), // 18r to 42r
+                    borderRadius: BorderRadius.circular(
+                      18.r + (24.r * _heightAnimation.value),
+                    ), // 18r to 42r
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.08 * _widthAnimation.value),
+                      color: Colors.white.withValues(
+                        alpha: 0.08 * _widthAnimation.value,
+                      ),
                       width: 0.5,
                     ),
                     boxShadow: [
                       // Status glow that appears as the island expands
                       BoxShadow(
-                        color: glowColor.withValues(alpha: 0.15 * _widthAnimation.value),
+                        color: glowColor.withValues(
+                          alpha: 0.15 * _widthAnimation.value,
+                        ),
                         blurRadius: 30,
                         spreadRadius: 4,
                         offset: const Offset(0, 10),
@@ -196,8 +232,9 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
                               ),
                             ),
                           ),
-                        
-                        if (_textOpacityAnimation.value > 0 && _iconScaleAnimation.value > 0)
+
+                        if (_textOpacityAnimation.value > 0 &&
+                            _iconScaleAnimation.value > 0)
                           SizedBox(height: 10.h),
 
                         // Animated Icon Circle (Extra Large)
@@ -211,14 +248,19 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
-                                  colors: widget.isError 
+                                  colors: widget.isError
                                       ? [Colors.redAccent, Colors.red.shade800]
-                                      : [AppColors.accentLime, const Color(0xFF8F994B)],
+                                      : [
+                                          AppColors.accentLime,
+                                          const Color(0xFF8F994B),
+                                        ],
                                 ),
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: glowColor.withValues(alpha: 0.4 * _iconScaleAnimation.value),
+                                    color: glowColor.withValues(
+                                      alpha: 0.4 * _iconScaleAnimation.value,
+                                    ),
                                     blurRadius: 10,
                                     offset: const Offset(0, 3),
                                   ),
@@ -228,7 +270,9 @@ class _DynamicIslandToastWidgetState extends State<_DynamicIslandToastWidget> wi
                                 painter: _AnimatedIconPainter(
                                   progress: _tickAnimation.value,
                                   isError: widget.isError,
-                                  color: widget.isError ? Colors.white : AppColors.primaryDark,
+                                  color: widget.isError
+                                      ? Colors.white
+                                      : AppColors.primaryDark,
                                 ),
                               ),
                             ),
@@ -272,7 +316,7 @@ class _AnimatedIconPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round;
 
     final Path path = Path();
-    
+
     if (isError) {
       // Draw X
       // Line 1: top-left to bottom-right
@@ -292,7 +336,10 @@ class _AnimatedIconPainter extends CustomPainter {
     ui.PathMetrics pathMetrics = path.computeMetrics();
     for (ui.PathMetric pathMetric in pathMetrics) {
       // Extract segment from 0 to current progress length
-      Path extractedPath = pathMetric.extractPath(0.0, pathMetric.length * progress);
+      Path extractedPath = pathMetric.extractPath(
+        0.0,
+        pathMetric.length * progress,
+      );
       canvas.drawPath(extractedPath, paint);
     }
   }

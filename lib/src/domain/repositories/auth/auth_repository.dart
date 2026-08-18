@@ -3,9 +3,7 @@ import 'package:customer_app/src/domain/entities/auth/otp_session_entity.dart';
 import 'package:customer_app/src/domain/entities/auth/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<OtpSessionEntity> sendOtp({
-    required String phoneNumber,
-  });
+  Future<OtpSessionEntity> sendOtp({required String phoneNumber});
 
   Future<OtpSessionEntity> resendOtp({
     required String phoneNumber,

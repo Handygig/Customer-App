@@ -38,11 +38,7 @@ class AuthHeaderBanner extends StatelessWidget {
               return Container(
                 color: AppColors.darkHeaderBg,
                 child: Center(
-                  child: Icon(
-                    fallbackIcon,
-                    size: 64,
-                    color: Colors.white24,
-                  ),
+                  child: Icon(fallbackIcon, size: 64, color: Colors.white24),
                 ),
               );
             },

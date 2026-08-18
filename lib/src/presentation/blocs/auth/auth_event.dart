@@ -63,12 +63,12 @@ class CompleteProfileRequested extends AuthEvent {
 
   @override
   List<Object?> get props => [
-        firstName,
-        lastName,
-        email,
-        gender,
-        profileImagePath,
-      ];
+    firstName,
+    lastName,
+    email,
+    gender,
+    profileImagePath,
+  ];
 }
 
 class LogoutRequested extends AuthEvent {

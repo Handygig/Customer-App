@@ -19,7 +19,8 @@ class UserModel extends UserEntity {
         : const <String, dynamic>{};
 
     final rawComplete = json['is_profile_complete'];
-    final inferredComplete = _hasText(json['first_name']) &&
+    final inferredComplete =
+        _hasText(json['first_name']) &&
         _hasText(json['last_name']) &&
         _hasText(json['email']);
 
@@ -37,8 +38,8 @@ class UserModel extends UserEntity {
       isProfileComplete: rawComplete is bool
           ? rawComplete
           : rawComplete is num
-              ? rawComplete != 0
-              : inferredComplete,
+          ? rawComplete != 0
+          : inferredComplete,
     );
   }
 

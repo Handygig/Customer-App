@@ -13,8 +13,8 @@ class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required AuthTokenStorage tokenStorage,
-  })  : _remoteDataSource = remoteDataSource,
-        _tokenStorage = tokenStorage;
+  }) : _remoteDataSource = remoteDataSource,
+       _tokenStorage = tokenStorage;
 
   @override
   Future<OtpSessionEntity> sendOtp({required String phoneNumber}) {
@@ -47,7 +47,9 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     if (result.token.trim().isEmpty) {
-      throw const AuthException('The server did not return an authentication token.');
+      throw const AuthException(
+        'The server did not return an authentication token.',
+      );
     }
 
     await _tokenStorage.saveToken(result.token);
@@ -62,7 +64,9 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     if (result.token.trim().isEmpty) {
-      throw const AuthException('The server did not return an authentication token.');
+      throw const AuthException(
+        'The server did not return an authentication token.',
+      );
     }
 
     await _tokenStorage.saveToken(result.token);
@@ -79,7 +83,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     final token = await _tokenStorage.readToken();
     if (token == null || token.trim().isEmpty) {
-      throw const AuthException('Your session has expired. Please verify your number again.');
+      throw const AuthException(
+        'Your session has expired. Please verify your number again.',
+      );
     }
 
     return _remoteDataSource.completeProfile(

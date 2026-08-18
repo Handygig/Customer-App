@@ -43,10 +43,12 @@ class AuthPrimaryButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: active ? onPressed : null,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                active ? AppColors.buttonBackground : const Color(0xFFE2E4DE),
-            foregroundColor:
-                active ? AppColors.buttonText : AppColors.textSecondary,
+            backgroundColor: active
+                ? AppColors.buttonBackground
+                : const Color(0xFFE2E4DE),
+            foregroundColor: active
+                ? AppColors.buttonText
+                : AppColors.textSecondary,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28.r),

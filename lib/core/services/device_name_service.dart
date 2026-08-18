@@ -5,7 +5,7 @@ class DeviceNameService {
   final DeviceInfoPlugin _deviceInfo;
 
   DeviceNameService({DeviceInfoPlugin? deviceInfo})
-      : _deviceInfo = deviceInfo ?? DeviceInfoPlugin();
+    : _deviceInfo = deviceInfo ?? DeviceInfoPlugin();
 
   Future<String> getDeviceName() async {
     try {
@@ -13,10 +13,10 @@ class DeviceNameService {
         final info = await _deviceInfo.androidInfo;
         final manufacturer = info.manufacturer.trim();
         final model = info.model.trim();
-        return [manufacturer, model]
-            .where((part) => part.isNotEmpty)
-            .join(' ')
-            .trim();
+        return [
+          manufacturer,
+          model,
+        ].where((part) => part.isNotEmpty).join(' ').trim();
       }
 
       if (Platform.isIOS) {

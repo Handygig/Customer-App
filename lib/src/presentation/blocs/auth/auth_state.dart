@@ -36,26 +36,28 @@ class AuthOtpSent extends AuthState {
   final String phoneNumber;
   final OtpSessionEntity session;
 
-  const AuthOtpSent({
-    required this.phoneNumber,
-    required this.session,
-  });
+  const AuthOtpSent({required this.phoneNumber, required this.session});
 
   @override
-  List<Object?> get props => [phoneNumber, session.verificationId, session.forceResendingToken];
+  List<Object?> get props => [
+    phoneNumber,
+    session.verificationId,
+    session.forceResendingToken,
+  ];
 }
 
 class AuthOtpResent extends AuthState {
   final String phoneNumber;
   final OtpSessionEntity session;
 
-  const AuthOtpResent({
-    required this.phoneNumber,
-    required this.session,
-  });
+  const AuthOtpResent({required this.phoneNumber, required this.session});
 
   @override
-  List<Object?> get props => [phoneNumber, session.verificationId, session.forceResendingToken];
+  List<Object?> get props => [
+    phoneNumber,
+    session.verificationId,
+    session.forceResendingToken,
+  ];
 }
 
 class AuthAuthenticated extends AuthState {
@@ -65,11 +67,11 @@ class AuthAuthenticated extends AuthState {
 
   @override
   List<Object?> get props => [
-        result.token,
-        result.isNewUser,
-        result.isProfileComplete,
-        result.user.id,
-      ];
+    result.token,
+    result.isNewUser,
+    result.isProfileComplete,
+    result.user.id,
+  ];
 }
 
 class AuthProfileCompleted extends AuthState {
@@ -89,10 +91,7 @@ class AuthFailure extends AuthState {
   final AuthOperation operation;
   final String message;
 
-  const AuthFailure({
-    required this.operation,
-    required this.message,
-  });
+  const AuthFailure({required this.operation, required this.message});
 
   @override
   List<Object?> get props => [operation, message];

@@ -28,7 +28,8 @@ class ProfileTab extends StatelessWidget {
       body: StreamBuilder<UserProfile>(
         stream: repository.watchUserProfile(),
         builder: (context, profileSnapshot) {
-          final profile = profileSnapshot.data ??
+          final profile =
+              profileSnapshot.data ??
               const UserProfile(
                 id: '1',
                 firstName: 'Alex',
@@ -67,7 +68,10 @@ class ProfileTab extends StatelessWidget {
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [AppColors.primaryDark, AppColors.primary],
+                                colors: [
+                                  AppColors.primaryDark,
+                                  AppColors.primary,
+                                ],
                               ),
                             ),
                             child: Center(
@@ -91,10 +95,13 @@ class ProfileTab extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             stops: const [0.0, 0.35, 0.72, 1.0],
                             colors: [
-                              Colors.black.withValues(alpha: 0.30), // subtle dark top tint
+                              Colors.black.withValues(
+                                alpha: 0.30,
+                              ), // subtle dark top tint
                               Colors.transparent,
                               AppColors.background.withValues(alpha: 0.75),
-                              AppColors.background, // Complete smooth fade into page background
+                              AppColors
+                                  .background, // Complete smooth fade into page background
                             ],
                           ),
                         ),
@@ -118,13 +125,17 @@ class ProfileTab extends StatelessWidget {
                           ],
                         ),
                         child: IconButton(
-                          icon: Icon(Icons.edit_rounded,
-                              color: AppColors.primaryDark, size: 20.r),
+                          icon: Icon(
+                            Icons.edit_rounded,
+                            color: AppColors.primaryDark,
+                            size: 20.r,
+                          ),
                           onPressed: () {
                             HapticFeedback.lightImpact();
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => EditProfileScreen(profile: profile),
+                                builder: (context) =>
+                                    EditProfileScreen(profile: profile),
                               ),
                             );
                           },
@@ -147,7 +158,10 @@ class ProfileTab extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white,
-                              border: Border.all(color: AppColors.primary, width: 3),
+                              border: Border.all(
+                                color: AppColors.primary,
+                                width: 3,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.12),
@@ -187,12 +201,15 @@ class ProfileTab extends StatelessWidget {
                           // Membership Badge
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 12.w, vertical: 4.h),
+                              horizontal: 12.w,
+                              vertical: 4.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.cardSelectedBg,
                               borderRadius: BorderRadius.circular(12.r),
                               border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.3)),
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Text(
                               profile.membershipTier.toUpperCase(),
@@ -236,7 +253,8 @@ class ProfileTab extends StatelessWidget {
                           HapticFeedback.lightImpact();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => EditProfileScreen(profile: profile),
+                              builder: (context) =>
+                                  EditProfileScreen(profile: profile),
                             ),
                           );
                         },
@@ -278,7 +296,8 @@ class ProfileTab extends StatelessWidget {
                                     cardholderName: '',
                                     lastFourDigits: '4920',
                                     expiryDate: '',
-                                    brand: CardBrand.visa),
+                                    brand: CardBrand.visa,
+                                  ),
                           );
                           final subText = cards.isEmpty
                               ? 'No cards saved'
@@ -292,7 +311,8 @@ class ProfileTab extends StatelessWidget {
                               HapticFeedback.lightImpact();
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (context) => const PaymentMethodsScreen(),
+                                  builder: (context) =>
+                                      const PaymentMethodsScreen(),
                                 ),
                               );
                             },
@@ -372,7 +392,9 @@ class ProfileTab extends StatelessWidget {
         leading: Container(
           padding: EdgeInsets.all(10.r),
           decoration: BoxDecoration(
-            color: isDestructive ? Colors.red.shade50 : AppColors.cardSelectedBg,
+            color: isDestructive
+                ? Colors.red.shade50
+                : AppColors.cardSelectedBg,
             borderRadius: BorderRadius.circular(12.r),
           ),
           child: Icon(
@@ -409,7 +431,9 @@ class ProfileTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
         title: Text(
           'Sign Out',
           style: GoogleFonts.plusJakartaSans(

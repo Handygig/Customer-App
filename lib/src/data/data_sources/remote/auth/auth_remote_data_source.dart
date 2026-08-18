@@ -19,9 +19,7 @@ abstract class AuthRemoteDataSource {
     required String firebaseIdToken,
   });
 
-  Future<AuthResultModel> loginWithFirebase({
-    required String firebaseIdToken,
-  });
+  Future<AuthResultModel> loginWithFirebase({required String firebaseIdToken});
 
   Future<UserModel> completeProfile({
     required String bearerToken,

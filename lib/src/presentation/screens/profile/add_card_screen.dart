@@ -17,7 +17,8 @@ class AddCardScreen extends StatefulWidget {
   State<AddCardScreen> createState() => _AddCardScreenState();
 }
 
-class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProviderStateMixin {
+class _AddCardScreenState extends State<AddCardScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _cardHolderController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
@@ -138,12 +139,14 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
     HapticFeedback.mediumImpact();
 
     final isEditing = widget.cardToEdit != null;
-    final lastFour = rawNumber.length >= 4 
-        ? rawNumber.substring(rawNumber.length - 4) 
+    final lastFour = rawNumber.length >= 4
+        ? rawNumber.substring(rawNumber.length - 4)
         : (isEditing ? widget.cardToEdit!.lastFourDigits : '4920');
 
     final card = PaymentCard(
-      id: isEditing ? widget.cardToEdit!.id : 'card_${DateTime.now().millisecondsSinceEpoch}',
+      id: isEditing
+          ? widget.cardToEdit!.id
+          : 'card_${DateTime.now().millisecondsSinceEpoch}',
       cardholderName: name,
       lastFourDigits: lastFour,
       expiryDate: expiry,
@@ -162,8 +165,8 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
 
     if (mounted) {
       DynamicIslandToast.showSuccess(
-        context, 
-        isEditing 
+        context,
+        isEditing
             ? '${_detectedBrand.name.toUpperCase()} Card Updated Successfully'
             : '${_detectedBrand.name.toUpperCase()} Card Added Successfully',
       );
@@ -196,7 +199,10 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -232,11 +238,35 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildDemoChip('Visa Card', () => _fillDemoCard('4242 8821 9902 4920', 'ALEX JOHNSON', '08/28', '842')),
+                  _buildDemoChip(
+                    'Visa Card',
+                    () => _fillDemoCard(
+                      '4242 8821 9902 4920',
+                      'ALEX JOHNSON',
+                      '08/28',
+                      '842',
+                    ),
+                  ),
                   SizedBox(width: 8.w),
-                  _buildDemoChip('Mastercard', () => _fillDemoCard('5520 3491 8812 7731', 'ALEX JOHNSON', '11/27', '391')),
+                  _buildDemoChip(
+                    'Mastercard',
+                    () => _fillDemoCard(
+                      '5520 3491 8812 7731',
+                      'ALEX JOHNSON',
+                      '11/27',
+                      '391',
+                    ),
+                  ),
                   SizedBox(width: 8.w),
-                  _buildDemoChip('Amex Platinum', () => _fillDemoCard('3782 8224 9910 3049', 'ALEX JOHNSON', '05/29', '4928')),
+                  _buildDemoChip(
+                    'Amex Platinum',
+                    () => _fillDemoCard(
+                      '3782 8224 9910 3049',
+                      'ALEX JOHNSON',
+                      '05/29',
+                      '4928',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -316,11 +346,14 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                     ],
                     suffix: IconButton(
                       icon: Icon(
-                        _obscureCvv ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        _obscureCvv
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
                         color: AppColors.textMuted,
                         size: 20.r,
                       ),
-                      onPressed: () => setState(() => _obscureCvv = !_obscureCvv),
+                      onPressed: () =>
+                          setState(() => _obscureCvv = !_obscureCvv),
                     ),
                   ),
                 ),
@@ -334,7 +367,10 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18.r),
-                border: Border.all(color: AppColors.borderUnselected, width: 1.2),
+                border: Border.all(
+                  color: AppColors.borderUnselected,
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 children: [
@@ -344,7 +380,11 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                       color: Color(0xFFF7F8F0),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.star_rounded, color: AppColors.primary, size: 22.r),
+                    child: Icon(
+                      Icons.star_rounded,
+                      color: AppColors.primary,
+                      size: 22.r,
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -397,15 +437,24 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                     ? const SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.lock_outline_rounded, color: Colors.white, size: 18),
+                          const Icon(
+                            Icons.lock_outline_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           SizedBox(width: 8.w),
                           Text(
-                            widget.cardToEdit != null ? 'Update Card Details' : 'Save & Verify Card',
+                            widget.cardToEdit != null
+                                ? 'Update Card Details'
+                                : 'Save & Verify Card',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
@@ -423,7 +472,11 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_outlined, size: 16.r, color: AppColors.textMuted),
+                  Icon(
+                    Icons.shield_outlined,
+                    size: 16.r,
+                    color: AppColors.textMuted,
+                  ),
                   SizedBox(width: 6.w),
                   Text(
                     '256-Bit Encrypted & PCI-DSS Compliant',
@@ -451,7 +504,10 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.0),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            width: 1.0,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -474,9 +530,14 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
 
   Widget _buildInteractiveCardPreview() {
     final numberText = _cardNumberController.text.trim();
-    final formattedNumber = numberText.isEmpty ? '••••  ••••  ••••  ••••' : numberText;
+    final formattedNumber = numberText.isEmpty
+        ? '••••  ••••  ••••  ••••'
+        : numberText;
 
-    List<Color> gradientColors = [const Color(0xFF0D253F), const Color(0xFF1E50A2)];
+    List<Color> gradientColors = [
+      const Color(0xFF0D253F),
+      const Color(0xFF1E50A2),
+    ];
     if (_detectedBrand == CardBrand.mastercard) {
       gradientColors = [const Color(0xFF1A1A2E), const Color(0xFF8B1E26)];
     } else if (_detectedBrand == CardBrand.amex) {
@@ -508,7 +569,10 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
     );
   }
 
-  Widget _buildCardFrontView(List<Color> gradientColors, String formattedNumber) {
+  Widget _buildCardFrontView(
+    List<Color> gradientColors,
+    String formattedNumber,
+  ) {
     return Container(
       width: double.infinity,
       height: 205.h,
@@ -521,7 +585,9 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
           colors: gradientColors,
         ),
         border: Border.all(
-          color: _isDefault ? AppColors.accentLime.withValues(alpha: 0.5) : Colors.white24,
+          color: _isDefault
+              ? AppColors.accentLime.withValues(alpha: 0.5)
+              : Colors.white24,
           width: _isDefault ? 2.0 : 1.0,
         ),
         boxShadow: [
@@ -550,21 +616,35 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                         colors: [Color(0xFFE8D499), Color(0xFFC7AC64)],
                       ),
                       borderRadius: BorderRadius.circular(6.r),
-                      border: Border.all(color: const Color(0xFF8C7536), width: 0.8),
+                      border: Border.all(
+                        color: const Color(0xFF8C7536),
+                        width: 0.8,
+                      ),
                     ),
                     child: Center(
-                      child: Icon(Icons.nfc_rounded, color: const Color(0xFF5C4C1E), size: 16.r),
+                      child: Icon(
+                        Icons.nfc_rounded,
+                        color: const Color(0xFF5C4C1E),
+                        size: 16.r,
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  Icon(Icons.wifi_tethering_rounded, color: Colors.white70, size: 18.r),
+                  Icon(
+                    Icons.wifi_tethering_rounded,
+                    color: Colors.white70,
+                    size: 18.r,
+                  ),
                 ],
               ),
               Row(
                 children: [
                   if (_isDefault) ...[
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.accentLime,
                         borderRadius: BorderRadius.circular(10.r),
@@ -572,7 +652,11 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star_rounded, size: 12.r, color: AppColors.primaryDark),
+                          Icon(
+                            Icons.star_rounded,
+                            size: 12.r,
+                            color: AppColors.primaryDark,
+                          ),
                           SizedBox(width: 3.w),
                           Text(
                             'PRIMARY',
@@ -589,7 +673,10 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                     SizedBox(width: 8.w),
                   ],
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 9.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8.r),
@@ -665,7 +752,9 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    _expiryController.text.isEmpty ? 'MM/YY' : _expiryController.text,
+                    _expiryController.text.isEmpty
+                        ? 'MM/YY'
+                        : _expiryController.text,
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 13.5.sp,
@@ -695,7 +784,9 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
           colors: gradientColors,
         ),
         border: Border.all(
-          color: _isDefault ? AppColors.accentLime.withValues(alpha: 0.5) : Colors.white24,
+          color: _isDefault
+              ? AppColors.accentLime.withValues(alpha: 0.5)
+              : Colors.white24,
           width: _isDefault ? 2.0 : 1.0,
         ),
         boxShadow: [
@@ -791,7 +882,11 @@ class _AddCardScreenState extends State<AddCardScreen> with SingleTickerProvider
               children: [
                 Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: Colors.white70, size: 14.r),
+                    Icon(
+                      Icons.shield_outlined,
+                      color: Colors.white70,
+                      size: 14.r,
+                    ),
                     SizedBox(width: 5.w),
                     Text(
                       'CVV SECURITY CODE',

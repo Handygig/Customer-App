@@ -9,7 +9,8 @@ import 'package:customer_app/src/domain/repositories/profile_repository.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   // Singleton pattern for seamless global state sharing across presentation screens
-  static final ProfileRepositoryImpl _instance = ProfileRepositoryImpl._internal();
+  static final ProfileRepositoryImpl _instance =
+      ProfileRepositoryImpl._internal();
   factory ProfileRepositoryImpl() => _instance;
 
   ProfileRepositoryImpl._internal() {
@@ -199,7 +200,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<void> addProperty(Property property) async {
     await Future.delayed(const Duration(milliseconds: 400));
     if (property.isPrimary) {
-      _properties = _properties.map((p) => p.copyWith(isPrimary: false)).toList();
+      _properties = _properties
+          .map((p) => p.copyWith(isPrimary: false))
+          .toList();
     }
     _properties = [..._properties, property];
     _propertiesController.add(_properties);
@@ -209,7 +212,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<void> updateProperty(Property property) async {
     await Future.delayed(const Duration(milliseconds: 400));
     if (property.isPrimary) {
-      _properties = _properties.map((p) => p.copyWith(isPrimary: false)).toList();
+      _properties = _properties
+          .map((p) => p.copyWith(isPrimary: false))
+          .toList();
     }
     final index = _properties.indexWhere((p) => p.id == property.id);
     if (index != -1) {

@@ -10,20 +10,8 @@ class LanguageModel {
   });
 
   static const List<LanguageModel> supportedLanguages = [
-    LanguageModel(
-      code: 'en',
-      nativeName: 'English',
-      englishName: 'English',
-    ),
-    LanguageModel(
-      code: 'si',
-      nativeName: 'සිංහල',
-      englishName: 'Sinhala',
-    ),
-    LanguageModel(
-      code: 'ta',
-      nativeName: 'தமிழ்',
-      englishName: 'Tamil',
-    ),
+    LanguageModel(code: 'en', nativeName: 'English', englishName: 'English'),
+    LanguageModel(code: 'si', nativeName: 'සිංහල', englishName: 'Sinhala'),
+    LanguageModel(code: 'ta', nativeName: 'தமிழ்', englishName: 'Tamil'),
   ];
 }

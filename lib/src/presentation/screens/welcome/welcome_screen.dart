@@ -31,40 +31,30 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       duration: const Duration(milliseconds: 700),
     );
 
-    _sheetSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.25),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
-      ),
-    );
+    _sheetSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.25), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _sheetFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _sheetFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: const Interval(0.0, 0.60, curve: Curves.easeOut),
       ),
     );
 
-    _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.12),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _contentSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.12), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _contentFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _contentFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: const Interval(0.20, 0.85, curve: Curves.easeOut),
@@ -83,18 +73,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void _navigateToLanguageScreen(BuildContext context) {
     HapticFeedback.mediumImpact();
     Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => const LanguageSelectionScreen(),
-      ),
+      CupertinoPageRoute(builder: (context) => const LanguageSelectionScreen()),
     );
   }
 
   void _bypassRegistrationForDev(BuildContext context) {
     HapticFeedback.heavyImpact();
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => const MainNavigationScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
       (route) => false,
     );
   }
@@ -166,7 +152,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               right: 0,
               child: SafeArea(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 24.w,
+                    vertical: 8.h,
+                  ),
                   child: Row(
                     children: [
                       Container(
@@ -197,10 +186,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Icon(
-                                  Icons.home_repair_service,
-                                  color: AppColors.primary,
-                                  size: 24.r,
-                                ),
+                                      Icons.home_repair_service,
+                                      color: AppColors.primary,
+                                      size: 24.r,
+                                    ),
                               ),
                             ),
                             SizedBox(width: 8.w),
@@ -327,15 +316,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                             vertical: 5.h,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.primary
-                                                .withValues(alpha: 0.08),
-                                            borderRadius:
-                                                BorderRadius.circular(12.r),
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12.r,
+                                            ),
                                           ),
                                           child: Text(
                                             'ON-DEMAND HOME SERVICES',
-                                            style: GoogleFonts
-                                                .plusJakartaSans(
+                                            style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11.5.sp,
                                               fontWeight: FontWeight.w800,
                                               color: AppColors.primary,
@@ -392,20 +382,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                                         const Spacer(),
 
-                                         // Buttons Section
-                                         Padding(
-                                           padding: EdgeInsets.only(
-                                             bottom: 20.h,
-                                             top: 16.h,
-                                           ),
-                                           child: Column(
-                                             children: [
-                                               _buildGetStartedButton(context),
-                                               SizedBox(height: 10.h),
-                                               _buildDevBypassButton(context),
-                                             ],
-                                           ),
-                                         ),
+                                        // Buttons Section
+                                        Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: 20.h,
+                                            top: 16.h,
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              _buildGetStartedButton(context),
+                                              SizedBox(height: 10.h),
+                                              _buildDevBypassButton(context),
+                                            ],
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -426,28 +416,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  Widget _buildFeatureBadge({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildFeatureBadge({required IconData icon, required String label}) {
     return Expanded(
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 6.w),
         decoration: BoxDecoration(
           color: const Color(0xFFF6F8F3),
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(
-            color: AppColors.borderUnselected,
-            width: 1,
-          ),
+          border: Border.all(color: AppColors.borderUnselected, width: 1),
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 20.r,
-              color: AppColors.primary,
-            ),
+            Icon(icon, size: 20.r, color: AppColors.primary),
             SizedBox(height: 4.h),
             Text(
               label,
