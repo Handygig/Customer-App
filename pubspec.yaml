@@ -36,6 +36,8 @@ dependencies:
   firebase_core: ^4.13.0
   firebase_auth: ^6.5.7
   http: ^1.2.0
+  get_it: ^8.0.1
+  dartz: ^0.10.1
   cupertino_icons: ^1.0.8
   country_flags: ^4.1.2
   connectivity_plus: ^7.1.1

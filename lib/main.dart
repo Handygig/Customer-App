@@ -1,9 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'config/theme/app_theme.dart';
-import 'src/presentation/screens/welcome/welcome_screen.dart';
+import 'package:customer_app/config/theme/app_theme.dart';
+import 'package:customer_app/config/router/app_router.dart';
+import 'package:customer_app/core/di/service_locator.dart';
+import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,6 +15,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
   await Firebase.initializeApp();
+  await initServiceLocator();
   runApp(const CustomerApp());
 }
 
@@ -25,18 +29,23 @@ class CustomerApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return ValueListenableBuilder<ThemeMode>(
-          valueListenable: themeModeNotifier,
-          builder: (context, mode, child) {
-            return MaterialApp(
-              title: 'Customer App',
-              debugShowCheckedModeBanner: false,
-              theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
-              themeMode: mode,
-              home: const WelcomeScreen(),
-            );
-          },
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
+          ],
+          child: ValueListenableBuilder<ThemeMode>(
+            valueListenable: themeModeNotifier,
+            builder: (context, mode, child) {
+              return MaterialApp.router(
+                title: 'Customer App',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: mode,
+                routerConfig: AppRouter.router,
+              );
+            },
+          ),
         );
       },
     );

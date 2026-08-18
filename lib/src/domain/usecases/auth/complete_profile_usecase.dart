@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:customer_app/core/errors/failures.dart';
 import 'package:customer_app/src/domain/entities/auth/user_entity.dart';
 import 'package:customer_app/src/domain/repositories/auth/auth_repository.dart';
 
@@ -6,7 +8,7 @@ class CompleteProfileUsecase {
 
   const CompleteProfileUsecase(this._repository);
 
-  Future<UserEntity> call({
+  Future<Either<Failure, UserEntity>> call({
     required String firstName,
     required String lastName,
     required String email,

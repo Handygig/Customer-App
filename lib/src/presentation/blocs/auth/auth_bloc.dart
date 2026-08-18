@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:customer_app/core/errors/auth_exception.dart';
 import 'package:customer_app/src/domain/usecases/auth/complete_profile_usecase.dart';
 import 'package:customer_app/src/domain/usecases/auth/login_with_firebase_usecase.dart';
 import 'package:customer_app/src/domain/usecases/auth/logout_usecase.dart';
@@ -44,14 +43,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading(AuthOperation.sendOtp));
-    try {
-      final session = await _sendOtp(event.phoneNumber);
-      emit(AuthOtpSent(phoneNumber: event.phoneNumber, session: session));
-    } catch (error) {
-      emit(
-        AuthFailure(operation: AuthOperation.sendOtp, message: _message(error)),
-      );
-    }
+    final res = await _sendOtp(event.phoneNumber);
+    res.fold(
+      (failure) => emit(AuthFailure(operation: AuthOperation.sendOtp, message: failure.errorMessage)),
+      (session) => emit(AuthOtpSent(phoneNumber: event.phoneNumber, session: session)),
+    );
   }
 
   Future<void> _onResendOtp(
@@ -59,20 +55,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading(AuthOperation.resendOtp));
-    try {
-      final session = await _resendOtp(
-        phoneNumber: event.phoneNumber,
-        forceResendingToken: event.forceResendingToken,
-      );
-      emit(AuthOtpResent(phoneNumber: event.phoneNumber, session: session));
-    } catch (error) {
-      emit(
-        AuthFailure(
-          operation: AuthOperation.resendOtp,
-          message: _message(error),
-        ),
-      );
-    }
+    final res = await _resendOtp(
+      phoneNumber: event.phoneNumber,
+      forceResendingToken: event.forceResendingToken,
+    );
+    res.fold(
+      (failure) => emit(AuthFailure(operation: AuthOperation.resendOtp, message: failure.errorMessage)),
+      (session) => emit(AuthOtpResent(phoneNumber: event.phoneNumber, session: session)),
+    );
   }
 
   Future<void> _onVerifyOtp(
@@ -80,20 +70,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading(AuthOperation.verifyOtp));
-    try {
-      final result = await _verifyOtpAndRegister(
-        verificationId: event.verificationId,
-        smsCode: event.smsCode,
-      );
-      emit(AuthAuthenticated(result));
-    } catch (error) {
-      emit(
-        AuthFailure(
-          operation: AuthOperation.verifyOtp,
-          message: _message(error),
-        ),
-      );
-    }
+    final res = await _verifyOtpAndRegister(
+      verificationId: event.verificationId,
+      smsCode: event.smsCode,
+    );
+    res.fold(
+      (failure) => emit(AuthFailure(operation: AuthOperation.verifyOtp, message: failure.errorMessage)),
+      (result) => emit(AuthAuthenticated(result)),
+    );
   }
 
   Future<void> _onLogin(
@@ -101,13 +85,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading(AuthOperation.login));
-    try {
-      emit(AuthAuthenticated(await _loginWithFirebase()));
-    } catch (error) {
-      emit(
-        AuthFailure(operation: AuthOperation.login, message: _message(error)),
-      );
-    }
+    final res = await _loginWithFirebase();
+    res.fold(
+      (failure) => emit(AuthFailure(operation: AuthOperation.login, message: failure.errorMessage)),
+      (result) => emit(AuthAuthenticated(result)),
+    );
   }
 
   Future<void> _onCompleteProfile(
@@ -115,39 +97,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(const AuthLoading(AuthOperation.completeProfile));
-    try {
-      final user = await _completeProfile(
-        firstName: event.firstName,
-        lastName: event.lastName,
-        email: event.email,
-        gender: event.gender,
-        profileImagePath: event.profileImagePath,
-      );
-      emit(AuthProfileCompleted(user));
-    } catch (error) {
-      emit(
-        AuthFailure(
-          operation: AuthOperation.completeProfile,
-          message: _message(error),
-        ),
-      );
-    }
+    final res = await _completeProfile(
+      firstName: event.firstName,
+      lastName: event.lastName,
+      email: event.email,
+      gender: event.gender,
+      profileImagePath: event.profileImagePath,
+    );
+    res.fold(
+      (failure) => emit(AuthFailure(operation: AuthOperation.completeProfile, message: failure.errorMessage)),
+      (user) => emit(AuthProfileCompleted(user)),
+    );
   }
 
   Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
     emit(const AuthLoading(AuthOperation.logout));
-    try {
-      await _logout();
-      emit(const AuthLoggedOut());
-    } catch (error) {
-      emit(
-        AuthFailure(operation: AuthOperation.logout, message: _message(error)),
-      );
-    }
-  }
-
-  String _message(Object error) {
-    if (error is AuthException) return error.message;
-    return 'Something went wrong. Please try again.';
+    final res = await _logout();
+    res.fold(
+      (failure) => emit(AuthFailure(operation: AuthOperation.logout, message: failure.errorMessage)),
+      (_) => emit(const AuthLoggedOut()),
+    );
   }
 }

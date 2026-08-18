@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/domain/models/language_model.dart';
+import 'package:customer_app/src/data/models/language/language_model.dart';
 
 class LanguageOptionCard extends StatelessWidget {
   final LanguageModel language;

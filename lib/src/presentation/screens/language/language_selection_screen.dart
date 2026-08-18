@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/domain/models/language_model.dart';
+import 'package:customer_app/src/data/models/language/language_model.dart';
 import 'package:customer_app/src/presentation/screens/auth/mobile_number_screen.dart';
 import 'package:customer_app/src/presentation/screens/language/widgets/language_option_card.dart';
 

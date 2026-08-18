@@ -6,8 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
-import 'package:customer_app/src/domain/entities/property.dart';
+import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/profile/property.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 

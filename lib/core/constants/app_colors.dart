@@ -85,4 +85,10 @@ class AppColors {
 
   static Color iconColor(BuildContext context) =>
       isDark(context) ? accentLime : primary;
+
+  // Semantic/alert colors matching Equisport structure
+  static const Color errorColor = Color(0xFFE63946);
+  static const Color warningColor = Color(0xFFFFC811);
+  static const Color successColor = Color(0xFF14AE5C);
+  static const Color infoColor = Color(0xFF42A5F5);
 }

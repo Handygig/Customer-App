@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
-import 'package:customer_app/src/domain/entities/user_profile.dart';
-import 'package:customer_app/src/domain/entities/payment_card.dart';
-import 'package:customer_app/src/domain/entities/property.dart';
-import 'package:customer_app/src/domain/repositories/profile_repository.dart';
+import 'package:customer_app/core/errors/failures.dart';
+import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
+import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
+import 'package:customer_app/src/domain/entities/profile/property.dart';
+import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   // Singleton pattern for seamless global state sharing across presentation screens
@@ -115,14 +117,15 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<UserProfile> getUserProfile() async {
-    return _profile;
+  Future<Either<Failure, UserProfile>> getUserProfile() async {
+    return Right(_profile);
   }
 
   @override
-  Future<void> updateUserProfile(UserProfile profile) async {
+  Future<Either<Failure, void>> updateUserProfile(UserProfile profile) async {
     _profile = profile;
     _profileController.add(_profile);
+    return const Right(null);
   }
 
   @override
@@ -132,30 +135,32 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<List<PaymentCard>> getPaymentCards() async {
-    return List.unmodifiable(_cards);
+  Future<Either<Failure, List<PaymentCard>>> getPaymentCards() async {
+    return Right(List.unmodifiable(_cards));
   }
 
   @override
-  Future<void> addPaymentCard(PaymentCard card) async {
+  Future<Either<Failure, void>> addPaymentCard(PaymentCard card) async {
     if (card.isDefault) {
       _cards = _cards.map((c) => c.copyWith(isDefault: false)).toList();
     }
     _cards = [..._cards, card];
     _cardsController.add(_cards);
+    return const Right(null);
   }
 
   @override
-  Future<void> deletePaymentCard(String cardId) async {
+  Future<Either<Failure, void>> deletePaymentCard(String cardId) async {
     _cards = _cards.where((c) => c.id != cardId).toList();
     if (_cards.isNotEmpty && !_cards.any((c) => c.isDefault)) {
       _cards[0] = _cards[0].copyWith(isDefault: true);
     }
     _cardsController.add(_cards);
+    return const Right(null);
   }
 
   @override
-  Future<void> updatePaymentCard(PaymentCard card) async {
+  Future<Either<Failure, void>> updatePaymentCard(PaymentCard card) async {
     if (card.isDefault) {
       _cards = _cards.map((c) => c.copyWith(isDefault: false)).toList();
     }
@@ -164,18 +169,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
       _cards[index] = card;
     }
     _cardsController.add(_cards);
+    return const Right(null);
   }
 
   @override
-  Future<void> setDefaultPaymentCard(String cardId) async {
+  Future<Either<Failure, void>> setDefaultPaymentCard(String cardId) async {
     _cards = _cards.map((c) {
       return c.copyWith(isDefault: c.id == cardId);
     }).toList();
     _cardsController.add(_cards);
+    return const Right(null);
   }
 
   @override
-  Future<void> toggleFreezePaymentCard(String cardId) async {
+  Future<Either<Failure, void>> toggleFreezePaymentCard(String cardId) async {
     _cards = _cards.map((c) {
       if (c.id == cardId) {
         return c.copyWith(isFrozen: !c.isFrozen);
@@ -183,6 +190,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return c;
     }).toList();
     _cardsController.add(_cards);
+    return const Right(null);
   }
 
   @override
@@ -192,12 +200,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<List<Property>> getProperties() async {
-    return List.unmodifiable(_properties);
+  Future<Either<Failure, List<Property>>> getProperties() async {
+    return Right(List.unmodifiable(_properties));
   }
 
   @override
-  Future<void> addProperty(Property property) async {
+  Future<Either<Failure, void>> addProperty(Property property) async {
     await Future.delayed(const Duration(milliseconds: 400));
     if (property.isPrimary) {
       _properties = _properties
@@ -206,10 +214,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
     _properties = [..._properties, property];
     _propertiesController.add(_properties);
+    return const Right(null);
   }
 
   @override
-  Future<void> updateProperty(Property property) async {
+  Future<Either<Failure, void>> updateProperty(Property property) async {
     await Future.delayed(const Duration(milliseconds: 400));
     if (property.isPrimary) {
       _properties = _properties
@@ -221,62 +230,70 @@ class ProfileRepositoryImpl implements ProfileRepository {
       _properties[index] = property;
       _propertiesController.add(_properties);
     }
+    return const Right(null);
   }
 
   @override
-  Future<void> deleteProperty(String propertyId) async {
+  Future<Either<Failure, void>> deleteProperty(String propertyId) async {
     _properties = _properties.where((p) => p.id != propertyId).toList();
     if (_properties.isNotEmpty && !_properties.any((p) => p.isPrimary)) {
       _properties[0] = _properties[0].copyWith(isPrimary: true);
     }
     _propertiesController.add(_properties);
+    return const Right(null);
   }
 
   @override
-  Future<void> setPrimaryProperty(String propertyId) async {
+  Future<Either<Failure, void>> setPrimaryProperty(String propertyId) async {
     _properties = _properties.map((p) {
       return p.copyWith(isPrimary: p.id == propertyId);
     }).toList();
     _propertiesController.add(_properties);
+    return const Right(null);
   }
 
   @override
-  Future<bool> changePassword({
+  Future<Either<Failure, bool>> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
     await Future.delayed(const Duration(milliseconds: 600));
-    return true;
+    return const Right(true);
   }
 
   @override
-  Future<void> toggleTwoFactorAuth(bool enabled) async {
+  Future<Either<Failure, void>> toggleTwoFactorAuth(bool enabled) async {
     _profile = _profile.copyWith(isTwoFactorEnabled: enabled);
     _profileController.add(_profile);
+    return const Right(null);
   }
 
   @override
-  Future<void> updateLanguage(String languageCode) async {
+  Future<Either<Failure, void>> updateLanguage(String languageCode) async {
     _profile = _profile.copyWith(languageCode: languageCode);
     _profileController.add(_profile);
+    return const Right(null);
   }
 
   @override
-  Future<void> toggleNotifications(bool enabled) async {
+  Future<Either<Failure, void>> toggleNotifications(bool enabled) async {
     _profile = _profile.copyWith(pushNotificationsEnabled: enabled);
     _profileController.add(_profile);
+    return const Right(null);
   }
 
   @override
-  Future<void> toggleBiometrics(bool enabled) async {
+  Future<Either<Failure, void>> toggleBiometrics(bool enabled) async {
     _profile = _profile.copyWith(biometricsEnabled: enabled);
     _profileController.add(_profile);
+    return const Right(null);
   }
 
   @override
-  Future<void> toggleDarkMode(bool enabled) async {
+  Future<Either<Failure, void>> toggleDarkMode(bool enabled) async {
     _profile = _profile.copyWith(isDarkMode: enabled);
     _profileController.add(_profile);
     themeModeNotifier.value = enabled ? ThemeMode.dark : ThemeMode.light;
+    return const Right(null);
   }
 }
