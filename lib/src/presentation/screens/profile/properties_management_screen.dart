@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
-import 'package:customer_app/src/domain/entities/property.dart';
+import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/profile/property.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
 
 class PropertiesManagementScreen extends StatelessWidget {
@@ -21,7 +21,10 @@ class PropertiesManagementScreen extends StatelessWidget {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -70,8 +73,11 @@ class PropertiesManagementScreen extends StatelessWidget {
                             color: AppColors.cardSelectedBg,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.location_city_rounded,
-                              size: 40.r, color: AppColors.primary),
+                          child: Icon(
+                            Icons.location_city_rounded,
+                            size: 40.r,
+                            color: AppColors.primary,
+                          ),
                         ),
                         SizedBox(height: 16.h),
                         Text(
@@ -95,45 +101,53 @@ class PropertiesManagementScreen extends StatelessWidget {
                     ),
                   )
                 else
-                  ...properties.map((prop) => _buildPropertyTile(context, prop, repository)),
-
-                SizedBox(height: 16.h),
-
-                // Add Property Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54.h,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const AddNewPropertyScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add_home_rounded, color: Colors.white),
-                    label: Text(
-                      'Add New Property',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.buttonBackground,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(27.r),
-                      ),
-                    ),
+                  ...properties.map(
+                    (prop) => _buildPropertyTile(context, prop, repository),
                   ),
-                ),
-                SizedBox(height: 20.h),
               ],
             ),
           );
         },
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          border: Border(
+            top: BorderSide(color: AppColors.borderUnselected, width: 1.0),
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 16.h),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 54.h,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AddNewPropertyScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add_home_rounded, color: Colors.white),
+              label: Text(
+                'Add New Property',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.buttonBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(27.r),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -169,7 +183,9 @@ class PropertiesManagementScreen extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3D4127).withValues(alpha: isPrimary ? 0.08 : 0.05),
+            color: const Color(
+              0xFF3D4127,
+            ).withValues(alpha: isPrimary ? 0.08 : 0.05),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -211,7 +227,10 @@ class PropertiesManagementScreen extends StatelessWidget {
                     top: 12.h,
                     left: 14.w,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 5.h,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(20.r),
@@ -247,7 +266,10 @@ class PropertiesManagementScreen extends StatelessWidget {
                       children: [
                         if (isPrimary) ...[
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 5.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.accentLime,
                               borderRadius: BorderRadius.circular(20.r),
@@ -262,8 +284,11 @@ class PropertiesManagementScreen extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.star_rounded,
-                                    size: 14.r, color: AppColors.primaryDark),
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 14.r,
+                                  color: AppColors.primaryDark,
+                                ),
                                 SizedBox(width: 4.w),
                                 Text(
                                   'PRIMARY',
@@ -280,9 +305,48 @@ class PropertiesManagementScreen extends StatelessWidget {
                           SizedBox(width: 8.w),
                         ],
 
+                        // Edit Action Button
+                        InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => AddNewPropertyScreen(
+                                  propertyToEdit: property,
+                                ),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(20.r),
+                          child: Container(
+                            padding: EdgeInsets.all(7.r),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              color: AppColors.primary,
+                              size: 18.r,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8.w),
+
                         // Delete Action Button
                         InkWell(
-                          onTap: () => _confirmDeleteProperty(context, property, repository),
+                          onTap: () => _confirmDeleteProperty(
+                            context,
+                            property,
+                            repository,
+                          ),
                           borderRadius: BorderRadius.circular(20.r),
                           child: Container(
                             padding: EdgeInsets.all(7.r),
@@ -335,7 +399,10 @@ class PropertiesManagementScreen extends StatelessWidget {
                       ),
                       if (isPrimary)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF2F5EC),
                             borderRadius: BorderRadius.circular(8.r),
@@ -343,8 +410,11 @@ class PropertiesManagementScreen extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check_circle_rounded,
-                                  size: 13.r, color: AppColors.primary),
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 13.r,
+                                color: AppColors.primary,
+                              ),
                               SizedBox(width: 4.w),
                               Text(
                                 'Default',
@@ -387,22 +457,11 @@ class PropertiesManagementScreen extends StatelessWidget {
                   SizedBox(height: 12.h),
 
                   // Specs Badges Row
-                  Row(
-                    children: [
-                      _buildSpecBadge(Icons.bed_rounded, '${property.bedrooms} Beds'),
-                      SizedBox(width: 8.w),
-                      _buildSpecBadge(Icons.square_foot_rounded, '${property.areaSqft} sqft'),
-                      SizedBox(width: 8.w),
-                      _buildSpecBadge(typeIcon, typeLabel),
-                    ],
-                  ),
+                  Row(children: [_buildSpecBadge(typeIcon, typeLabel)]),
                   SizedBox(height: 14.h),
 
                   // Divider
-                  Container(
-                    height: 1,
-                    color: const Color(0xFFEFF2E7),
-                  ),
+                  Container(height: 1, color: const Color(0xFFEFF2E7)),
                   SizedBox(height: 10.h),
 
                   // Bottom Action Footer
@@ -459,7 +518,10 @@ class PropertiesManagementScreen extends StatelessWidget {
                         ),
 
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 5.h,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF6F8F3),
                           borderRadius: BorderRadius.circular(12.r),
@@ -515,7 +577,8 @@ class PropertiesManagementScreen extends StatelessWidget {
         return Image.asset(
           imagePath,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildFallbackImage(fallbackIcon),
+          errorBuilder: (context, error, stackTrace) =>
+              _buildFallbackImage(fallbackIcon),
         );
       } else {
         try {
@@ -524,7 +587,8 @@ class PropertiesManagementScreen extends StatelessWidget {
             return Image.file(
               file,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => _buildFallbackImage(fallbackIcon),
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildFallbackImage(fallbackIcon),
             );
           }
         } catch (_) {}
@@ -616,7 +680,10 @@ class PropertiesManagementScreen extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(ctx).pop(),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.borderUnselected, width: 1.5),
+                            side: const BorderSide(
+                              color: AppColors.borderUnselected,
+                              width: 1.5,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(25.r),
                             ),

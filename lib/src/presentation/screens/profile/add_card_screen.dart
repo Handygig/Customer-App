@@ -1,23 +1,32 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
-import 'package:customer_app/src/domain/entities/payment_card.dart';
+import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AddCardScreen extends StatefulWidget {
-  const AddCardScreen({super.key});
+  final PaymentCard? cardToEdit;
+
+  const AddCardScreen({super.key, this.cardToEdit});
 
   @override
   State<AddCardScreen> createState() => _AddCardScreenState();
 }
 
-class _AddCardScreenState extends State<AddCardScreen> {
+class _AddCardScreenState extends State<AddCardScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _cardNumberController = TextEditingController();
   final TextEditingController _cardHolderController = TextEditingController();
   final TextEditingController _expiryController = TextEditingController();
   final TextEditingController _cvvController = TextEditingController();
+  final FocusNode _cvvFocusNode = FocusNode();
+
+  late AnimationController _flipController;
+  late Animation<double> _flipAnimation;
 
   bool _isDefault = true;
   CardBrand _detectedBrand = CardBrand.visa;
@@ -31,10 +40,38 @@ class _AddCardScreenState extends State<AddCardScreen> {
     _cardHolderController.addListener(() => setState(() {}));
     _expiryController.addListener(() => setState(() {}));
     _cvvController.addListener(() => setState(() {}));
+
+    _flipController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _flipAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutCubic),
+    );
+
+    _cvvFocusNode.addListener(() {
+      if (_cvvFocusNode.hasFocus) {
+        _flipController.forward();
+      } else {
+        _flipController.reverse();
+      }
+    });
+
+    if (widget.cardToEdit != null) {
+      final card = widget.cardToEdit!;
+      _cardNumberController.text = '•••• •••• •••• ${card.lastFourDigits}';
+      _cardHolderController.text = card.cardholderName;
+      _expiryController.text = card.expiryDate;
+      _cvvController.text = '123';
+      _isDefault = card.isDefault;
+      _detectedBrand = card.brand;
+    }
   }
 
   @override
   void dispose() {
+    _cvvFocusNode.dispose();
+    _flipController.dispose();
     _cardNumberController.dispose();
     _cardHolderController.dispose();
     _expiryController.dispose();
@@ -78,7 +115,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
     final expiry = _expiryController.text.trim();
     final cvv = _cvvController.text.trim();
 
-    if (rawNumber.length < 15) {
+    if (widget.cardToEdit == null && rawNumber.length < 15) {
       _showErrorSnackBar('Please enter a valid 15-16 digit card number.');
       return;
     }
@@ -101,69 +138,56 @@ class _AddCardScreenState extends State<AddCardScreen> {
     setState(() => _isSubmitting = true);
     HapticFeedback.mediumImpact();
 
-    final lastFour = rawNumber.substring(rawNumber.length - 4);
+    final isEditing = widget.cardToEdit != null;
+    final lastFour = rawNumber.length >= 4
+        ? rawNumber.substring(rawNumber.length - 4)
+        : (isEditing ? widget.cardToEdit!.lastFourDigits : '4920');
+
     final card = PaymentCard(
-      id: 'card_${DateTime.now().millisecondsSinceEpoch}',
+      id: isEditing
+          ? widget.cardToEdit!.id
+          : 'card_${DateTime.now().millisecondsSinceEpoch}',
       cardholderName: name,
       lastFourDigits: lastFour,
       expiryDate: expiry,
       brand: _detectedBrand,
       isDefault: _isDefault,
-      cardLimit: 12000.0,
+      cardLimit: isEditing ? widget.cardToEdit!.cardLimit : 12000.0,
       gradientColors: _getBrandGradientColors(_detectedBrand),
+      isFrozen: isEditing ? widget.cardToEdit!.isFrozen : false,
     );
 
-    await ProfileRepositoryImpl().addPaymentCard(card);
+    if (isEditing) {
+      await ProfileRepositoryImpl().updatePaymentCard(card);
+    } else {
+      await ProfileRepositoryImpl().addPaymentCard(card);
+    }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Text(
-                  '${_detectedBrand.name.toUpperCase()} ending in $lastFour added successfully!',
-                  style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.primaryDark,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-          duration: const Duration(seconds: 2),
-        ),
+      DynamicIslandToast.showSuccess(
+        context,
+        isEditing
+            ? '${_detectedBrand.name.toUpperCase()} Card Updated Successfully'
+            : '${_detectedBrand.name.toUpperCase()} Card Added Successfully',
       );
       Navigator.of(context).pop();
     }
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.plusJakartaSans(color: Colors.white),
-        ),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-      ),
-    );
+    DynamicIslandToast.showError(context, message);
   }
 
   List<int> _getBrandGradientColors(CardBrand brand) {
     switch (brand) {
-      case CardBrand.mastercard:
-        return [0xFF3D4127, 0xFF636B2F];
-      case CardBrand.amex:
-        return [0xFF1E2117, 0xFF383E20];
-      case CardBrand.discover:
-        return [0xFF53482A, 0xFF756A3D];
       case CardBrand.visa:
-        return [0xFF4A5129, 0xFF6B7435];
+        return [0xFF0D253F, 0xFF1E50A2];
+      case CardBrand.mastercard:
+        return [0xFF1A1A2E, 0xFF8B1E26];
+      case CardBrand.amex:
+        return [0xFF2C3E50, 0xFF4CA1AF];
+      case CardBrand.discover:
+        return [0xFF3E2723, 0xFFD84315];
     }
   }
 
@@ -175,11 +199,14 @@ class _AddCardScreenState extends State<AddCardScreen> {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Add Payment Card',
+          widget.cardToEdit != null ? 'Edit Payment Card' : 'Add Payment Card',
           style: GoogleFonts.plusJakartaSans(
             color: Colors.white,
             fontSize: 18.sp,
@@ -211,11 +238,35 @@ class _AddCardScreenState extends State<AddCardScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildDemoChip('Visa Card', () => _fillDemoCard('4242 8821 9902 4920', 'ALEX JOHNSON', '08/28', '842')),
+                  _buildDemoChip(
+                    'Visa Card',
+                    () => _fillDemoCard(
+                      '4242 8821 9902 4920',
+                      'ALEX JOHNSON',
+                      '08/28',
+                      '842',
+                    ),
+                  ),
                   SizedBox(width: 8.w),
-                  _buildDemoChip('Mastercard', () => _fillDemoCard('5520 3491 8812 7731', 'ALEX JOHNSON', '11/27', '391')),
+                  _buildDemoChip(
+                    'Mastercard',
+                    () => _fillDemoCard(
+                      '5520 3491 8812 7731',
+                      'ALEX JOHNSON',
+                      '11/27',
+                      '391',
+                    ),
+                  ),
                   SizedBox(width: 8.w),
-                  _buildDemoChip('Amex Platinum', () => _fillDemoCard('3782 8224 9910 3049', 'ALEX JOHNSON', '05/29', '4928')),
+                  _buildDemoChip(
+                    'Amex Platinum',
+                    () => _fillDemoCard(
+                      '3782 8224 9910 3049',
+                      'ALEX JOHNSON',
+                      '05/29',
+                      '4928',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -284,6 +335,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
                   child: _buildInputField(
                     label: 'CVV / CVC',
                     controller: _cvvController,
+                    focusNode: _cvvFocusNode,
                     hint: '123',
                     icon: Icons.lock_outline_rounded,
                     keyboardType: TextInputType.number,
@@ -294,11 +346,14 @@ class _AddCardScreenState extends State<AddCardScreen> {
                     ],
                     suffix: IconButton(
                       icon: Icon(
-                        _obscureCvv ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                        _obscureCvv
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
                         color: AppColors.textMuted,
                         size: 20.r,
                       ),
-                      onPressed: () => setState(() => _obscureCvv = !_obscureCvv),
+                      onPressed: () =>
+                          setState(() => _obscureCvv = !_obscureCvv),
                     ),
                   ),
                 ),
@@ -312,7 +367,10 @@ class _AddCardScreenState extends State<AddCardScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18.r),
-                border: Border.all(color: AppColors.borderUnselected, width: 1.2),
+                border: Border.all(
+                  color: AppColors.borderUnselected,
+                  width: 1.2,
+                ),
               ),
               child: Row(
                 children: [
@@ -322,7 +380,11 @@ class _AddCardScreenState extends State<AddCardScreen> {
                       color: Color(0xFFF7F8F0),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.star_rounded, color: AppColors.primary, size: 22.r),
+                    child: Icon(
+                      Icons.star_rounded,
+                      color: AppColors.primary,
+                      size: 22.r,
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -375,15 +437,24 @@ class _AddCardScreenState extends State<AddCardScreen> {
                     ? const SizedBox(
                         width: 24,
                         height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.lock_outline_rounded, color: Colors.white, size: 18),
+                          const Icon(
+                            Icons.lock_outline_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                           SizedBox(width: 8.w),
                           Text(
-                            'Save & Verify Card',
+                            widget.cardToEdit != null
+                                ? 'Update Card Details'
+                                : 'Save & Verify Card',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
@@ -401,7 +472,11 @@ class _AddCardScreenState extends State<AddCardScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_outlined, size: 16.r, color: AppColors.textMuted),
+                  Icon(
+                    Icons.shield_outlined,
+                    size: 16.r,
+                    color: AppColors.textMuted,
+                  ),
                   SizedBox(width: 6.w),
                   Text(
                     '256-Bit Encrypted & PCI-DSS Compliant',
@@ -429,7 +504,10 @@ class _AddCardScreenState extends State<AddCardScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.4), width: 1.0),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            width: 1.0,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -452,17 +530,49 @@ class _AddCardScreenState extends State<AddCardScreen> {
 
   Widget _buildInteractiveCardPreview() {
     final numberText = _cardNumberController.text.trim();
-    final formattedNumber = numberText.isEmpty ? '••••  ••••  ••••  ••••' : numberText;
+    final formattedNumber = numberText.isEmpty
+        ? '••••  ••••  ••••  ••••'
+        : numberText;
 
-    List<Color> gradientColors = [const Color(0xFF4A5129), const Color(0xFF6B7435)];
+    List<Color> gradientColors = [
+      const Color(0xFF0D253F),
+      const Color(0xFF1E50A2),
+    ];
     if (_detectedBrand == CardBrand.mastercard) {
-      gradientColors = [const Color(0xFF3D4127), const Color(0xFF636B2F)];
+      gradientColors = [const Color(0xFF1A1A2E), const Color(0xFF8B1E26)];
     } else if (_detectedBrand == CardBrand.amex) {
-      gradientColors = [const Color(0xFF1E2117), const Color(0xFF383E20)];
+      gradientColors = [const Color(0xFF2C3E50), const Color(0xFF4CA1AF)];
     } else if (_detectedBrand == CardBrand.discover) {
-      gradientColors = [const Color(0xFF53482A), const Color(0xFF756A3D)];
+      gradientColors = [const Color(0xFF3E2723), const Color(0xFFD84315)];
     }
 
+    return AnimatedBuilder(
+      animation: _flipAnimation,
+      builder: (context, child) {
+        final double angle = _flipAnimation.value * math.pi;
+        final bool isBack = angle >= math.pi / 2;
+
+        return Transform(
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(angle),
+          alignment: Alignment.center,
+          child: isBack
+              ? Transform(
+                  transform: Matrix4.identity()..rotateY(math.pi),
+                  alignment: Alignment.center,
+                  child: _buildCardBackView(gradientColors),
+                )
+              : _buildCardFrontView(gradientColors, formattedNumber),
+        );
+      },
+    );
+  }
+
+  Widget _buildCardFrontView(
+    List<Color> gradientColors,
+    String formattedNumber,
+  ) {
     return Container(
       width: double.infinity,
       height: 205.h,
@@ -475,7 +585,9 @@ class _AddCardScreenState extends State<AddCardScreen> {
           colors: gradientColors,
         ),
         border: Border.all(
-          color: _isDefault ? AppColors.accentLime.withValues(alpha: 0.5) : Colors.white24,
+          color: _isDefault
+              ? AppColors.accentLime.withValues(alpha: 0.5)
+              : Colors.white24,
           width: _isDefault ? 2.0 : 1.0,
         ),
         boxShadow: [
@@ -504,21 +616,35 @@ class _AddCardScreenState extends State<AddCardScreen> {
                         colors: [Color(0xFFE8D499), Color(0xFFC7AC64)],
                       ),
                       borderRadius: BorderRadius.circular(6.r),
-                      border: Border.all(color: const Color(0xFF8C7536), width: 0.8),
+                      border: Border.all(
+                        color: const Color(0xFF8C7536),
+                        width: 0.8,
+                      ),
                     ),
                     child: Center(
-                      child: Icon(Icons.nfc_rounded, color: const Color(0xFF5C4C1E), size: 16.r),
+                      child: Icon(
+                        Icons.nfc_rounded,
+                        color: const Color(0xFF5C4C1E),
+                        size: 16.r,
+                      ),
                     ),
                   ),
                   SizedBox(width: 10.w),
-                  Icon(Icons.wifi_tethering_rounded, color: Colors.white70, size: 18.r),
+                  Icon(
+                    Icons.wifi_tethering_rounded,
+                    color: Colors.white70,
+                    size: 18.r,
+                  ),
                 ],
               ),
               Row(
                 children: [
                   if (_isDefault) ...[
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.accentLime,
                         borderRadius: BorderRadius.circular(10.r),
@@ -526,7 +652,11 @@ class _AddCardScreenState extends State<AddCardScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.star_rounded, size: 12.r, color: AppColors.primaryDark),
+                          Icon(
+                            Icons.star_rounded,
+                            size: 12.r,
+                            color: AppColors.primaryDark,
+                          ),
                           SizedBox(width: 3.w),
                           Text(
                             'PRIMARY',
@@ -543,7 +673,10 @@ class _AddCardScreenState extends State<AddCardScreen> {
                     SizedBox(width: 8.w),
                   ],
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 9.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8.r),
@@ -619,7 +752,9 @@ class _AddCardScreenState extends State<AddCardScreen> {
                   ),
                   SizedBox(height: 2.h),
                   Text(
-                    _expiryController.text.isEmpty ? 'MM/YY' : _expiryController.text,
+                    _expiryController.text.isEmpty
+                        ? 'MM/YY'
+                        : _expiryController.text,
                     style: GoogleFonts.plusJakartaSans(
                       color: Colors.white,
                       fontSize: 13.5.sp,
@@ -629,6 +764,152 @@ class _AddCardScreenState extends State<AddCardScreen> {
                 ],
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardBackView(List<Color> gradientColors) {
+    final cvvText = _cvvController.text.isEmpty ? '•••' : _cvvController.text;
+
+    return Container(
+      width: double.infinity,
+      height: 205.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.r),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+        border: Border.all(
+          color: _isDefault
+              ? AppColors.accentLime.withValues(alpha: 0.5)
+              : Colors.white24,
+          width: _isDefault ? 2.0 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors[0].withValues(alpha: 0.4),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 22.h),
+
+          // Black Magnetic Stripe
+          Container(
+            width: double.infinity,
+            height: 40.h,
+            color: const Color(0xFF1E1E1E),
+          ),
+          SizedBox(height: 16.h),
+
+          // Signature Panel & CVV Box
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 18.w),
+            child: Row(
+              children: [
+                // Signature strip
+                Expanded(
+                  child: Container(
+                    height: 36.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.88),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(6.r),
+                        bottomLeft: Radius.circular(6.r),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'AUTHORIZED SIGNATURE',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade600,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // CVV White Box
+                Container(
+                  width: 65.w,
+                  height: 36.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(6.r),
+                      bottomRight: Radius.circular(6.r),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      _obscureCvv ? ('•' * cvvText.length) : cvvText,
+                      style: GoogleFonts.shareTechMono(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textHeadline,
+                        letterSpacing: 1.8,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const Spacer(),
+
+          // Bottom Info Row
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.shield_outlined,
+                      color: Colors.white70,
+                      size: 14.r,
+                    ),
+                    SizedBox(width: 5.w),
+                    Text(
+                      'CVV SECURITY CODE',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: const Color(0xFFC7CBC0),
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  _detectedBrand.name.toUpperCase(),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white70,
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -645,6 +926,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
     List<TextInputFormatter>? inputFormatters,
     TextCapitalization textCapitalization = TextCapitalization.none,
     Widget? suffix,
+    FocusNode? focusNode,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,6 +954,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
               Expanded(
                 child: TextField(
                   controller: controller,
+                  focusNode: focusNode,
                   keyboardType: keyboardType,
                   obscureText: obscureText,
                   textCapitalization: textCapitalization,

@@ -3,14 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AllServicesScreen extends StatefulWidget {
   final String? initialCategory;
 
-  const AllServicesScreen({
-    super.key,
-    this.initialCategory,
-  });
+  const AllServicesScreen({super.key, this.initialCategory});
 
   @override
   State<AllServicesScreen> createState() => _AllServicesScreenState();
@@ -43,7 +41,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Popular',
       'image': 'assets/images/icon_cleaning.png',
       'icon': Icons.cleaning_services_rounded,
-      'description': 'Full house deep cleaning with eco-friendly sanitization solutions.',
+      'description':
+          'Full house deep cleaning with eco-friendly sanitization solutions.',
     },
     {
       'id': 'SRV-02',
@@ -55,7 +54,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Fast 30m',
       'image': 'assets/images/icon_plumbing.png',
       'icon': Icons.plumbing_rounded,
-      'description': 'Leak detection, pipe replacement, and drain unclogging by certified pros.',
+      'description':
+          'Leak detection, pipe replacement, and drain unclogging by certified pros.',
     },
     {
       'id': 'SRV-03',
@@ -67,7 +67,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Certified',
       'image': 'assets/images/icon_electrical.png',
       'icon': Icons.electrical_services_rounded,
-      'description': 'Fuse box check, wiring repairs, and lighting fixture installations.',
+      'description':
+          'Fuse box check, wiring repairs, and lighting fixture installations.',
     },
     {
       'id': 'SRV-04',
@@ -79,7 +80,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Top Rated',
       'image': 'assets/images/icon_painting.png',
       'icon': Icons.format_paint_rounded,
-      'description': 'Premium finish wall coating, drywall patching, and exterior painting.',
+      'description':
+          'Premium finish wall coating, drywall patching, and exterior painting.',
     },
     {
       'id': 'SRV-05',
@@ -91,7 +93,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Eco Friendly',
       'image': 'assets/images/icon_gardening.png',
       'icon': Icons.yard_rounded,
-      'description': 'Grass mowing, hedge trimming, weed removal, and soil health testing.',
+      'description':
+          'Grass mowing, hedge trimming, weed removal, and soil health testing.',
     },
     {
       'id': 'SRV-06',
@@ -103,7 +106,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Warranty',
       'image': 'assets/images/icon_appliances.png',
       'icon': Icons.kitchen_rounded,
-      'description': 'Washing machine, fridge, oven, and microwave diagnosis and repair.',
+      'description':
+          'Washing machine, fridge, oven, and microwave diagnosis and repair.',
     },
     {
       'id': 'SRV-07',
@@ -115,7 +119,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': 'Best Seller',
       'image': 'assets/images/icon_electrical.png',
       'icon': Icons.hvac_rounded,
-      'description': 'Air filter replacement, coolant refill, and duct cleaning.',
+      'description':
+          'Air filter replacement, coolant refill, and duct cleaning.',
     },
     {
       'id': 'SRV-08',
@@ -127,7 +132,8 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'badge': '24/7 Shield',
       'image': 'assets/images/icon_electrical.png',
       'icon': Icons.shield_rounded,
-      'description': 'CCTV camera installation, smart lock setup, and alarm configuration.',
+      'description':
+          'CCTV camera installation, smart lock setup, and alarm configuration.',
     },
   ];
 
@@ -145,9 +151,11 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
 
   List<Map<String, dynamic>> get _filteredServices {
     return _allServices.where((srv) {
-      final matchesCategory = _selectedCategory == 'All' || srv['category'] == _selectedCategory;
+      final matchesCategory =
+          _selectedCategory == 'All' || srv['category'] == _selectedCategory;
       final query = _searchController.text.toLowerCase().trim();
-      final matchesQuery = query.isEmpty ||
+      final matchesQuery =
+          query.isEmpty ||
           (srv['title'] as String).toLowerCase().contains(query) ||
           (srv['category'] as String).toLowerCase().contains(query) ||
           (srv['description'] as String).toLowerCase().contains(query);
@@ -165,7 +173,10 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textHeadline),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.textHeadline,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -201,7 +212,11 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
               padding: EdgeInsets.symmetric(horizontal: 14.w),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+                  const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                   SizedBox(width: 10.w),
                   Expanded(
                     child: TextField(
@@ -223,7 +238,11 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                         _searchController.clear();
                         setState(() {});
                       },
-                      child: const Icon(Icons.close_rounded, size: 18, color: AppColors.textMuted),
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                 ],
               ),
@@ -251,20 +270,31 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                     });
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : AppColors.cardSelectedBg,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.cardSelectedBg,
                       borderRadius: BorderRadius.circular(20.r),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.borderUnselected,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.borderUnselected,
                       ),
                     ),
                     child: Text(
                       cat,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5.sp,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -282,7 +312,11 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off_rounded, size: 54.r, color: AppColors.radioUnselected),
+                        Icon(
+                          Icons.search_off_rounded,
+                          size: 54.r,
+                          color: AppColors.radioUnselected,
+                        ),
                         SizedBox(height: 12.h),
                         Text(
                           'No services found matching your query',
@@ -447,7 +481,10 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                   _showBookingConfirmationModal(srv);
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.buttonBackground,
                     borderRadius: BorderRadius.circular(10.r),
@@ -549,14 +586,9 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Booking request sent for ${srv['title']}!',
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
-                        ),
-                        backgroundColor: AppColors.primary,
-                      ),
+                    DynamicIslandToast.showSuccess(
+                      context,
+                      'Booking request sent for ${srv['title']}!',
                     );
                   },
                   child: Text(

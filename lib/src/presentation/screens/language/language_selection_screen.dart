@@ -5,7 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/domain/models/language_model.dart';
+import 'package:customer_app/src/data/models/language/language_model.dart';
 import 'package:customer_app/src/presentation/screens/auth/mobile_number_screen.dart';
 import 'package:customer_app/src/presentation/screens/language/widgets/language_option_card.dart';
 
@@ -20,7 +20,8 @@ class LanguageSelectionScreen extends StatefulWidget {
   });
 
   @override
-  State<LanguageSelectionScreen> createState() => _LanguageSelectionScreenState();
+  State<LanguageSelectionScreen> createState() =>
+      _LanguageSelectionScreenState();
 }
 
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
@@ -40,40 +41,30 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
       duration: const Duration(milliseconds: 700),
     );
 
-    _sheetSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.25),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
-      ),
-    );
+    _sheetSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.25), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _sheetFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _sheetFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: const Interval(0.0, 0.60, curve: Curves.easeOut),
       ),
     );
 
-    _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.12),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _contentSlideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.12), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.20, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
 
-    _contentFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
+    _contentFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _animController,
         curve: const Interval(0.20, 0.85, curve: Curves.easeOut),
@@ -107,9 +98,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
       widget.onContinue!();
     } else {
       Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (context) => const MobileNumberScreen(),
-        ),
+        CupertinoPageRoute(builder: (context) => const MobileNumberScreen()),
       );
     }
   }
@@ -169,8 +158,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         splashColor: AppColors.primary.withValues(alpha: 0.15),
-                        highlightColor:
-                            AppColors.primary.withValues(alpha: 0.08),
+                        highlightColor: AppColors.primary.withValues(
+                          alpha: 0.08,
+                        ),
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.of(context).maybePop();
@@ -282,17 +272,19 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                                         SizedBox(height: 24.h),
 
                                         // Language Options List
-                                        ...LanguageModel.supportedLanguages
-                                            .map((lang) {
-                                          final isSelected = lang.code ==
-                                              _selectedLanguageCode;
-                                          return LanguageOptionCard(
-                                            language: lang,
-                                            isSelected: isSelected,
-                                            onTap: () =>
-                                                _selectLanguage(lang.code),
-                                          );
-                                        }),
+                                        ...LanguageModel.supportedLanguages.map(
+                                          (lang) {
+                                            final isSelected =
+                                                lang.code ==
+                                                _selectedLanguageCode;
+                                            return LanguageOptionCard(
+                                              language: lang,
+                                              isSelected: isSelected,
+                                              onTap: () =>
+                                                  _selectLanguage(lang.code),
+                                            );
+                                          },
+                                        ),
 
                                         const Spacer(),
 

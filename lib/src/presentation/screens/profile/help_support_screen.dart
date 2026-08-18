@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -15,19 +16,23 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   final List<Map<String, String>> _faqs = [
     {
       'question': 'How do I book a home maintenance service?',
-      'answer': 'Navigate to the Home or Search tab, select your required service (e.g. Plumbing, AC Repair), pick a convenient date & time slot, choose your property, and confirm payment.'
+      'answer':
+          'Navigate to the Home or Search tab, select your required service (e.g. Plumbing, AC Repair), pick a convenient date & time slot, choose your property, and confirm payment.',
     },
     {
       'question': 'Can I cancel or reschedule my booking?',
-      'answer': 'Yes! Go to the Jobs tab, select your upcoming booking, and tap "Reschedule" or "Cancel Booking". Cancellations made 2 hours prior are 100% free of charge.'
+      'answer':
+          'Yes! Go to the Jobs tab, select your upcoming booking, and tap "Reschedule" or "Cancel Booking". Cancellations made 2 hours prior are 100% free of charge.',
     },
     {
       'question': 'What if the technician doesn\'t arrive on time?',
-      'answer': 'All service providers are GPS tracked in real-time. If there is a delay over 15 minutes, our 24/7 support team automatically reaches out and provides a \$10 service credit voucher.'
+      'answer':
+          'All service providers are GPS tracked in real-time. If there is a delay over 15 minutes, our 24/7 support team automatically reaches out and provides a \$10 service credit voucher.',
     },
     {
       'question': 'Are service technicians verified and insured?',
-      'answer': 'Absolutely. Every professional undergoes background screening, identity verification, and carries comprehensive service liability coverage.'
+      'answer':
+          'Absolutely. Every professional undergoes background screening, identity verification, and carries comprehensive service liability coverage.',
     },
   ];
 
@@ -41,7 +46,10 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         backgroundColor: AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -76,8 +84,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       color: AppColors.accentLime,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.headset_mic_rounded,
-                        color: AppColors.primaryDark, size: 24.r),
+                    child: Icon(
+                      Icons.headset_mic_rounded,
+                      color: AppColors.primaryDark,
+                      size: 24.r,
+                    ),
                   ),
                   SizedBox(width: 14.w),
                   Expanded(
@@ -106,20 +117,18 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ElevatedButton(
                     onPressed: () {
                       HapticFeedback.mediumImpact();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Calling Emergency Dispatch Line: +1 (800) 992-4357',
-                            style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                          ),
-                          backgroundColor: AppColors.primaryDark,
-                        ),
+                      DynamicIslandToast.showSuccess(
+                        context,
+                        'Calling Emergency Dispatch Line: +1 (800) 123-4567',
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentLime,
                       foregroundColor: AppColors.primaryDark,
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 8.h,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
@@ -147,14 +156,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               child: ListTile(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Connecting to live chat agent...',
-                        style: GoogleFonts.plusJakartaSans(color: Colors.white),
-                      ),
-                      backgroundColor: AppColors.primary,
-                    ),
+                  DynamicIslandToast.showSuccess(
+                    context,
+                    'Connecting to live chat agent...',
                   );
                 },
                 leading: Container(
@@ -163,8 +167,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     color: AppColors.cardSelectedBg,
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Icon(Icons.chat_bubble_outline_rounded,
-                      color: AppColors.primary, size: 22.r),
+                  child: Icon(
+                    Icons.chat_bubble_outline_rounded,
+                    color: AppColors.primary,
+                    size: 22.r,
+                  ),
                 ),
                 title: Text(
                   'Start Live Support Chat',
@@ -181,8 +188,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     color: AppColors.textMuted,
                   ),
                 ),
-                trailing: Icon(Icons.arrow_forward_ios_rounded,
-                    size: 14.r, color: AppColors.textMuted),
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14.r,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
             SizedBox(height: 28.h),
@@ -209,12 +219,17 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16.r),
                   border: Border.all(
-                    color: isExpanded ? AppColors.primary : AppColors.borderUnselected,
+                    color: isExpanded
+                        ? AppColors.primary
+                        : AppColors.borderUnselected,
                   ),
                 ),
                 child: ExpansionTile(
                   key: Key('faq_$index'),
-                  tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                  tilePadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 4.h,
+                  ),
                   childrenPadding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
                   iconColor: AppColors.primary,
                   collapsedIconColor: AppColors.textMuted,
