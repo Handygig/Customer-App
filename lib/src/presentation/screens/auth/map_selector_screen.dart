@@ -21,6 +21,7 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
   bool _myLocationEnabled = false;
   Placemark? _selectedPlacemark;
   GoogleMapController? _mapController;
+  final Geocoding _geocoding = Geocoding();
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -71,7 +72,7 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
     setState(() => _isLoadingAddress = true);
 
     try {
-      final placemarks = await placemarkFromCoordinates(
+      final placemarks = await _geocoding.placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
@@ -121,7 +122,7 @@ class _MapSelectorScreenState extends State<MapSelectorScreen> {
     setState(() => _isLoadingAddress = true);
 
     try {
-      final locations = await locationFromAddress(text);
+      final locations = await _geocoding.locationFromAddress(text);
       if (locations.isEmpty || !mounted) return;
 
       final target = LatLng(

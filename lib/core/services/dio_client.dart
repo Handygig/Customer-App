@@ -21,6 +21,9 @@ class DioClient {
         baseUrl: AppEndpoints.baseUrl,
         contentType: Headers.jsonContentType,
         responseType: ResponseType.json,
+        headers: {
+          'Accept': 'application/json',
+        },
         receiveDataWhenStatusError: true,
       ),
     );
