@@ -34,7 +34,7 @@ class AuthHeaderBanner extends StatelessWidget {
             assetPath,
             fit: BoxFit.cover,
             alignment: Alignment.center,
-            errorBuilder: (_, __, ___) {
+            errorBuilder: (_, _, _) {
               return Container(
                 color: AppColors.darkHeaderBg,
                 child: Center(

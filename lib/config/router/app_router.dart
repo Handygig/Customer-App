@@ -38,7 +38,8 @@ class AppRouter {
           final otpSession = extra['otpSession'] as OtpSessionEntity;
           return OtpVerificationScreen(
             phoneNumber: phoneNumber,
-            otpSession: otpSession,
+            verificationId: otpSession.verificationId,
+            forceResendingToken: otpSession.forceResendingToken,
           );
         },
       ),

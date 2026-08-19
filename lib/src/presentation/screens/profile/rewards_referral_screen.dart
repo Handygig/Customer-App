@@ -40,8 +40,9 @@ class RewardsReferralScreen extends StatelessWidget {
         stream: repository.watchUserProfile(),
         builder: (context, snapshot) {
           final profile = snapshot.data;
-          if (profile == null)
+          if (profile == null) {
             return const Center(child: CircularProgressIndicator());
+          }
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(20.w),

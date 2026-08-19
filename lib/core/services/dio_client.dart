@@ -21,6 +21,9 @@ class DioClient {
         baseUrl: AppEndpoints.baseUrl,
         contentType: Headers.jsonContentType,
         responseType: ResponseType.json,
+        headers: {
+          'Accept': 'application/json',
+        },
         receiveDataWhenStatusError: true,
       ),
     );
@@ -46,7 +49,8 @@ class DioClient {
         },
         onResponse: (response, handler) async {
           final token = await AuthManager.getAccessToken();
-          final isAuthPath = response.requestOptions.path.contains(
+          final isAuthPath =
+              response.requestOptions.path.contains(
                 AppEndpoints.customerLogin,
               ) ||
               response.requestOptions.path.contains(
@@ -75,12 +79,9 @@ class DioClient {
             return handler.next(networkError);
           }
 
-          final isAuthPath = e.requestOptions.path.contains(
-                AppEndpoints.customerLogin,
-              ) ||
-              e.requestOptions.path.contains(
-                AppEndpoints.customerRegister,
-              );
+          final isAuthPath =
+              e.requestOptions.path.contains(AppEndpoints.customerLogin) ||
+              e.requestOptions.path.contains(AppEndpoints.customerRegister);
 
           if (token != null && e.response?.statusCode == 401 && !isAuthPath) {
             _handleUnauthorized(e.response?.data);
