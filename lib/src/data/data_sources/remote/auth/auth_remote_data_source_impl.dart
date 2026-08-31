@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:customer_app/core/errors/auth_exception.dart';
-import 'package:customer_app/core/network/api_config.dart';
+import 'package:customer_app/core/constants/app_endpoints.dart';
 import 'package:customer_app/core/services/device_name_service.dart';
 import 'package:customer_app/src/data/data_sources/remote/auth/auth_remote_data_source.dart';
 import 'package:customer_app/src/data/models/auth/auth_result_model.dart';
@@ -15,12 +15,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final DeviceNameService _deviceNameService;
 
   AuthRemoteDataSourceImpl({
-    required FirebaseAuth firebaseAuth,
-    required Dio dio,
-    required DeviceNameService deviceNameService,
-  }) : _firebaseAuth = firebaseAuth,
-       _dio = dio,
-       _deviceNameService = deviceNameService;
+    required this._firebaseAuth,
+    required this._dio,
+    required this._deviceNameService,
+  });
 
   @override
   Future<OtpSessionEntity> sendOtp({
@@ -126,9 +124,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        ApiConfig.customerRegister,
+        AppEndpoints.customerRegister,
         data: {
-          'id_token': firebaseIdToken,
+          'firebase_token': firebaseIdToken,
           'device_name': await _deviceNameService.getDeviceName(),
         },
       );
@@ -144,9 +142,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     try {
       final response = await _dio.post(
-        ApiConfig.customerLogin,
+        AppEndpoints.customerLogin,
         data: {
-          'id_token': firebaseIdToken,
+          'firebase_token': firebaseIdToken,
           'device_name': await _deviceNameService.getDeviceName(),
         },
       );
@@ -167,8 +165,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     try {
       final fields = <String, dynamic>{
-        'first_name': firstName,
-        'last_name': lastName,
+        'full_name': '$firstName $lastName'.trim(),
         'email': email,
         'gender': gender,
       };
@@ -181,7 +178,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
 
       final response = await _dio.put(
-        ApiConfig.customerCompleteProfile,
+        AppEndpoints.customerCompleteProfile,
         data: FormData.fromMap(fields),
         options: Options(
           headers: {
@@ -212,7 +209,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       throw const AuthException('The server returned an invalid response.');
     }
 
-    final map = Map<String, dynamic>.from(raw as Map);
+    final map = Map<String, dynamic>.from(raw);
     final nested = map['data'];
     if (nested is Map) {
       return Map<String, dynamic>.from(nested);

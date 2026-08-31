@@ -26,7 +26,8 @@ class ManagePaymentCardsUseCase {
   ManagePaymentCardsUseCase(this.repository);
 
   Stream<List<PaymentCard>> watch() => repository.watchPaymentCards();
-  Future<Either<Failure, void>> addCard(PaymentCard card) => repository.addPaymentCard(card);
+  Future<Either<Failure, void>> addCard(PaymentCard card) =>
+      repository.addPaymentCard(card);
   Future<Either<Failure, void>> deleteCard(String cardId) =>
       repository.deletePaymentCard(cardId);
   Future<Either<Failure, void>> setDefaultCard(String cardId) =>
@@ -53,7 +54,8 @@ class ManageSettingsUseCase {
 
   Future<Either<Failure, void>> toggle2FA(bool enabled) =>
       repository.toggleTwoFactorAuth(enabled);
-  Future<Either<Failure, void>> setLanguage(String code) => repository.updateLanguage(code);
+  Future<Either<Failure, void>> setLanguage(String code) =>
+      repository.updateLanguage(code);
   Future<Either<Failure, void>> toggleNotifications(bool enabled) =>
       repository.toggleNotifications(enabled);
   Future<Either<Failure, void>> toggleBiometrics(bool enabled) =>

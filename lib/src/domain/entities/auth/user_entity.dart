@@ -23,7 +23,7 @@ class UserEntity {
 
   String get fullName {
     return [firstName, lastName]
-        .where((value) => value != null && value!.trim().isNotEmpty)
+        .where((value) => value != null && value.trim().isNotEmpty)
         .map((value) => value!.trim())
         .join(' ');
   }

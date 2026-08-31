@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/config/router/app_router.dart';
 import 'package:customer_app/core/di/service_locator.dart';
@@ -14,6 +15,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp();
   await initServiceLocator();
   runApp(const CustomerApp());

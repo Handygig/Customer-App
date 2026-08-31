@@ -27,7 +27,9 @@ Future<void> initServiceLocator() async {
   // External / Third-party
   sl.registerLazySingleton<Dio>(() => DioClient.create());
   sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  sl.registerLazySingleton<FlutterSecureStorage>(() => const FlutterSecureStorage());
+  sl.registerLazySingleton<FlutterSecureStorage>(
+    () => const FlutterSecureStorage(),
+  );
   sl.registerLazySingleton<Connectivity>(() => Connectivity());
 
   // Services
@@ -49,9 +51,7 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(sl<AuthRemoteDataSource>(), sl<NetworkService>()),
   );
-  sl.registerLazySingleton<ProfileRepository>(
-    () => ProfileRepositoryImpl(),
-  );
+  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl());
 
   // Use Cases
   // Auth Usecases

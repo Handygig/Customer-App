@@ -17,10 +17,14 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._remoteDataSource, this._networkService);
 
   @override
-  Future<Either<Failure, OtpSessionEntity>> sendOtp({required String phoneNumber}) async {
+  Future<Either<Failure, OtpSessionEntity>> sendOtp({
+    required String phoneNumber,
+  }) async {
     try {
       if (!await _networkService.isConnected()) {
-        return const Left(NetworkFailure(errorMessage: 'No internet connection detected.'));
+        return const Left(
+          NetworkFailure(errorMessage: 'No internet connection detected.'),
+        );
       }
       final result = await _remoteDataSource.sendOtp(phoneNumber: phoneNumber);
       return Right(result);
@@ -28,7 +32,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
       debugPrint('⚠️ [AuthRepositoryImpl.sendOtp] Error: $e');
-      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+      return Left(
+        APIFailure(errorMessage: e.toString(), stackTrace: stackTrace),
+      );
     }
   }
 
@@ -39,7 +45,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       if (!await _networkService.isConnected()) {
-        return const Left(NetworkFailure(errorMessage: 'No internet connection detected.'));
+        return const Left(
+          NetworkFailure(errorMessage: 'No internet connection detected.'),
+        );
       }
       final result = await _remoteDataSource.sendOtp(
         phoneNumber: phoneNumber,
@@ -50,7 +58,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
       debugPrint('⚠️ [AuthRepositoryImpl.resendOtp] Error: $e');
-      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+      return Left(
+        APIFailure(errorMessage: e.toString(), stackTrace: stackTrace),
+      );
     }
   }
 
@@ -61,7 +71,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       if (!await _networkService.isConnected()) {
-        return const Left(NetworkFailure(errorMessage: 'No internet connection detected.'));
+        return const Left(
+          NetworkFailure(errorMessage: 'No internet connection detected.'),
+        );
       }
       final idToken = await _remoteDataSource.verifyOtpAndGetFirebaseIdToken(
         verificationId: verificationId,
@@ -72,7 +84,11 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (result.token.trim().isEmpty) {
-        return const Left(APIFailure(errorMessage: 'The server did not return an authentication token.'));
+        return const Left(
+          APIFailure(
+            errorMessage: 'The server did not return an authentication token.',
+          ),
+        );
       }
 
       await AuthManager.saveSession(accessToken: result.token);
@@ -81,15 +97,20 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
       debugPrint('⚠️ [AuthRepositoryImpl.verifyOtpAndRegister] Error: $e');
-      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+      return Left(
+        APIFailure(errorMessage: e.toString(), stackTrace: stackTrace),
+      );
     }
   }
 
   @override
-  Future<Either<Failure, AuthResultEntity>> loginWithCurrentFirebaseUser() async {
+  Future<Either<Failure, AuthResultEntity>>
+  loginWithCurrentFirebaseUser() async {
     try {
       if (!await _networkService.isConnected()) {
-        return const Left(NetworkFailure(errorMessage: 'No internet connection detected.'));
+        return const Left(
+          NetworkFailure(errorMessage: 'No internet connection detected.'),
+        );
       }
       final idToken = await _remoteDataSource.getCurrentFirebaseIdToken();
       final result = await _remoteDataSource.loginWithFirebase(
@@ -97,7 +118,11 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (result.token.trim().isEmpty) {
-        return const Left(APIFailure(errorMessage: 'The server did not return an authentication token.'));
+        return const Left(
+          APIFailure(
+            errorMessage: 'The server did not return an authentication token.',
+          ),
+        );
       }
 
       await AuthManager.saveSession(accessToken: result.token);
@@ -105,8 +130,12 @@ class AuthRepositoryImpl implements AuthRepository {
     } on AuthException catch (e) {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
-      debugPrint('⚠️ [AuthRepositoryImpl.loginWithCurrentFirebaseUser] Error: $e');
-      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+      debugPrint(
+        '⚠️ [AuthRepositoryImpl.loginWithCurrentFirebaseUser] Error: $e',
+      );
+      return Left(
+        APIFailure(errorMessage: e.toString(), stackTrace: stackTrace),
+      );
     }
   }
 
@@ -120,11 +149,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       if (!await _networkService.isConnected()) {
-        return const Left(NetworkFailure(errorMessage: 'No internet connection detected.'));
+        return const Left(
+          NetworkFailure(errorMessage: 'No internet connection detected.'),
+        );
       }
       final token = await AuthManager.getAccessToken();
       if (token == null || token.trim().isEmpty) {
-        return const Left(APIFailure(errorMessage: 'Your session has expired. Please verify your number again.'));
+        return const Left(
+          APIFailure(
+            errorMessage:
+                'Your session has expired. Please verify your number again.',
+          ),
+        );
       }
 
       final result = await _remoteDataSource.completeProfile(
@@ -140,7 +176,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
       debugPrint('⚠️ [AuthRepositoryImpl.completeProfile] Error: $e');
-      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+      return Left(
+        APIFailure(errorMessage: e.toString(), stackTrace: stackTrace),
+      );
     }
   }
 
@@ -152,7 +190,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Right(null);
     } catch (e, stackTrace) {
       debugPrint('⚠️ [AuthRepositoryImpl.logout] Error: $e');
-      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+      return Left(
+        APIFailure(errorMessage: e.toString(), stackTrace: stackTrace),
+      );
     }
   }
 }

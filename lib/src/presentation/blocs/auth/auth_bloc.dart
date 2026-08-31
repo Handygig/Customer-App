@@ -17,19 +17,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUsecase _logout;
 
   AuthBloc({
-    required SendOtpUsecase sendOtp,
-    required ResendOtpUsecase resendOtp,
-    required VerifyOtpAndRegisterUsecase verifyOtpAndRegister,
-    required LoginWithFirebaseUsecase loginWithFirebase,
-    required CompleteProfileUsecase completeProfile,
-    required LogoutUsecase logout,
-  }) : _sendOtp = sendOtp,
-       _resendOtp = resendOtp,
-       _verifyOtpAndRegister = verifyOtpAndRegister,
-       _loginWithFirebase = loginWithFirebase,
-       _completeProfile = completeProfile,
-       _logout = logout,
-       super(const AuthInitial()) {
+    required this._sendOtp,
+    required this._resendOtp,
+    required this._verifyOtpAndRegister,
+    required this._loginWithFirebase,
+    required this._completeProfile,
+    required this._logout,
+  }) : super(const AuthInitial()) {
     on<SendOtpRequested>(_onSendOtp);
     on<ResendOtpRequested>(_onResendOtp);
     on<VerifyOtpRequested>(_onVerifyOtp);
@@ -45,8 +39,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading(AuthOperation.sendOtp));
     final res = await _sendOtp(event.phoneNumber);
     res.fold(
-      (failure) => emit(AuthFailure(operation: AuthOperation.sendOtp, message: failure.errorMessage)),
-      (session) => emit(AuthOtpSent(phoneNumber: event.phoneNumber, session: session)),
+      (failure) => emit(
+        AuthFailure(
+          operation: AuthOperation.sendOtp,
+          message: failure.errorMessage,
+        ),
+      ),
+      (session) =>
+          emit(AuthOtpSent(phoneNumber: event.phoneNumber, session: session)),
     );
   }
 
@@ -60,8 +60,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       forceResendingToken: event.forceResendingToken,
     );
     res.fold(
-      (failure) => emit(AuthFailure(operation: AuthOperation.resendOtp, message: failure.errorMessage)),
-      (session) => emit(AuthOtpResent(phoneNumber: event.phoneNumber, session: session)),
+      (failure) => emit(
+        AuthFailure(
+          operation: AuthOperation.resendOtp,
+          message: failure.errorMessage,
+        ),
+      ),
+      (session) =>
+          emit(AuthOtpResent(phoneNumber: event.phoneNumber, session: session)),
     );
   }
 
@@ -75,7 +81,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       smsCode: event.smsCode,
     );
     res.fold(
-      (failure) => emit(AuthFailure(operation: AuthOperation.verifyOtp, message: failure.errorMessage)),
+      (failure) => emit(
+        AuthFailure(
+          operation: AuthOperation.verifyOtp,
+          message: failure.errorMessage,
+        ),
+      ),
       (result) => emit(AuthAuthenticated(result)),
     );
   }
@@ -87,7 +98,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading(AuthOperation.login));
     final res = await _loginWithFirebase();
     res.fold(
-      (failure) => emit(AuthFailure(operation: AuthOperation.login, message: failure.errorMessage)),
+      (failure) => emit(
+        AuthFailure(
+          operation: AuthOperation.login,
+          message: failure.errorMessage,
+        ),
+      ),
       (result) => emit(AuthAuthenticated(result)),
     );
   }
@@ -105,7 +121,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       profileImagePath: event.profileImagePath,
     );
     res.fold(
-      (failure) => emit(AuthFailure(operation: AuthOperation.completeProfile, message: failure.errorMessage)),
+      (failure) => emit(
+        AuthFailure(
+          operation: AuthOperation.completeProfile,
+          message: failure.errorMessage,
+        ),
+      ),
       (user) => emit(AuthProfileCompleted(user)),
     );
   }
@@ -114,7 +135,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading(AuthOperation.logout));
     final res = await _logout();
     res.fold(
-      (failure) => emit(AuthFailure(operation: AuthOperation.logout, message: failure.errorMessage)),
+      (failure) => emit(
+        AuthFailure(
+          operation: AuthOperation.logout,
+          message: failure.errorMessage,
+        ),
+      ),
       (_) => emit(const AuthLoggedOut()),
     );
   }
