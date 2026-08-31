@@ -62,13 +62,13 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       duration: const Duration(milliseconds: 700),
     );
 
-    _sheetSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.25),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0, 0.85, curve: Curves.easeOutCubic),
-    ));
+    _sheetSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0, 0.85, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _sheetFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
@@ -77,13 +77,13 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       ),
     );
 
-    _contentSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.12),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animController,
-      curve: const Interval(0.20, 1, curve: Curves.easeOutCubic),
-    ));
+    _contentSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.20, 1, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _contentFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(
@@ -118,7 +118,8 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
     final last = _lastNameController.text.trim();
     final email = _emailController.text.trim();
     final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    final valid = first.isNotEmpty && last.isNotEmpty && emailRegex.hasMatch(email);
+    final valid =
+        first.isNotEmpty && last.isNotEmpty && emailRegex.hasMatch(email);
 
     if (valid != _formValid && mounted) {
       setState(() => _formValid = valid);
@@ -198,14 +199,14 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
     HapticFeedback.mediumImpact();
 
     context.read<AuthBloc>().add(
-          CompleteProfileRequested(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
-            email: _emailController.text.trim(),
-            gender: _selectedGender.name,
-            profileImagePath: _profileImagePath,
-          ),
-        );
+      CompleteProfileRequested(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        gender: _selectedGender.name,
+        profileImagePath: _profileImagePath,
+      ),
+    );
   }
 
   @override
@@ -229,16 +230,15 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         if (state is AuthProfileCompleted) {
           DynamicIslandToast.showSuccess(context, 'Profile completed!');
           Navigator.of(context).pushReplacement(
-            CupertinoPageRoute(
-              builder: (_) => const AddPropertiesScreen(),
-            ),
+            CupertinoPageRoute(builder: (_) => const AddPropertiesScreen()),
           );
         } else if (state is AuthFailure) {
           DynamicIslandToast.showError(context, state.message);
         }
       },
       builder: (context, state) {
-        final submitting = state is AuthLoading &&
+        final submitting =
+            state is AuthLoading &&
             state.operation == AuthOperation.completeProfile;
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -293,8 +293,9 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                                 Expanded(
                                   child: SingleChildScrollView(
                                     physics: const BouncingScrollPhysics(),
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 24.w),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 24.w,
+                                    ),
                                     child: SlideTransition(
                                       position: _contentSlideAnimation,
                                       child: FadeTransition(
@@ -345,8 +346,10 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       onVerticalDragStart: (_) => setState(() => _isDragging = true),
       onVerticalDragUpdate: (details) {
         setState(() {
-          _sheetTop = (_sheetTop! + details.primaryDelta!)
-              .clamp(minTop, _defaultTop);
+          _sheetTop = (_sheetTop! + details.primaryDelta!).clamp(
+            minTop,
+            _defaultTop,
+          );
         });
       },
       onVerticalDragEnd: (details) {
@@ -466,10 +469,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
             decoration: BoxDecoration(
               color: const Color(0xFFF6F8F3),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.borderUnselected,
-                width: 1.5,
-              ),
+              border: Border.all(color: AppColors.borderUnselected, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
@@ -485,10 +485,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                     size: 44.r,
                     color: AppColors.textSecondary.withValues(alpha: 0.6),
                   )
-                : Image.file(
-                    File(_profileImagePath!),
-                    fit: BoxFit.cover,
-                  ),
+                : Image.file(File(_profileImagePath!), fit: BoxFit.cover),
           ),
           Positioned(
             bottom: 0,
@@ -535,10 +532,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           decoration: BoxDecoration(
             color: const Color(0xFFF6F8F3),
             borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: AppColors.borderUnselected,
-              width: 1.2,
-            ),
+            border: Border.all(color: AppColors.borderUnselected, width: 1.2),
           ),
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           child: Row(
