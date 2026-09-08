@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 
 class AllServicesScreen extends StatefulWidget {
   final String? initialCategory;
@@ -18,7 +21,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
   final TextEditingController _searchController = TextEditingController();
   late String _selectedCategory;
 
-  final List<String> _categories = [
+  final List<String> _defaultCategories = [
     'All',
     'Cleaning',
     'Plumbing',
@@ -253,51 +256,61 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
           Container(
             height: 48.h,
             color: Colors.white,
-            child: ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              separatorBuilder: (context, index) => SizedBox(width: 8.w),
-              itemBuilder: (context, index) {
-                final cat = _categories[index];
-                final isSelected = _selectedCategory == cat;
+            child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
+              builder: (context, state) {
+                final categories = (state is ServiceCategoryLoaded &&
+                        state.categories.isNotEmpty)
+                    ? ['All', ...state.categories.map((c) => c.name)]
+                    : _defaultCategories;
 
-                return GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() {
-                      _selectedCategory = cat;
-                    });
+                return ListView.separated(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length,
+                  separatorBuilder: (context, index) => SizedBox(width: 8.w),
+                  itemBuilder: (context, index) {
+                    final cat = categories[index];
+                    final isSelected = _selectedCategory == cat;
+
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _selectedCategory = cat;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14.w,
+                          vertical: 6.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.cardSelectedBg,
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.borderUnselected,
+                          ),
+                        ),
+                        child: Text(
+                          cat,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5.sp,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    );
                   },
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 14.w,
-                      vertical: 6.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.cardSelectedBg,
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.borderUnselected,
-                      ),
-                    ),
-                    child: Text(
-                      cat,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5.sp,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w600,
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
                 );
               },
             ),

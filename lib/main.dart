@@ -8,6 +8,7 @@ import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/config/router/app_router.dart';
 import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,9 @@ class CustomerApp extends StatelessWidget {
         return MultiBlocProvider(
           providers: [
             BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
+            BlocProvider<ServiceCategoryCubit>(
+              create: (context) => sl<ServiceCategoryCubit>()..loadCategories(),
+            ),
           ],
           child: ValueListenableBuilder<ThemeMode>(
             valueListenable: themeModeNotifier,

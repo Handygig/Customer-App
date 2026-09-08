@@ -19,6 +19,12 @@ import 'package:customer_app/src/domain/usecases/auth/resend_otp_usecase.dart';
 import 'package:customer_app/src/domain/usecases/auth/send_otp_usecase.dart';
 import 'package:customer_app/src/domain/usecases/auth/verify_otp_and_register_usecase.dart';
 import 'package:customer_app/src/domain/usecases/profile/profile_usecases.dart';
+import 'package:customer_app/src/data/data_sources/remote/services/service_category_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/services/service_category_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/services/service_category_repository.dart';
+import 'package:customer_app/src/data/repositories/services/service_category_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/services/get_service_categories_usecase.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 
 final sl = GetIt.instance;
@@ -44,10 +50,19 @@ Future<void> initServiceLocator() async {
       deviceNameService: sl<DeviceNameService>(),
     ),
   );
+  sl.registerLazySingleton<ServiceCategoryRemoteDataSource>(
+    () => ServiceCategoryRemoteDataSourceImpl(sl<Dio>()),
+  );
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(sl<AuthRemoteDataSource>(), sl<NetworkService>()),
+  );
+  sl.registerLazySingleton<ServiceCategoryRepository>(
+    () => ServiceCategoryRepositoryImpl(
+      sl<ServiceCategoryRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
   );
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(),
@@ -74,6 +89,11 @@ Future<void> initServiceLocator() async {
     () => LogoutUsecase(sl<AuthRepository>()),
   );
 
+  // Services Usecases
+  sl.registerLazySingleton<GetServiceCategoriesUseCase>(
+    () => GetServiceCategoriesUseCase(sl<ServiceCategoryRepository>()),
+  );
+
   // Profile Usecases
   sl.registerLazySingleton<GetUserProfileUseCase>(
     () => GetUserProfileUseCase(sl<ProfileRepository>()),
@@ -91,7 +111,7 @@ Future<void> initServiceLocator() async {
     () => ManageSettingsUseCase(sl<ProfileRepository>()),
   );
 
-  // Blocs
+  // Blocs & Cubits
   sl.registerFactory<AuthBloc>(
     () => AuthBloc(
       sendOtp: sl<SendOtpUsecase>(),
@@ -101,5 +121,8 @@ Future<void> initServiceLocator() async {
       completeProfile: sl<CompleteProfileUsecase>(),
       logout: sl<LogoutUsecase>(),
     ),
+  );
+  sl.registerFactory<ServiceCategoryCubit>(
+    () => ServiceCategoryCubit(sl<GetServiceCategoriesUseCase>()),
   );
 }
