@@ -5,7 +5,7 @@ class AppEndpoints {
 
   static String get baseUrl {
     final baseUrl = dotenv.env['BASE_URL'];
-    if (baseUrl == null) {
+    if (baseUrl == null || baseUrl.trim().isEmpty) {
       // Fallback to environment variable or standard localhost
       return const String.fromEnvironment(
         'API_BASE_URL',

@@ -40,11 +40,10 @@ class _DynamicIslandToastWidget extends StatefulWidget {
   final VoidCallback onDismiss;
 
   const _DynamicIslandToastWidget({
-    Key? key,
     required this.message,
     this.isError = false,
     required this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   State<_DynamicIslandToastWidget> createState() =>
