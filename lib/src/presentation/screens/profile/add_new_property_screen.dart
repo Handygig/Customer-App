@@ -2,17 +2,18 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
-import 'package:customer_app/src/domain/entities/profile/property.dart';
+import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AddNewPropertyScreen extends StatefulWidget {
-  final Property? propertyToEdit;
+  final PropertyEntity? propertyToEdit;
 
   const AddNewPropertyScreen({super.key, this.propertyToEdit});
 
@@ -32,28 +33,29 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
   double? _selectedLatitude;
   double? _selectedLongitude;
   String? _selectedImagePath;
-
-  final ProfileRepositoryImpl _repository = ProfileRepositoryImpl();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.propertyToEdit != null) {
       final p = widget.propertyToEdit!;
-      _nameController.text = p.title;
-      _addressLine1Controller.text = p.address;
+      _nameController.text = p.label;
+      _addressLine1Controller.text = p.addressLine;
+      _cityController.text = p.city;
+      _selectedLatitude = p.latitude;
+      _selectedLongitude = p.longitude;
 
-      if (p.type == PropertyType.office) {
+      final lowerLabel = p.label.toLowerCase();
+      if (lowerLabel.contains('office')) {
         _selectedType = 'Office';
-      } else if (p.type == PropertyType.apartment) {
+      } else if (lowerLabel.contains('apartment')) {
         _selectedType = 'Apartment';
-      } else if (p.type == PropertyType.villa) {
+      } else if (lowerLabel.contains('villa') || lowerLabel.contains('other')) {
         _selectedType = 'Other';
       } else {
         _selectedType = 'Home';
       }
-
-      _selectedImagePath = p.imagePath;
     }
   }
 
@@ -73,58 +75,46 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
     final line1 = _addressLine1Controller.text.trim();
     final line2 = _addressLine2Controller.text.trim();
     final city = _cityController.text.trim();
-    final province = _provinceController.text.trim();
-    final postalCode = _postalCodeController.text.trim();
 
-    if (name.isEmpty ||
-        line1.isEmpty ||
-        city.isEmpty ||
-        province.isEmpty ||
-        postalCode.isEmpty) {
+    if (name.isEmpty || line1.isEmpty || city.isEmpty) {
       DynamicIslandToast.showError(
         context,
-        'Please fill in all required fields.',
+        'Please fill in Property Name, Address Line, and City.',
       );
       return;
     }
 
-    if (_selectedImagePath == null) {
-      DynamicIslandToast.showError(context, 'Please upload a property photo.');
-      return;
-    }
-
-    final fullAddress = line2.isNotEmpty
-        ? '$line1, $line2, $city, $province, $postalCode'
-        : '$line1, $city, $province, $postalCode';
-
-    PropertyType propType = PropertyType.house;
-    if (_selectedType == 'Office') propType = PropertyType.office;
-    if (_selectedType == 'Apartment') propType = PropertyType.apartment;
-    if (_selectedType == 'Other') propType = PropertyType.villa;
-
+    final fullAddressLine = line2.isNotEmpty ? '$line1, $line2' : line1;
     final isEditing = widget.propertyToEdit != null;
-    final newProperty = Property(
-      id: isEditing
-          ? widget.propertyToEdit!.id
-          : 'prop_${DateTime.now().millisecondsSinceEpoch}',
-      title: name,
-      address: fullAddress,
-      type: propType,
-      bedrooms: isEditing ? widget.propertyToEdit!.bedrooms : 3,
-      areaSqft: isEditing ? widget.propertyToEdit!.areaSqft : 1850,
-      isPrimary: isEditing ? widget.propertyToEdit!.isPrimary : false,
-      imagePath: _selectedImagePath,
-    );
 
     HapticFeedback.mediumImpact();
+    setState(() => _isLoading = true);
 
+    bool success;
     if (isEditing) {
-      await _repository.updateProperty(newProperty);
+      success = await context.read<PropertyCubit>().updateProperty(
+            id: widget.propertyToEdit!.id,
+            label: name,
+            addressLine: fullAddressLine,
+            city: city,
+            latitude: _selectedLatitude,
+            longitude: _selectedLongitude,
+          );
     } else {
-      await _repository.addProperty(newProperty);
+      success = await context.read<PropertyCubit>().addProperty(
+            label: name,
+            addressLine: fullAddressLine,
+            city: city,
+            latitude: _selectedLatitude,
+            longitude: _selectedLongitude,
+            isDefault: false,
+          );
     }
 
-    if (mounted) {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
       DynamicIslandToast.showSuccess(
         context,
         isEditing
@@ -731,7 +721,7 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
             width: double.infinity,
             height: 52.h,
             child: ElevatedButton(
-              onPressed: _saveProperty,
+              onPressed: _isLoading ? null : _saveProperty,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.buttonBackground,
                 foregroundColor: Colors.white,
@@ -740,15 +730,24 @@ class _AddNewPropertyScreenState extends State<AddNewPropertyScreen> {
                   borderRadius: BorderRadius.circular(26.r),
                 ),
               ),
-              child: Text(
-                widget.propertyToEdit != null
-                    ? 'Save Changes'
-                    : 'Save Property',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : Text(
+                      widget.propertyToEdit != null
+                          ? 'Save Changes'
+                          : 'Save Property',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
             ),
           ),
         ),

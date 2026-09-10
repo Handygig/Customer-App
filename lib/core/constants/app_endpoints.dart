@@ -22,4 +22,8 @@ class AppEndpoints {
 
   // Services endpoints
   static const String customerServiceCategories = '/customer/service-categories';
+
+  // Properties endpoints
+  static const String customerProperties = '/customer/properties';
+  static String customerProperty(int id) => '/customer/properties/$id';
 }

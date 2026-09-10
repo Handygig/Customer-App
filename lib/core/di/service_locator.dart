@@ -25,6 +25,12 @@ import 'package:customer_app/src/domain/repositories/services/service_category_r
 import 'package:customer_app/src/data/repositories/services/service_category_repository_impl.dart';
 import 'package:customer_app/src/domain/usecases/services/get_service_categories_usecase.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/data/data_sources/remote/properties/property_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/properties/property_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/properties/property_repository.dart';
+import 'package:customer_app/src/data/repositories/properties/property_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/properties/property_usecases.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 
 final sl = GetIt.instance;
@@ -55,6 +61,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<ServiceCategoryRemoteDataSource>(
     () => ServiceCategoryRemoteDataSourceImpl(sl<Dio>()),
   );
+  sl.registerLazySingleton<PropertyRemoteDataSource>(
+    () => PropertyRemoteDataSourceImpl(sl<Dio>()),
+  );
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -63,6 +72,12 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<ServiceCategoryRepository>(
     () => ServiceCategoryRepositoryImpl(
       sl<ServiceCategoryRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
+  );
+  sl.registerLazySingleton<PropertyRepository>(
+    () => PropertyRepositoryImpl(
+      sl<PropertyRemoteDataSource>(),
       sl<NetworkService>(),
     ),
   );
@@ -92,6 +107,23 @@ Future<void> initServiceLocator() async {
   // Services Usecases
   sl.registerLazySingleton<GetServiceCategoriesUseCase>(
     () => GetServiceCategoriesUseCase(sl<ServiceCategoryRepository>()),
+  );
+
+  // Properties Usecases
+  sl.registerLazySingleton<GetPropertiesUseCase>(
+    () => GetPropertiesUseCase(sl<PropertyRepository>()),
+  );
+  sl.registerLazySingleton<GetPropertyUseCase>(
+    () => GetPropertyUseCase(sl<PropertyRepository>()),
+  );
+  sl.registerLazySingleton<AddPropertyUseCase>(
+    () => AddPropertyUseCase(sl<PropertyRepository>()),
+  );
+  sl.registerLazySingleton<UpdatePropertyUseCase>(
+    () => UpdatePropertyUseCase(sl<PropertyRepository>()),
+  );
+  sl.registerLazySingleton<DeletePropertyUseCase>(
+    () => DeletePropertyUseCase(sl<PropertyRepository>()),
   );
 
   // Profile Usecases
@@ -124,5 +156,13 @@ Future<void> initServiceLocator() async {
   );
   sl.registerFactory<ServiceCategoryCubit>(
     () => ServiceCategoryCubit(sl<GetServiceCategoriesUseCase>()),
+  );
+  sl.registerFactory<PropertyCubit>(
+    () => PropertyCubit(
+      sl<GetPropertiesUseCase>(),
+      sl<AddPropertyUseCase>(),
+      sl<UpdatePropertyUseCase>(),
+      sl<DeletePropertyUseCase>(),
+    ),
   );
 }
