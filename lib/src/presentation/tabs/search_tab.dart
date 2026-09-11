@@ -2,10 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 
 class ServiceProvider {
   final String id;
@@ -55,7 +58,7 @@ class _SearchTabState extends State<SearchTab> {
   String _selectedCategory = 'All';
   ServiceProvider? _selectedProvider;
 
-  final List<String> _serviceCategories = [
+  final List<String> _defaultServiceCategories = [
     'All',
     'Cleaning',
     'Plumbing',
@@ -551,114 +554,129 @@ class _SearchTabState extends State<SearchTab> {
     return Container(
       height: 48.h,
       color: Colors.transparent, // Floating over map
-      child: ListView.separated(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-        scrollDirection: Axis.horizontal,
-        itemCount: _serviceCategories.length,
-        separatorBuilder: (_, _) => SizedBox(width: 8.w),
-        itemBuilder: (context, index) {
-          final category = _serviceCategories[index];
-          final isSelected = _selectedCategory == category;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() {
-                _selectedCategory = category;
-              });
-            },
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20.r),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary
-                        : Colors.white.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.primary
-                          : Colors.white.withValues(alpha: 0.5),
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                  ),
-                  child: Row(
-                    children: [
-                      // Optional: add a small icon for the categories
-                      if (category == 'Plumbing')
-                        Icon(
-                          Icons.plumbing_rounded,
-                          size: 14.r,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        ),
-                      if (category == 'Cleaning')
-                        Icon(
-                          Icons.cleaning_services_rounded,
-                          size: 14.r,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        ),
-                      if (category == 'Electrical')
-                        Icon(
-                          Icons.electrical_services_rounded,
-                          size: 14.r,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        ),
-                      if (category == 'Painting')
-                        Icon(
-                          Icons.format_paint_rounded,
-                          size: 14.r,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        ),
-                      if (category == 'Gardening')
-                        Icon(
-                          Icons.yard_rounded,
-                          size: 14.r,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        ),
-                      if (category == 'HVAC')
-                        Icon(
-                          Icons.hvac_rounded,
-                          size: 14.r,
-                          color: isSelected ? Colors.white : AppColors.primary,
-                        ),
-                      if (category != 'All') SizedBox(width: 6.w),
-                      Text(
-                        category,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.sp,
-                          fontWeight: isSelected
-                              ? FontWeight.w800
-                              : FontWeight.w700,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textHeadline,
-                        ),
+      child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
+        builder: (context, state) {
+          final categories = (state is ServiceCategoryLoaded &&
+                  state.categories.isNotEmpty)
+              ? ['All', ...state.categories.map((c) => c.name)]
+              : _defaultServiceCategories;
+
+          return ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            separatorBuilder: (_, _) => SizedBox(width: 8.w),
+            itemBuilder: (context, index) {
+              final category = categories[index];
+              final isSelected = _selectedCategory == category;
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  setState(() {
+                    _selectedCategory = category;
+                  });
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20.r),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
                       ),
-                    ],
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary
+                            : Colors.white.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.white.withValues(alpha: 0.5),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                      ),
+                      child: Row(
+                        children: [
+                          if (category.toLowerCase().contains('plumb'))
+                            Icon(
+                              Icons.plumbing_rounded,
+                              size: 14.r,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
+                            ),
+                          if (category.toLowerCase().contains('clean'))
+                            Icon(
+                              Icons.cleaning_services_rounded,
+                              size: 14.r,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
+                            ),
+                          if (category.toLowerCase().contains('electr'))
+                            Icon(
+                              Icons.electrical_services_rounded,
+                              size: 14.r,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
+                            ),
+                          if (category.toLowerCase().contains('paint'))
+                            Icon(
+                              Icons.format_paint_rounded,
+                              size: 14.r,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
+                            ),
+                          if (category.toLowerCase().contains('garden'))
+                            Icon(
+                              Icons.yard_rounded,
+                              size: 14.r,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
+                            ),
+                          if (category.toLowerCase().contains('hvac') ||
+                              category.toLowerCase().contains('ac'))
+                            Icon(
+                              Icons.hvac_rounded,
+                              size: 14.r,
+                              color:
+                                  isSelected ? Colors.white : AppColors.primary,
+                            ),
+                          if (category != 'All') SizedBox(width: 6.w),
+                          Text(
+                            category,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.textHeadline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         },
       ),
