@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -14,10 +13,7 @@ import 'package:customer_app/src/presentation/tabs/profile_tab.dart';
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
 
-  const MainNavigationScreen({
-    super.key,
-    this.initialIndex = 0,
-  });
+  const MainNavigationScreen({super.key, this.initialIndex = 0});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -44,9 +40,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _openAddProperties() {
     HapticFeedback.lightImpact();
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const AddPropertiesScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddPropertiesScreen()),
     );
   }
 
@@ -69,13 +63,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   onNavigateTab: _onTabSelected,
                 ),
                 const JobsTab(),
-                SearchTab(
-                  onBackTap: () => _onTabSelected(0),
-                ),
+                SearchTab(onBackTap: () => _onTabSelected(0)),
                 const AlertsTab(),
-                ProfileTab(
-                  onAddPropertyTap: _openAddProperties,
-                ),
+                ProfileTab(onAddPropertyTap: _openAddProperties),
               ],
             ),
 
@@ -305,23 +295,32 @@ class CurvatureNotchedNavBarPainterLight extends CustomPainter {
 
     // Smooth entry curve into the scoop (Notch)
     path.cubicTo(
-      centerX - (notchWidth / 2) + 4.w, 0,
-      centerX - (notchWidth / 2) + 8.w, notchDepth,
-      centerX - (notchWidth / 4), notchDepth,
+      centerX - (notchWidth / 2) + 4.w,
+      0,
+      centerX - (notchWidth / 2) + 8.w,
+      notchDepth,
+      centerX - (notchWidth / 4),
+      notchDepth,
     );
 
     // Bottom arc of the scoop
     path.cubicTo(
-      centerX - 8.w, notchDepth + 5.h,
-      centerX + 8.w, notchDepth + 5.h,
-      centerX + (notchWidth / 4), notchDepth,
+      centerX - 8.w,
+      notchDepth + 5.h,
+      centerX + 8.w,
+      notchDepth + 5.h,
+      centerX + (notchWidth / 4),
+      notchDepth,
     );
 
     // Smooth exit curve out of the scoop
     path.cubicTo(
-      centerX + (notchWidth / 2) - 8.w, notchDepth,
-      centerX + (notchWidth / 2) - 4.w, 0,
-      centerX + (notchWidth / 2) + 14.w, 0,
+      centerX + (notchWidth / 2) - 8.w,
+      notchDepth,
+      centerX + (notchWidth / 2) - 4.w,
+      0,
+      centerX + (notchWidth / 2) + 14.w,
+      0,
     );
 
     // Top horizontal line to top-right corner

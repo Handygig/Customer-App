@@ -3,9 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile_repository_impl.dart';
-import 'package:customer_app/src/domain/entities/user_profile.dart';
-import 'package:customer_app/src/presentation/screens/language/language_selection_screen.dart';
+import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -18,10 +17,15 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor(context),
       appBar: AppBar(
-        backgroundColor: AppColors.isDark(context) ? AppColors.darkSurface : AppColors.darkHeaderBg,
+        backgroundColor: AppColors.isDark(context)
+            ? AppColors.darkSurface
+            : AppColors.darkHeaderBg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -77,8 +81,11 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.cardSelectedColor(context),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child: Icon(Icons.verified_user_outlined,
-                            color: AppColors.primary, size: 22.r),
+                        child: Icon(
+                          Icons.verified_user_outlined,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
                       ),
                       title: Text(
                         'Two-Factor Authentication (2FA)',
@@ -133,8 +140,11 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.cardSelectedColor(context),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child: Icon(Icons.fingerprint_rounded,
-                            color: AppColors.primary, size: 22.r),
+                        child: Icon(
+                          Icons.fingerprint_rounded,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
                       ),
                       title: Text(
                         'Biometric Login (Face ID / Touch ID)',
@@ -187,8 +197,11 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.cardSelectedColor(context),
                           borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child: Icon(Icons.language_rounded,
-                            color: AppColors.primary, size: 22.r),
+                        child: Icon(
+                          Icons.language_rounded,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
                       ),
                       title: Text(
                         'App Language',
@@ -199,7 +212,11 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        profile.languageCode == 'si' ? 'සිංහල' : (profile.languageCode == 'ta' ? 'தமிழ்' : 'English'),
+                        profile.languageCode == 'si'
+                            ? 'සිංහල'
+                            : (profile.languageCode == 'ta'
+                                  ? 'தமிழ்'
+                                  : 'English'),
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: AppColors.mutedTextColor(context),
@@ -210,14 +227,32 @@ class SettingsScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(10.r),
-                          border: Border.all(color: AppColors.borderUnselected, width: 0.5),
+                          border: Border.all(
+                            color: AppColors.borderUnselected,
+                            width: 0.5,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildLanguageSegment('en', 'EN', profile.languageCode, repository),
-                            _buildLanguageSegment('si', 'SI', profile.languageCode, repository),
-                            _buildLanguageSegment('ta', 'TA', profile.languageCode, repository),
+                            _buildLanguageSegment(
+                              'en',
+                              'EN',
+                              profile.languageCode,
+                              repository,
+                            ),
+                            _buildLanguageSegment(
+                              'si',
+                              'SI',
+                              profile.languageCode,
+                              repository,
+                            ),
+                            _buildLanguageSegment(
+                              'ta',
+                              'TA',
+                              profile.languageCode,
+                              repository,
+                            ),
                           ],
                         ),
                       ),
@@ -243,7 +278,9 @@ class SettingsScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Icon(
-                          profile.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                          profile.isDarkMode
+                              ? Icons.dark_mode_rounded
+                              : Icons.light_mode_rounded,
                           color: AppColors.primary,
                           size: 22.r,
                         ),
@@ -257,7 +294,9 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        profile.isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
+                        profile.isDarkMode
+                            ? 'Dark theme enabled'
+                            : 'Light theme enabled',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: AppColors.textMuted,
@@ -292,8 +331,11 @@ class SettingsScreen extends StatelessWidget {
                           color: AppColors.cardSelectedBg,
                           borderRadius: BorderRadius.circular(12.r),
                         ),
-                        child: Icon(Icons.notifications_none_rounded,
-                            color: AppColors.primary, size: 22.r),
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          color: AppColors.primary,
+                          size: 22.r,
+                        ),
                       ),
                       title: Text(
                         'Push Notifications',
@@ -341,7 +383,12 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLanguageSegment(String code, String display, String currentCode, ProfileRepositoryImpl repository) {
+  Widget _buildLanguageSegment(
+    String code,
+    String display,
+    String currentCode,
+    ProfileRepositoryImpl repository,
+  ) {
     final isSelected = code == currentCode;
     return GestureDetector(
       onTap: () {
@@ -356,9 +403,15 @@ class SettingsScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(8.r),
-          boxShadow: isSelected 
-             ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
-             : null,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           display,
@@ -390,56 +443,59 @@ class SettingsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         clipBehavior: Clip.antiAlias,
         child: ListTile(
-        onTap: onTap,
-        leading: Container(
-          padding: EdgeInsets.all(10.r),
-          decoration: BoxDecoration(
-            color: AppColors.cardSelectedBg,
-            borderRadius: BorderRadius.circular(12.r),
+          onTap: onTap,
+          leading: Container(
+            padding: EdgeInsets.all(10.r),
+            decoration: BoxDecoration(
+              color: AppColors.cardSelectedBg,
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 22.r),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 22.r),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14.5.sp,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textHeadline,
+          title: Text(
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14.5.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textHeadline,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12.sp,
-            color: AppColors.textMuted,
+          subtitle: Text(
+            subtitle,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12.sp,
+              color: AppColors.textMuted,
+            ),
           ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (trailingText != null)
-              Container(
-                margin: EdgeInsets.only(right: 8.w),
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: AppColors.cardSelectedBg,
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Text(
-                  trailingText,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (trailingText != null)
+                Container(
+                  margin: EdgeInsets.only(right: 8.w),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardSelectedBg,
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Text(
+                    trailingText,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14.r,
+                color: AppColors.textMuted,
               ),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 14.r, color: AppColors.textMuted),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -502,11 +558,17 @@ class SettingsScreen extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () async {
                     if (newCtrl.text.length < 6) {
-                      DynamicIslandToast.showError(context, 'Password must be at least 6 characters.');
+                      DynamicIslandToast.showError(
+                        context,
+                        'Password must be at least 6 characters.',
+                      );
                       return;
                     }
                     if (newCtrl.text != confirmCtrl.text) {
-                      DynamicIslandToast.showError(context, 'New passwords do not match.');
+                      DynamicIslandToast.showError(
+                        context,
+                        'New passwords do not match.',
+                      );
                       return;
                     }
 
@@ -517,7 +579,10 @@ class SettingsScreen extends StatelessWidget {
 
                     if (ctx.mounted) {
                       Navigator.of(ctx).pop();
-                      DynamicIslandToast.showSuccess(context, 'Password updated successfully!');
+                      DynamicIslandToast.showSuccess(
+                        context,
+                        'Password updated successfully!',
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -629,12 +694,17 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 decoration: InputDecoration(
                   hintText: '• • • •',
-                  hintStyle: TextStyle(color: AppColors.textMuted, fontSize: 22.sp),
+                  hintStyle: TextStyle(
+                    color: AppColors.textMuted,
+                    fontSize: 22.sp,
+                  ),
                   filled: true,
                   fillColor: AppColors.background,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16.r),
-                    borderSide: const BorderSide(color: AppColors.borderUnselected),
+                    borderSide: const BorderSide(
+                      color: AppColors.borderUnselected,
+                    ),
                   ),
                 ),
               ),
@@ -646,7 +716,10 @@ class SettingsScreen extends StatelessWidget {
                   onPressed: () {
                     repository.toggleTwoFactorAuth(true);
                     Navigator.of(ctx).pop();
-                    DynamicIslandToast.showSuccess(context, '2FA Authentication enabled!');
+                    DynamicIslandToast.showSuccess(
+                      context,
+                      '2FA Authentication enabled!',
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.buttonBackground,

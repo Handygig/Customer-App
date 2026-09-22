@@ -207,10 +207,8 @@ class _SearchTabState extends State<SearchTab> {
       body: Stack(
         children: [
           // 1. Full-Screen Map Area (Base Layer)
-          Positioned.fill(
-            child: _buildMapView(providers),
-          ),
-          
+          Positioned.fill(child: _buildMapView(providers)),
+
           // 2. Floating Top Elements (Search Bar & Categories)
           Positioned(
             top: 0,
@@ -309,7 +307,10 @@ class _SearchTabState extends State<SearchTab> {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.75),
                   borderRadius: BorderRadius.circular(24.r),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 1.5),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    width: 1.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
@@ -319,223 +320,223 @@ class _SearchTabState extends State<SearchTab> {
                   ],
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Stack(
                   children: [
-                    // Service Type Row (Pickup style)
-                    Row(
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Transform.rotate(
-                          angle: -0.6,
-                          child: Icon(
-                            Icons.navigation_rounded,
-                            color: AppColors.primary,
-                            size: 20.r,
-                          ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'SERVICE TYPE',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 9.5.sp,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textMuted,
-                                  letterSpacing: 0.5,
-                                ),
+                        // Service Type Row (Pickup style)
+                        Row(
+                          children: [
+                            Transform.rotate(
+                              angle: -0.6,
+                              child: Icon(
+                                Icons.navigation_rounded,
+                                color: AppColors.primary,
+                                size: 20.r,
                               ),
-                              SizedBox(
-                                height: 24.h,
-                                child: TextField(
-                                  controller: _serviceController,
-                                  onChanged: (_) => setState(() {}),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textHeadline,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText:
-                                        'Search service type (e.g. Plumbing, Cleaning)',
-                                    hintStyle: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.5.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textMuted.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                    ),
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_serviceController.text.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              _serviceController.clear();
-                              setState(() {});
-                            },
-                            child: Icon(
-                              Icons.close_rounded,
-                              size: 18.r,
-                              color: AppColors.textMuted,
                             ),
-                          ),
-                      ],
-                    ),
-
-                    // Divider Line
-                    Padding(
-                      padding: EdgeInsets.only(
-                        left: 32.w,
-                        top: 6.h,
-                        bottom: 6.h,
-                      ),
-                      child: Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.borderUnselected,
-                      ),
-                    ),
-
-                    // Location Row (Drop off style)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_rounded,
-                          color: Colors.redAccent,
-                          size: 20.r,
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'LOCATION',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 9.5.sp,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textMuted,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              SizedBox(
-                                height: 24.h,
-                                child: TextField(
-                                  controller: _locationController,
-                                  onChanged: (_) => setState(() {}),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textHeadline,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText:
-                                        'Search location or area (e.g. Downtown)',
-                                    hintStyle: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.5.sp,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textMuted.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                    ),
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (_locationController.text.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              _locationController.clear();
-                              setState(() {});
-                            },
-                            child: Icon(
-                              Icons.close_rounded,
-                              size: 18.r,
-                              color: AppColors.textMuted,
-                            ),
-                          )
-                        else
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              _locationController.text = 'Downtown';
-                              setState(() {});
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.cardSelectedBg,
-                                borderRadius: BorderRadius.circular(8.r),
-                                border: Border.all(
-                                  color: AppColors.borderUnselected,
-                                ),
-                              ),
-                              child: Row(
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.my_location_rounded,
-                                    size: 12.r,
-                                    color: AppColors.primary,
-                                  ),
-                                  SizedBox(width: 4.w),
                                   Text(
-                                    'Near me',
+                                    'SERVICE TYPE',
                                     style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary,
+                                      fontSize: 9.5.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textMuted,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 24.h,
+                                    child: TextField(
+                                      controller: _serviceController,
+                                      onChanged: (_) => setState(() {}),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13.5.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textHeadline,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            'Search service type (e.g. Plumbing, Cleaning)',
+                                        hintStyle: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12.5.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textMuted.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                        ),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
+                            if (_serviceController.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _serviceController.clear();
+                                  setState(() {});
+                                },
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 18.r,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        // Divider Line
+                        Padding(
+                          padding: EdgeInsets.only(
+                            left: 32.w,
+                            top: 6.h,
+                            bottom: 6.h,
                           ),
+                          child: Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: AppColors.borderUnselected,
+                          ),
+                        ),
+
+                        // Location Row (Drop off style)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_rounded,
+                              color: Colors.redAccent,
+                              size: 20.r,
+                            ),
+                            SizedBox(width: 12.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'LOCATION',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 9.5.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textMuted,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 24.h,
+                                    child: TextField(
+                                      controller: _locationController,
+                                      onChanged: (_) => setState(() {}),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13.5.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textHeadline,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText:
+                                            'Search location or area (e.g. Downtown)',
+                                        hintStyle: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12.5.sp,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.textMuted.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                        ),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (_locationController.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _locationController.clear();
+                                  setState(() {});
+                                },
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 18.r,
+                                  color: AppColors.textMuted,
+                                ),
+                              )
+                            else
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  _locationController.text = 'Downtown';
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.cardSelectedBg,
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: AppColors.borderUnselected,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.my_location_rounded,
+                                        size: 12.r,
+                                        color: AppColors.primary,
+                                      ),
+                                      SizedBox(width: 4.w),
+                                      Text(
+                                        'Near me',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 11.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
 
-                // Dotted connecting line between icons
-                Positioned(
-                  left: 9.w,
-                  top: 22.h,
-                  child: Column(
-                    children: List.generate(
-                      3,
-                      (index) => Container(
-                        width: 2.w,
-                        height: 3.h,
-                        margin: EdgeInsets.symmetric(vertical: 1.5.h),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade400,
-                          borderRadius: BorderRadius.circular(1.r),
+                    // Dotted connecting line between icons
+                    Positioned(
+                      left: 9.w,
+                      top: 22.h,
+                      child: Column(
+                        children: List.generate(
+                          3,
+                          (index) => Container(
+                            width: 2.w,
+                            height: 3.h,
+                            margin: EdgeInsets.symmetric(vertical: 1.5.h),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade400,
+                              borderRadius: BorderRadius.circular(1.r),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
             ),
           ),
         ],
@@ -571,7 +572,10 @@ class _SearchTabState extends State<SearchTab> {
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 8.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
@@ -582,36 +586,72 @@ class _SearchTabState extends State<SearchTab> {
                           ? AppColors.primary
                           : Colors.white.withValues(alpha: 0.5),
                     ),
-                    boxShadow: isSelected ? [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ] : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      )
-                    ],
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                   ),
                   child: Row(
                     children: [
                       // Optional: add a small icon for the categories
-                      if (category == 'Plumbing') Icon(Icons.plumbing_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
-                      if (category == 'Cleaning') Icon(Icons.cleaning_services_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
-                      if (category == 'Electrical') Icon(Icons.electrical_services_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
-                      if (category == 'Painting') Icon(Icons.format_paint_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
-                      if (category == 'Gardening') Icon(Icons.yard_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
-                      if (category == 'HVAC') Icon(Icons.hvac_rounded, size: 14.r, color: isSelected ? Colors.white : AppColors.primary),
+                      if (category == 'Plumbing')
+                        Icon(
+                          Icons.plumbing_rounded,
+                          size: 14.r,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                        ),
+                      if (category == 'Cleaning')
+                        Icon(
+                          Icons.cleaning_services_rounded,
+                          size: 14.r,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                        ),
+                      if (category == 'Electrical')
+                        Icon(
+                          Icons.electrical_services_rounded,
+                          size: 14.r,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                        ),
+                      if (category == 'Painting')
+                        Icon(
+                          Icons.format_paint_rounded,
+                          size: 14.r,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                        ),
+                      if (category == 'Gardening')
+                        Icon(
+                          Icons.yard_rounded,
+                          size: 14.r,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                        ),
+                      if (category == 'HVAC')
+                        Icon(
+                          Icons.hvac_rounded,
+                          size: 14.r,
+                          color: isSelected ? Colors.white : AppColors.primary,
+                        ),
                       if (category != 'All') SizedBox(width: 6.w),
                       Text(
                         category,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
-                          color: isSelected ? Colors.white : AppColors.textHeadline,
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w700,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textHeadline,
                         ),
                       ),
                     ],
@@ -935,11 +975,7 @@ class _SearchTabState extends State<SearchTab> {
   // ---------------------------------------------------------------------------
   Widget _buildProviderDetailSheet(ServiceProvider provider) {
     return Container(
-      margin: EdgeInsets.only(
-        left: 16.w, 
-        right: 16.w, 
-        bottom: 32.h,
-      ),
+      margin: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 32.h),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32.r),
         child: BackdropFilter(
@@ -977,7 +1013,7 @@ class _SearchTabState extends State<SearchTab> {
                   ),
                 ),
                 SizedBox(height: 24.h),
-                
+
                 // Profile Section
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1060,9 +1096,9 @@ class _SearchTabState extends State<SearchTab> {
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 24.h),
-                
+
                 // Rate and Action Row
                 Row(
                   children: [
@@ -1102,7 +1138,10 @@ class _SearchTabState extends State<SearchTab> {
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            DynamicIslandToast.showSuccess(context, 'Contacting ${provider.name}...');
+                            DynamicIslandToast.showSuccess(
+                              context,
+                              'Contacting ${provider.name}...',
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,

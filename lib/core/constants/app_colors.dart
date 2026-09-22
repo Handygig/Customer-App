@@ -9,10 +9,10 @@ class AppColors {
   // #D4DE95 - Bright Lime Accent
   // #3D4127 - Deep Dark Olive
 
-  static const Color primary = Color(0xFF636B2F);       // #636B2F
-  static const Color sage = Color(0xFFBAC095);          // #BAC095
-  static const Color accentLime = Color(0xFFD4DE95);     // #D4DE95
-  static const Color primaryDark = Color(0xFF3D4127);     // #3D4127
+  static const Color primary = Color(0xFF636B2F); // #636B2F
+  static const Color sage = Color(0xFFBAC095); // #BAC095
+  static const Color accentLime = Color(0xFFD4DE95); // #D4DE95
+  static const Color primaryDark = Color(0xFF3D4127); // #3D4127
 
   static const Color primaryLight = Color(0xFFBAC095);
   static const Color primaryAccent = Color(0xFF636B2F);
@@ -85,4 +85,10 @@ class AppColors {
 
   static Color iconColor(BuildContext context) =>
       isDark(context) ? accentLime : primary;
+
+  // Semantic/alert colors matching Equisport structure
+  static const Color errorColor = Color(0xFFE63946);
+  static const Color warningColor = Color(0xFFFFC811);
+  static const Color successColor = Color(0xFF14AE5C);
+  static const Color infoColor = Color(0xFF42A5F5);
 }
