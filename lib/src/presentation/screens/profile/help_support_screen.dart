@@ -133,41 +133,45 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
             // Live Chat Tile
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
                 borderRadius: BorderRadius.circular(18.r),
                 border: Border.all(color: AppColors.borderUnselected),
               ),
-              child: ListTile(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  DynamicIslandToast.showSuccess(context, 'Connecting to live chat agent...');
-                },
-                leading: Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardSelectedBg,
-                    borderRadius: BorderRadius.circular(12.r),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18.r),
+                clipBehavior: Clip.antiAlias,
+                child: ListTile(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    DynamicIslandToast.showSuccess(context, 'Connecting to live chat agent...');
+                  },
+                  leading: Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardSelectedBg,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(Icons.chat_bubble_outline_rounded,
+                        color: AppColors.primary, size: 22.r),
                   ),
-                  child: Icon(Icons.chat_bubble_outline_rounded,
-                      color: AppColors.primary, size: 22.r),
-                ),
-                title: Text(
-                  'Start Live Support Chat',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textHeadline,
+                  title: Text(
+                    'Start Live Support Chat',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textHeadline,
+                    ),
                   ),
-                ),
-                subtitle: Text(
-                  'Average response time: 2 mins',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12.sp,
-                    color: AppColors.textMuted,
+                  subtitle: Text(
+                    'Average response time: 2 mins',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      color: AppColors.textMuted,
+                    ),
                   ),
+                  trailing: Icon(Icons.arrow_forward_ios_rounded,
+                      size: 14.r, color: AppColors.textMuted),
                 ),
-                trailing: Icon(Icons.arrow_forward_ios_rounded,
-                    size: 14.r, color: AppColors.textMuted),
               ),
             ),
             SizedBox(height: 28.h),
