@@ -382,13 +382,16 @@ class ProfileTab extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.borderUnselected),
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: onTap,
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
         leading: Container(
           padding: EdgeInsets.all(10.r),
           decoration: BoxDecoration(
@@ -423,6 +426,7 @@ class ProfileTab extends StatelessWidget {
           size: 14.r,
           color: AppColors.borderUnselected,
         ),
+      ),
       ),
     );
   }

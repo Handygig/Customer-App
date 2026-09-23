@@ -67,13 +67,13 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 12.h),
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
                   child: Material(
-                    color: Colors.transparent,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
+                    clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       leading: Container(
                         padding: EdgeInsets.all(10.r),
@@ -126,13 +126,13 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 12.h),
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
                   child: Material(
-                    color: Colors.transparent,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
+                    clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       leading: Container(
                         padding: EdgeInsets.all(10.r),
@@ -183,13 +183,13 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 12.h),
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
                   child: Material(
-                    color: Colors.transparent,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
+                    clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       leading: Container(
                         padding: EdgeInsets.all(10.r),
@@ -263,13 +263,13 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 12.h),
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
                   child: Material(
-                    color: Colors.transparent,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
+                    clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       leading: Container(
                         padding: EdgeInsets.all(10.r),
@@ -317,13 +317,13 @@ class SettingsScreen extends StatelessWidget {
                 Container(
                   margin: EdgeInsets.only(bottom: 12.h),
                   decoration: BoxDecoration(
-                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderUnselected),
                   ),
                   child: Material(
-                    color: Colors.transparent,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16.r),
+                    clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       leading: Container(
                         padding: EdgeInsets.all(10.r),
@@ -435,13 +435,13 @@ class SettingsScreen extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: AppColors.borderUnselected),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
+        clipBehavior: Clip.antiAlias,
         child: ListTile(
           onTap: onTap,
           leading: Container(
