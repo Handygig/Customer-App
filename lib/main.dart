@@ -1,13 +1,15 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:customer_app/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/config/router/app_router.dart';
 import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,8 +17,9 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await initServiceLocator();
   runApp(const CustomerApp());
 }
@@ -34,6 +37,12 @@ class CustomerApp extends StatelessWidget {
         return MultiBlocProvider(
           providers: [
             BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
+            BlocProvider<ServiceCategoryCubit>(
+              create: (context) => sl<ServiceCategoryCubit>()..loadCategories(),
+            ),
+            BlocProvider<PropertyCubit>(
+              create: (context) => sl<PropertyCubit>()..loadProperties(),
+            ),
           ],
           child: ValueListenableBuilder<ThemeMode>(
             valueListenable: themeModeNotifier,

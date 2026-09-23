@@ -1,20 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
-import 'package:customer_app/src/domain/entities/profile/property.dart';
+import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class PropertiesManagementScreen extends StatelessWidget {
   const PropertiesManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final repository = ProfileRepositoryImpl();
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -37,74 +38,92 @@ class PropertiesManagementScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<List<Property>>(
-        stream: repository.watchProperties(),
-        builder: (context, snapshot) {
-          final properties = snapshot.data ?? [];
+      body: BlocConsumer<PropertyCubit, PropertyState>(
+        listener: (context, state) {
+          if (state is PropertyActionSuccess) {
+            DynamicIslandToast.showSuccess(context, state.message);
+          } else if (state is PropertyError) {
+            DynamicIslandToast.showError(context, state.message);
+          }
+        },
+        builder: (context, state) {
+          final properties = context.read<PropertyCubit>().currentProperties;
+          final isLoading = state is PropertyLoading && properties.isEmpty;
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your Registered Properties (${properties.length})',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textHeadline,
-                  ),
-                ),
-                SizedBox(height: 14.h),
-                if (properties.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.all(32.w),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24.r),
-                      border: Border.all(color: AppColors.borderUnselected),
+          if (isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => context.read<PropertyCubit>().loadProperties(forceRefresh: true),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(20.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your Registered Properties (${properties.length})',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textHeadline,
                     ),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(16.r),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardSelectedBg,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.location_city_rounded,
-                            size: 40.r,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        SizedBox(height: 16.h),
-                        Text(
-                          'No Properties Added Yet',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 17.sp,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textHeadline,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        Text(
-                          'Add your first property to schedule home services easily.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13.sp,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  ...properties.map(
-                    (prop) => _buildPropertyTile(context, prop, repository),
                   ),
-              ],
+                  SizedBox(height: 14.h),
+                  if (properties.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(32.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24.r),
+                        border: Border.all(color: AppColors.borderUnselected),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(16.r),
+                            decoration: const BoxDecoration(
+                              color: AppColors.cardSelectedBg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.location_city_rounded,
+                              size: 40.r,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+                          Text(
+                            'No Properties Added Yet',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 17.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textHeadline,
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            'Add your first property to schedule home services easily.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.sp,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ...properties.map(
+                      (prop) => _buildPropertyTile(context, prop),
+                    ),
+                ],
+              ),
             ),
           );
         },
@@ -154,23 +173,26 @@ class PropertiesManagementScreen extends StatelessWidget {
 
   Widget _buildPropertyTile(
     BuildContext context,
-    Property property,
-    ProfileRepositoryImpl repository,
+    PropertyEntity property,
   ) {
     IconData typeIcon = Icons.home_rounded;
-    String typeLabel = 'House';
-    if (property.type == PropertyType.apartment) {
+    String typeLabel = property.label;
+    final lower = property.label.toLowerCase();
+    if (lower.contains('apartment')) {
       typeIcon = Icons.apartment_rounded;
       typeLabel = 'Apartment';
-    } else if (property.type == PropertyType.villa) {
+    } else if (lower.contains('villa')) {
       typeIcon = Icons.villa_rounded;
       typeLabel = 'Villa';
-    } else if (property.type == PropertyType.office) {
+    } else if (lower.contains('office')) {
       typeIcon = Icons.domain_rounded;
       typeLabel = 'Office';
+    } else if (lower.contains('home') || lower.contains('house')) {
+      typeIcon = Icons.home_rounded;
+      typeLabel = 'Home';
     }
 
-    final isPrimary = property.isPrimary;
+    final isPrimary = property.isDefault;
 
     return Container(
       margin: EdgeInsets.only(bottom: 20.h),
@@ -204,7 +226,7 @@ class PropertiesManagementScreen extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   // Background Property Photo
-                  _buildPropertyImage(property.imagePath, typeIcon),
+                  _buildPropertyImage(null, typeIcon),
 
                   // Top & Bottom Subtle Gradients for visual contrast
                   Container(
@@ -345,7 +367,6 @@ class PropertiesManagementScreen extends StatelessWidget {
                           onTap: () => _confirmDeleteProperty(
                             context,
                             property,
-                            repository,
                           ),
                           borderRadius: BorderRadius.circular(20.r),
                           child: Container(
@@ -472,7 +493,7 @@ class PropertiesManagementScreen extends StatelessWidget {
                         InkWell(
                           onTap: () {
                             HapticFeedback.lightImpact();
-                            repository.setPrimaryProperty(property.id);
+                            context.read<PropertyCubit>().setDefaultProperty(property.id);
                           },
                           borderRadius: BorderRadius.circular(8.r),
                           child: Padding(
@@ -614,8 +635,7 @@ class PropertiesManagementScreen extends StatelessWidget {
 
   void _confirmDeleteProperty(
     BuildContext context,
-    Property property,
-    ProfileRepositoryImpl repository,
+    PropertyEntity property,
   ) {
     HapticFeedback.mediumImpact();
     showModalBottomSheet(
@@ -707,7 +727,7 @@ class PropertiesManagementScreen extends StatelessWidget {
                           onPressed: () async {
                             Navigator.of(ctx).pop();
                             HapticFeedback.lightImpact();
-                            await repository.deleteProperty(property.id);
+                            await context.read<PropertyCubit>().deleteProperty(property.id);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red.shade600,

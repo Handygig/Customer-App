@@ -19,4 +19,11 @@ class AppEndpoints {
   static const String customerRegister = '/customer/register';
   static const String customerLogin = '/customer/login';
   static const String customerCompleteProfile = '/customer/complete-profile';
+
+  // Services endpoints
+  static const String customerServiceCategories = '/customer/service-categories';
+
+  // Properties endpoints
+  static const String customerProperties = '/customer/properties';
+  static String customerProperty(int id) => '/customer/properties/$id';
 }

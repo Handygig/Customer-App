@@ -8,7 +8,7 @@ import 'package:customer_app/src/presentation/screens/auth/customer_details_scre
 import 'package:customer_app/src/presentation/screens/auth/add_properties_screen.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
-import 'package:customer_app/src/domain/entities/auth/otp_session_entity.dart';
+
 
 class AppRouter {
   AppRouter._();
@@ -35,11 +35,12 @@ class AppRouter {
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>;
           final phoneNumber = extra['phoneNumber'] as String;
-          final otpSession = extra['otpSession'] as OtpSessionEntity;
+          final verificationId = extra['verificationId'] as String;
+          final forceResendingToken = extra['forceResendingToken'] as int?;
           return OtpVerificationScreen(
             phoneNumber: phoneNumber,
-            verificationId: otpSession.verificationId,
-            forceResendingToken: otpSession.forceResendingToken,
+            verificationId: verificationId,
+            forceResendingToken: forceResendingToken,
           );
         },
       ),
