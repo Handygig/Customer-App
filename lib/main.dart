@@ -10,6 +10,7 @@ import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +43,9 @@ class CustomerApp extends StatelessWidget {
             ),
             BlocProvider<PropertyCubit>(
               create: (context) => sl<PropertyCubit>()..loadProperties(),
+            ),
+            BlocProvider<CardCubit>(
+              create: (context) => sl<CardCubit>()..loadCards(),
             ),
           ],
           child: ValueListenableBuilder<ThemeMode>(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
@@ -7,12 +8,15 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
 import 'package:customer_app/src/domain/entities/profile/property.dart';
-import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
+import 'package:customer_app/src/domain/entities/payments/card_entity.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/screens/profile/edit_profile_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/help_support_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/settings_screen.dart';
+import 'package:customer_app/src/presentation/screens/profile/rewards_referral_screen.dart';
 
 class ProfileTab extends StatelessWidget {
   final VoidCallback? onAddPropertyTap;
@@ -282,26 +286,18 @@ class ProfileTab extends StatelessWidget {
                         },
                       ),
 
-                      // Payment Methods Stream Builder Subtitle
-                      StreamBuilder<List<PaymentCard>>(
-                        stream: repository.watchPaymentCards(),
-                        builder: (context, snapshot) {
-                          final cards = snapshot.data ?? [];
-                          final defaultCard = cards.firstWhere(
-                            (c) => c.isDefault,
-                            orElse: () => cards.isNotEmpty
-                                ? cards.first
-                                : const PaymentCard(
-                                    id: '0',
-                                    cardholderName: '',
-                                    lastFourDigits: '4920',
-                                    expiryDate: '',
-                                    brand: CardBrand.visa,
-                                  ),
-                          );
+                      // Payment Methods Bloc Builder Subtitle
+                      BlocBuilder<CardCubit, CardState>(
+                        builder: (context, cardState) {
+                          final cards = cardState is CardLoaded
+                              ? cardState.cards
+                              : context.read<CardCubit>().cards;
+                          final CardEntity? defaultCard = cards.isNotEmpty
+                              ? cards.firstWhere((c) => c.isDefault, orElse: () => cards.first)
+                              : null;
                           final subText = cards.isEmpty
                               ? 'No cards saved'
-                              : '${defaultCard.brand.name.toUpperCase()} ending ${defaultCard.lastFourDigits}';
+                              : '${defaultCard!.brand.name.toUpperCase()} ending ${defaultCard.lastFourDigits}';
 
                           return _buildOptionTile(
                             icon: Icons.credit_card_rounded,
@@ -316,6 +312,23 @@ class ProfileTab extends StatelessWidget {
                                 ),
                               );
                             },
+                          );
+                        },
+                      ),
+
+                      // Rewards & Wallet Tile
+                      _buildOptionTile(
+                        icon: Icons.card_giftcard_rounded,
+                        title: 'Rewards & Wallet',
+                        subtitle:
+                            '${profile.rewardPoints} pts • \${profile.walletBalance.toStringAsFixed(2)} balance',
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const RewardsReferralScreen(),
+                            ),
                           );
                         },
                       ),
