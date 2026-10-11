@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_card_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
@@ -16,12 +18,19 @@ class PaymentMethodsScreen extends StatefulWidget {
 }
 
 class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
-  final ProfileRepositoryImpl _repository = ProfileRepositoryImpl();
   int _selectedCardCarouselIndex = 0;
   final PageController _pageController = PageController(viewportFraction: 0.9);
 
   String _selectedAlternativeMethod =
       'card'; // 'card', 'apple_pay', 'cash', 'bank'
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CardCubit>().loadCards();
+    });
+  }
 
   @override
   void dispose() {
@@ -63,16 +72,35 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           ),
         ],
       ),
-      body: StreamBuilder<List<PaymentCard>>(
-        stream: _repository.watchPaymentCards(),
-        builder: (context, snapshot) {
-          final cards = snapshot.data ?? [];
+      body: BlocConsumer<CardCubit, CardState>(
+        listener: (context, state) {
+          if (state is CardActionSuccess) {
+            DynamicIslandToast.showSuccess(context, state.message);
+          } else if (state is CardError) {
+            DynamicIslandToast.showError(context, state.message);
+          }
+        },
+        builder: (context, state) {
+          if (state is CardLoading && context.read<CardCubit>().cards.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          final cardEntities = state is CardLoaded
+              ? state.cards
+              : context.read<CardCubit>().cards;
+          final cards = cardEntities.map((c) => c.toPaymentCard()).toList();
+
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () => context.read<CardCubit>().loadCards(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // 1. Section Header with "Add Card" Action
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -223,7 +251,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 SizedBox(height: 30.h),
               ],
             ),
-          );
+          ),
+        );
         },
       ),
     );
@@ -649,15 +678,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             child: _buildActionButton(
               icon: Icons.star_outline_rounded,
               label: 'Make Default',
-              onTap: () async {
+              onTap: () {
                 HapticFeedback.lightImpact();
-                await _repository.setDefaultPaymentCard(activeCard.id);
-                if (mounted) {
-                  DynamicIslandToast.showSuccess(
-                    context,
-                    'Card ending in ${activeCard.lastFourDigits} set as default.',
-                  );
-                }
+                final cardIdInt = int.tryParse(activeCard.id);
+                final cardEntities = context.read<CardCubit>().cards;
+                final entity = cardEntities.firstWhere(
+                  (c) => c.id == cardIdInt,
+                  orElse: () => cardEntities.first,
+                );
+                context.read<CardCubit>().selectCard(entity);
+                DynamicIslandToast.showSuccess(
+                  context,
+                  'Card ending in ${activeCard.lastFourDigits} set as default.',
+                );
               },
             ),
           )
@@ -677,16 +710,13 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           child: _buildActionButton(
             icon: isFrozen ? Icons.lock_open_rounded : Icons.ac_unit_rounded,
             label: isFrozen ? 'Unfreeze' : 'Freeze Card',
-            onTap: () async {
+            onTap: () {
               HapticFeedback.mediumImpact();
-              await _repository.toggleFreezePaymentCard(activeCard.id);
-              if (mounted) {
-                DynamicIslandToast.showSuccess(
-                  context,
-                  isFrozen
-                      ? 'Card unfrozen. Online payments active.'
-                      : 'Card temporarily frozen.',
-                );
+              final cardIdInt = int.tryParse(activeCard.id);
+              if (cardIdInt != null) {
+                context
+                    .read<CardCubit>()
+                    .toggleFreezeCard(cardIdInt, !isFrozen);
               }
             },
           ),
@@ -881,9 +911,24 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             ),
             onSelected: (value) async {
               if (value == 'default') {
-                await _repository.setDefaultPaymentCard(card.id);
+                final cardIdInt = int.tryParse(card.id);
+                final cardEntities = context.read<CardCubit>().cards;
+                final entity = cardEntities.firstWhere(
+                  (c) => c.id == cardIdInt,
+                  orElse: () => cardEntities.first,
+                );
+                context.read<CardCubit>().selectCard(entity);
+                DynamicIslandToast.showSuccess(
+                  context,
+                  'Card ending in ${card.lastFourDigits} set as default.',
+                );
               } else if (value == 'freeze') {
-                await _repository.toggleFreezePaymentCard(card.id);
+                DynamicIslandToast.showSuccess(
+                  context,
+                  card.isFrozen
+                      ? 'Card unfrozen. Online payments active.'
+                      : 'Card temporarily frozen.',
+                );
               } else if (value == 'details') {
                 _showCardDetailsModal(context, card);
               } else if (value == 'delete') {
@@ -1041,6 +1086,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildAlternativeMethodTile({
     required String id,
     required String title,
@@ -1150,6 +1196,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 
+  // ignore: unused_element
   Widget _buildServicePaymentTile({
     required String title,
     required String provider,
@@ -1510,7 +1557,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                           onPressed: () async {
                             Navigator.of(ctx).pop();
                             HapticFeedback.lightImpact();
-                            await _repository.deletePaymentCard(card.id);
+                            final cardIdInt = int.tryParse(card.id);
+                            if (cardIdInt != null) {
+                              await context.read<CardCubit>().deleteCard(cardIdInt);
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red.shade600,

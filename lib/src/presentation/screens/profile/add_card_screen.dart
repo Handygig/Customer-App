@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class AddCardScreen extends StatefulWidget {
@@ -143,34 +144,26 @@ class _AddCardScreenState extends State<AddCardScreen>
         ? rawNumber.substring(rawNumber.length - 4)
         : (isEditing ? widget.cardToEdit!.lastFourDigits : '4920');
 
-    final card = PaymentCard(
-      id: isEditing
-          ? widget.cardToEdit!.id
-          : 'card_${DateTime.now().millisecondsSinceEpoch}',
-      cardholderName: name,
-      lastFourDigits: lastFour,
-      expiryDate: expiry,
-      brand: _detectedBrand,
-      isDefault: _isDefault,
-      cardLimit: isEditing ? widget.cardToEdit!.cardLimit : 12000.0,
-      gradientColors: _getBrandGradientColors(_detectedBrand),
-      isFrozen: isEditing ? widget.cardToEdit!.isFrozen : false,
-    );
+    final maskedCardNumber = '•••• •••• •••• $lastFour';
 
-    if (isEditing) {
-      await ProfileRepositoryImpl().updatePaymentCard(card);
-    } else {
-      await ProfileRepositoryImpl().addPaymentCard(card);
-    }
+    final success = await context.read<CardCubit>().addCard(
+          cardType: _detectedBrand.name,
+          maskedCardNumber: maskedCardNumber,
+          expiryDate: expiry,
+          cardHolderName: name,
+        );
 
     if (mounted) {
-      DynamicIslandToast.showSuccess(
-        context,
-        isEditing
-            ? '${_detectedBrand.name.toUpperCase()} Card Updated Successfully'
-            : '${_detectedBrand.name.toUpperCase()} Card Added Successfully',
-      );
-      Navigator.of(context).pop();
+      setState(() => _isSubmitting = false);
+      if (success) {
+        DynamicIslandToast.showSuccess(
+          context,
+          isEditing
+              ? '${_detectedBrand.name.toUpperCase()} Card Updated'
+              : '${_detectedBrand.name.toUpperCase()} Card Added Successfully',
+        );
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -178,6 +171,7 @@ class _AddCardScreenState extends State<AddCardScreen>
     DynamicIslandToast.showError(context, message);
   }
 
+  // ignore: unused_element
   List<int> _getBrandGradientColors(CardBrand brand) {
     switch (brand) {
       case CardBrand.visa:

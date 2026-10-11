@@ -31,6 +31,12 @@ import 'package:customer_app/src/domain/repositories/properties/property_reposit
 import 'package:customer_app/src/data/repositories/properties/property_repository_impl.dart';
 import 'package:customer_app/src/domain/usecases/properties/property_usecases.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
+import 'package:customer_app/src/data/data_sources/remote/payments/payment_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/payments/payment_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/payments/payment_repository.dart';
+import 'package:customer_app/src/data/repositories/payments/payment_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/payments/card_usecases.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 
 final sl = GetIt.instance;
@@ -64,6 +70,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<PropertyRemoteDataSource>(
     () => PropertyRemoteDataSourceImpl(sl<Dio>()),
   );
+  sl.registerLazySingleton<PaymentRemoteDataSource>(
+    () => PaymentRemoteDataSourceImpl(sl<Dio>()),
+  );
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -78,6 +87,12 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<PropertyRepository>(
     () => PropertyRepositoryImpl(
       sl<PropertyRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
+  );
+  sl.registerLazySingleton<PaymentRepository>(
+    () => PaymentRepositoryImpl(
+      sl<PaymentRemoteDataSource>(),
       sl<NetworkService>(),
     ),
   );
@@ -126,6 +141,26 @@ Future<void> initServiceLocator() async {
     () => DeletePropertyUseCase(sl<PropertyRepository>()),
   );
 
+  // Payment Usecases
+  sl.registerLazySingleton<GetCardsUseCase>(
+    () => GetCardsUseCase(sl<PaymentRepository>()),
+  );
+  sl.registerLazySingleton<AddCardUseCase>(
+    () => AddCardUseCase(sl<PaymentRepository>()),
+  );
+  sl.registerLazySingleton<DeleteCardUseCase>(
+    () => DeleteCardUseCase(sl<PaymentRepository>()),
+  );
+  sl.registerLazySingleton<SetDefaultCardUseCase>(
+    () => SetDefaultCardUseCase(sl<PaymentRepository>()),
+  );
+  sl.registerLazySingleton<ToggleFreezeCardUseCase>(
+    () => ToggleFreezeCardUseCase(sl<PaymentRepository>()),
+  );
+  sl.registerLazySingleton<PayJobAssignmentUseCase>(
+    () => PayJobAssignmentUseCase(sl<PaymentRepository>()),
+  );
+
   // Profile Usecases
   sl.registerLazySingleton<GetUserProfileUseCase>(
     () => GetUserProfileUseCase(sl<ProfileRepository>()),
@@ -163,6 +198,16 @@ Future<void> initServiceLocator() async {
       sl<AddPropertyUseCase>(),
       sl<UpdatePropertyUseCase>(),
       sl<DeletePropertyUseCase>(),
+    ),
+  );
+  sl.registerFactory<CardCubit>(
+    () => CardCubit(
+      sl<GetCardsUseCase>(),
+      sl<AddCardUseCase>(),
+      sl<DeleteCardUseCase>(),
+      sl<SetDefaultCardUseCase>(),
+      sl<ToggleFreezeCardUseCase>(),
+      sl<PayJobAssignmentUseCase>(),
     ),
   );
 }
