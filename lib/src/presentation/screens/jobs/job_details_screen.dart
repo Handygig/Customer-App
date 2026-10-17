@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
+import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class JobDetailsScreen extends StatelessWidget {
@@ -100,7 +104,7 @@ class JobDetailsScreen extends StatelessWidget {
             ),
 
             // Bottom Action Footer
-            _buildBottomActionBar(context, type, providerName, service, jobId),
+            _buildBottomActionBar(context, type, providerName, service, jobId, job),
           ],
         ),
       ),
@@ -861,6 +865,7 @@ class JobDetailsScreen extends StatelessWidget {
     String providerName,
     String service,
     String jobId,
+    Map<String, dynamic> job,
   ) {
     return Container(
       width: double.infinity,
@@ -908,28 +913,22 @@ class JobDetailsScreen extends StatelessWidget {
             ),
             SizedBox(width: 14.w),
             Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  DynamicIslandToast.showSuccess(
-                    context,
-                    'Estimate Approved Successfully!',
-                  );
-                  Navigator.pop(context);
-                },
+              child: ElevatedButton.icon(
+                onPressed: () => _showPayJobAssignmentModal(context, job),
+                icon: Icon(Icons.payment_rounded, size: 18.r),
+                label: Text(
+                  'Pay & Approve',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryDark,
                   padding: EdgeInsets.symmetric(vertical: 14.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14.r),
-                  ),
-                ),
-                child: Text(
-                  'Approve',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
                   ),
                 ),
               ),
@@ -1791,5 +1790,377 @@ class JobDetailsScreen extends StatelessWidget {
       default:
         return 'Select a rating';
     }
+  }
+
+  void _showPayJobAssignmentModal(
+    BuildContext context,
+    Map<String, dynamic> job,
+  ) {
+    HapticFeedback.mediumImpact();
+    final String service = job['service'] as String? ?? 'Service Assignment';
+    final String provider = job['provider'] as String? ?? 'Assigned Pro';
+    final String price = job['price'] as String? ?? '\$0.00';
+
+    int assignmentId = 1;
+    if (job['assignment_id'] is int) {
+      assignmentId = job['assignment_id'] as int;
+    } else if (job['assignment_id'] is String) {
+      assignmentId = int.tryParse(job['assignment_id'] as String) ?? 1;
+    } else if (job['id'] is int) {
+      assignmentId = job['id'] as int;
+    } else if (job['id'] is String) {
+      final digits = (job['id'] as String).replaceAll(RegExp(r'\D'), '');
+      assignmentId = int.tryParse(digits) ?? 1;
+    }
+
+    final cardCubit = context.read<CardCubit>();
+    cardCubit.loadCards(silent: true);
+
+    int? selectedId = cardCubit.selectedCard?.id ??
+        (cardCubit.cards.isNotEmpty ? cardCubit.cards.first.id : null);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return BlocBuilder<CardCubit, CardState>(
+              bloc: cardCubit,
+              builder: (context, cardState) {
+                final cards = cardCubit.cards;
+                final isLoading = cardState is CardLoading;
+
+                if (selectedId == null && cards.isNotEmpty) {
+                  final active = cards.firstWhere(
+                    (c) => c.isDefault && !c.isFrozen,
+                    orElse: () => cards.firstWhere(
+                      (c) => !c.isFrozen,
+                      orElse: () => cards.first,
+                    ),
+                  );
+                  selectedId = active.id;
+                }
+
+                return Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(28.r),
+                    ),
+                  ),
+                  padding: EdgeInsets.fromLTRB(
+                    20.w,
+                    16.h,
+                    20.w,
+                    MediaQuery.of(context).padding.bottom + 20.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 44.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD6DBBA),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Pay & Complete Job',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F6E6),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              price,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        '$service • $provider',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      Text(
+                        'Select Payment Card',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      if (cards.isEmpty)
+                        Container(
+                          padding: EdgeInsets.all(16.r),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFBFBFB),
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: const Color(0xFFE8ECD8)),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'No payment cards available.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              SizedBox(height: 10.h),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(bottomSheetContext);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const PaymentMethodsScreen(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryDark,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Add Card in Settings',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Flexible(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: cards.length,
+                            separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                            itemBuilder: (context, index) {
+                              final card = cards[index];
+                              final isSelected = selectedId == card.id;
+                              final isFrozen = card.isFrozen;
+
+                              return InkWell(
+                                onTap: isFrozen
+                                    ? null
+                                    : () {
+                                        setModalState(() {
+                                          selectedId = card.id;
+                                        });
+                                      },
+                                borderRadius: BorderRadius.circular(14.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(12.r),
+                                  decoration: BoxDecoration(
+                                    color: isFrozen
+                                        ? const Color(0xFFF3F4F6)
+                                        : (isSelected
+                                            ? const Color(0xFFF3F6E6)
+                                            : Colors.white),
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primaryDark
+                                          : const Color(0xFFE8ECD8),
+                                      width: isSelected ? 1.8 : 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.credit_card_rounded,
+                                        color: isFrozen
+                                            ? Colors.grey
+                                            : AppColors.primaryDark,
+                                        size: 24.r,
+                                      ),
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  '${card.cardType.toUpperCase()} •••• ${card.lastFourDigits}',
+                                                  style: GoogleFonts
+                                                      .plusJakartaSans(
+                                                    fontSize: 13.5.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: isFrozen
+                                                        ? Colors.grey
+                                                        : AppColors.primaryDark,
+                                                  ),
+                                                ),
+                                                if (card.isDefault) ...[
+                                                  SizedBox(width: 6.w),
+                                                  Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                      horizontal: 6.w,
+                                                      vertical: 2.h,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          AppColors.primaryDark,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        6.r,
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'DEFAULT',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 9.sp,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            SizedBox(height: 2.h),
+                                            Text(
+                                              isFrozen
+                                                  ? 'Card is Frozen - Unfreeze to use'
+                                                  : 'Expires ${card.expiryDate}',
+                                              style: GoogleFonts
+                                                  .plusJakartaSans(
+                                                fontSize: 11.5.sp,
+                                                color: isFrozen
+                                                    ? Colors.red
+                                                    : AppColors.textMuted,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (isSelected && !isFrozen)
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          color: AppColors.primaryDark,
+                                          size: 20.r,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      SizedBox(height: 20.h),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50.h,
+                        child: ElevatedButton(
+                          onPressed:
+                              (isLoading || selectedId == null || cards.isEmpty)
+                                  ? null
+                                  : () async {
+                                      HapticFeedback.mediumImpact();
+                                      final success = await cardCubit
+                                          .payJobAssignment(
+                                        jobAssignmentId: assignmentId,
+                                        cardId: selectedId!,
+                                      );
+                                      if (context.mounted &&
+                                          bottomSheetContext.mounted) {
+                                        if (success) {
+                                          Navigator.pop(bottomSheetContext);
+                                          DynamicIslandToast.showSuccess(
+                                            context,
+                                            'Payment successful! Assignment completed.',
+                                          );
+                                          Navigator.pop(context);
+                                        } else {
+                                          final err =
+                                              cardCubit.state is CardError
+                                                  ? (cardCubit.state
+                                                          as CardError)
+                                                      .message
+                                                  : 'Payment failed';
+                                          DynamicIslandToast.showError(
+                                            context,
+                                            err,
+                                          );
+                                        }
+                                      }
+                                    },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryDark,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.r),
+                            ),
+                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  height: 20.r,
+                                  width: 20.r,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Confirm & Pay $price',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 }

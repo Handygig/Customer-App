@@ -681,16 +681,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               onTap: () {
                 HapticFeedback.lightImpact();
                 final cardIdInt = int.tryParse(activeCard.id);
-                final cardEntities = context.read<CardCubit>().cards;
-                final entity = cardEntities.firstWhere(
-                  (c) => c.id == cardIdInt,
-                  orElse: () => cardEntities.first,
-                );
-                context.read<CardCubit>().selectCard(entity);
-                DynamicIslandToast.showSuccess(
-                  context,
-                  'Card ending in ${activeCard.lastFourDigits} set as default.',
-                );
+                if (cardIdInt != null) {
+                  context.read<CardCubit>().setDefaultCard(cardIdInt);
+                }
               },
             ),
           )
@@ -912,23 +905,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
             onSelected: (value) async {
               if (value == 'default') {
                 final cardIdInt = int.tryParse(card.id);
-                final cardEntities = context.read<CardCubit>().cards;
-                final entity = cardEntities.firstWhere(
-                  (c) => c.id == cardIdInt,
-                  orElse: () => cardEntities.first,
-                );
-                context.read<CardCubit>().selectCard(entity);
-                DynamicIslandToast.showSuccess(
-                  context,
-                  'Card ending in ${card.lastFourDigits} set as default.',
-                );
+                if (cardIdInt != null) {
+                  context.read<CardCubit>().setDefaultCard(cardIdInt);
+                }
               } else if (value == 'freeze') {
-                DynamicIslandToast.showSuccess(
-                  context,
-                  card.isFrozen
-                      ? 'Card unfrozen. Online payments active.'
-                      : 'Card temporarily frozen.',
-                );
+                final cardIdInt = int.tryParse(card.id);
+                if (cardIdInt != null) {
+                  context
+                      .read<CardCubit>()
+                      .toggleFreezeCard(cardIdInt, !card.isFrozen);
+                }
               } else if (value == 'details') {
                 _showCardDetailsModal(context, card);
               } else if (value == 'delete') {
