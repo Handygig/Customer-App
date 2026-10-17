@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
+import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -70,11 +72,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       gender: _selectedGender,
     );
 
-    await ProfileRepositoryImpl().updateUserProfile(updated);
+    final repository = sl.isRegistered<ProfileRepository>()
+        ? sl<ProfileRepository>()
+        : ProfileRepositoryImpl();
+    final result = await repository.updateUserProfile(updated);
 
     if (mounted) {
-      DynamicIslandToast.showSuccess(context, 'Profile updated successfully!');
-      Navigator.of(context).pop();
+      setState(() => _isSaving = false);
+      result.fold(
+        (failure) {
+          DynamicIslandToast.showError(context, failure.errorMessage);
+        },
+        (_) {
+          DynamicIslandToast.showSuccess(context, 'Profile updated successfully!');
+          Navigator.of(context).pop();
+        },
+      );
     }
   }
 

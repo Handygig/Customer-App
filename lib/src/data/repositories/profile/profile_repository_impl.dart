@@ -1,21 +1,35 @@
 import 'dart:async';
 import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
+import 'package:customer_app/core/constants/app_endpoints.dart';
+import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/core/errors/failures.dart';
+import 'package:customer_app/core/services/dio_client.dart';
+import 'package:customer_app/core/services/network_service.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
 import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
 import 'package:customer_app/src/domain/entities/profile/property.dart';
 import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
-  // Singleton pattern for seamless global state sharing across presentation screens
-  static final ProfileRepositoryImpl _instance =
-      ProfileRepositoryImpl._internal();
-  factory ProfileRepositoryImpl() => _instance;
+  final Dio _dio;
+  final NetworkService? _networkService;
 
-  ProfileRepositoryImpl._internal() {
+  static ProfileRepositoryImpl? _instance;
+
+  factory ProfileRepositoryImpl([Dio? dio, NetworkService? networkService]) {
+    _instance ??= ProfileRepositoryImpl._internal(
+      dio ?? (sl.isRegistered<Dio>() ? sl<Dio>() : DioClient.create()),
+      networkService ??
+          (sl.isRegistered<NetworkService>() ? sl<NetworkService>() : null),
+    );
+    return _instance!;
+  }
+
+  ProfileRepositoryImpl._internal(this._dio, this._networkService) {
     _profileController = StreamController<UserProfile>.broadcast();
     _cardsController = StreamController<List<PaymentCard>>.broadcast();
     _propertiesController = StreamController<List<Property>>.broadcast();
@@ -27,16 +41,16 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   // In-memory reactive state
   UserProfile _profile = const UserProfile(
-    id: 'user_001',
-    firstName: 'Alex',
-    lastName: 'Johnson',
-    email: 'alex.johnson@example.com',
-    phone: '+1 (555) 382-9102',
+    id: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     gender: GenderType.male,
-    membershipTier: 'Gold Member',
-    rewardPoints: 1250,
-    walletBalance: 45.00,
-    referralCode: 'ALEX2026',
+    membershipTier: 'Member',
+    rewardPoints: 0,
+    walletBalance: 0.0,
+    referralCode: '',
     isTwoFactorEnabled: false,
     languageCode: 'en',
     pushNotificationsEnabled: true,
@@ -112,20 +126,81 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Stream<UserProfile> watchUserProfile() async* {
-    yield _profile;
+    if (_profile.id.isNotEmpty) {
+      yield _profile;
+    }
+    unawaited(getUserProfile());
     yield* _profileController.stream;
   }
 
   @override
   Future<Either<Failure, UserProfile>> getUserProfile() async {
-    return Right(_profile);
+    try {
+      final response = await _dio.get(AppEndpoints.userProfile);
+      final data = response.data;
+      final json = (data is Map && data['user'] is Map)
+          ? Map<String, dynamic>.from(data['user'] as Map)
+          : (data is Map
+              ? Map<String, dynamic>.from(data)
+              : <String, dynamic>{});
+
+      if (json.isNotEmpty) {
+        _profile = UserProfile.fromJson(json);
+        _profileController.add(_profile);
+      }
+      return Right(_profile);
+    } on DioException catch (e) {
+      debugPrint('⚠️ [ProfileRepositoryImpl.getUserProfile] DioException: ${e.message}');
+      if (_profile.id.isNotEmpty) {
+        return Right(_profile);
+      }
+      return Left(APIFailure(errorMessage: e.message ?? 'Failed to load profile'));
+    } catch (e, stackTrace) {
+      debugPrint('⚠️ [ProfileRepositoryImpl.getUserProfile] Error: $e');
+      if (_profile.id.isNotEmpty) {
+        return Right(_profile);
+      }
+      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
   }
 
   @override
   Future<Either<Failure, void>> updateUserProfile(UserProfile profile) async {
-    _profile = profile;
-    _profileController.add(_profile);
-    return const Right(null);
+    try {
+      final response = await _dio.put(
+        AppEndpoints.userProfile,
+        data: {
+          'full_name': profile.fullName,
+          'email': profile.email,
+          'phone': profile.phone,
+          'gender': profile.gender.name,
+        },
+      );
+
+      final data = response.data;
+      final json = (data is Map && data['user'] is Map)
+          ? Map<String, dynamic>.from(data['user'] as Map)
+          : (data is Map
+              ? Map<String, dynamic>.from(data)
+              : <String, dynamic>{});
+
+      if (json.isNotEmpty) {
+        _profile = UserProfile.fromJson(json);
+      } else {
+        _profile = profile;
+      }
+      _profileController.add(_profile);
+      return const Right(null);
+    } on DioException catch (e) {
+      debugPrint('⚠️ [ProfileRepositoryImpl.updateUserProfile] DioException: ${e.message}');
+      final String msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : (e.message ?? 'Failed to update profile');
+      return Left(APIFailure(errorMessage: msg));
+    } catch (e, stackTrace) {
+      debugPrint('⚠️ [ProfileRepositoryImpl.updateUserProfile] Error: $e');
+      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
   }
 
   @override

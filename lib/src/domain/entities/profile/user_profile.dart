@@ -81,4 +81,43 @@ class UserProfile {
       memberSinceYear: memberSinceYear ?? this.memberSinceYear,
     );
   }
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final rawFullName = (json['full_name'] ?? '').toString().trim();
+    final parts = rawFullName.isNotEmpty ? rawFullName.split(RegExp(r'\s+')) : <String>[];
+    final firstName = parts.isNotEmpty ? parts.first : '';
+    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
+    final genderStr = (json['gender'] ?? '').toString().trim().toLowerCase();
+    final gender = GenderType.values.firstWhere(
+      (g) => g.name == genderStr,
+      orElse: () => GenderType.male,
+    );
+
+    String memberYear = '2026';
+    if (json['created_at'] != null) {
+      try {
+        memberYear = DateTime.parse(json['created_at'].toString()).year.toString();
+      } catch (_) {}
+    }
+
+    return UserProfile(
+      id: json['id']?.toString() ?? '',
+      firstName: firstName,
+      lastName: lastName,
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      gender: gender,
+      profileImageUrl: json['profile_image']?.toString(),
+      membershipTier: json['membership_tier']?.toString() ?? 'Gold Member',
+      rewardPoints: (json['reward_points'] as num?)?.toInt() ?? 1250,
+      walletBalance: (json['wallet_balance'] as num?)?.toDouble() ?? 45.00,
+      referralCode: json['referral_code']?.toString() ?? 'HANDY2026',
+      isTwoFactorEnabled: json['is_two_factor_enabled'] == true,
+      languageCode: json['language_code']?.toString() ?? 'en',
+      pushNotificationsEnabled: json['push_notifications_enabled'] ?? true,
+      biometricsEnabled: json['biometrics_enabled'] ?? true,
+      memberSinceYear: memberYear,
+    );
+  }
 }

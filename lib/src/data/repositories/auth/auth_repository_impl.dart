@@ -185,6 +185,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, void>> logout() async {
     try {
+      await _remoteDataSource.logout();
       await AuthManager.logout();
       await _remoteDataSource.signOutFirebase();
       return const Right(null);

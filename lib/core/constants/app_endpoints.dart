@@ -19,6 +19,8 @@ class AppEndpoints {
   static const String customerRegister = '/customer/register';
   static const String customerLogin = '/customer/login';
   static const String customerCompleteProfile = '/customer/complete-profile';
+  static const String logout = '/auth/logout';
+  static const String userProfile = '/user/profile';
 
   // Services endpoints
   static const String customerServiceCategories = '/customer/service-categories';

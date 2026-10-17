@@ -4,6 +4,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/di/service_locator.dart';
+import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
+import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
@@ -320,51 +324,84 @@ class _HomeTabState extends State<HomeTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Row(
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 44.r,
-                      height: 44.r,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
-                        color: AppColors.primary,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'A',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w800,
+                child: StreamBuilder<UserProfile>(
+                  stream: (sl.isRegistered<ProfileRepository>()
+                          ? sl<ProfileRepository>()
+                          : ProfileRepositoryImpl())
+                      .watchUserProfile(),
+                  builder: (context, snapshot) {
+                    final firstName = snapshot.data?.firstName.trim() ?? '';
+                    final displayName = firstName.isNotEmpty
+                        ? firstName
+                        : (snapshot.data?.fullName.trim().isNotEmpty == true
+                            ? snapshot.data!.fullName.trim()
+                            : '');
+                    final greeting = displayName.isNotEmpty
+                        ? 'Good Morning, $displayName'
+                        : 'Good Morning';
+                    final initial = displayName.isNotEmpty
+                        ? displayName[0].toUpperCase()
+                        : 'U';
+                    final profileImage = snapshot.data?.profileImageUrl;
+
+                    return Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 44.r,
+                          height: 44.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.primary, width: 2),
+                            color: AppColors.primary,
+                            image: (profileImage != null && profileImage.isNotEmpty)
+                                ? DecorationImage(
+                                    image: NetworkImage(profileImage),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
+                          child: (profileImage == null || profileImage.isEmpty)
+                              ? Center(
+                                  child: Text(
+                                    initial,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white,
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Good Morning, Alex',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: AppColors.headlineColor(context),
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      greeting,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: AppColors.headlineColor(context),
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text('👋', style: TextStyle(fontSize: 14.sp)),
+                                ],
                               ),
-                              SizedBox(width: 4.w),
-                              Text('👋', style: TextStyle(fontSize: 14.sp)),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
 

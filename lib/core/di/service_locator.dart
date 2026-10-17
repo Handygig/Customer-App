@@ -96,7 +96,9 @@ Future<void> initServiceLocator() async {
       sl<NetworkService>(),
     ),
   );
-  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl());
+  sl.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(sl<Dio>(), sl<NetworkService>()),
+  );
 
   // Use Cases
   // Auth Usecases
