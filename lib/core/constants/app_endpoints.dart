@@ -27,12 +27,12 @@ class AppEndpoints {
 
   // Properties endpoints
   static const String customerProperties = '/customer/properties';
-  static String customerProperty(int id) => '/customer/properties/';
+  static String customerProperty(int id) => '/customer/properties/$id';
 
   // Payment Cards & Payments endpoints
   static const String customerCards = '/customer/cards';
-  static String customerCard(int id) => '/customer/cards/';
-  static String customerCardDefault(int id) => '/customer/cards//default';
-  static String customerCardFreeze(int id) => '/customer/cards//freeze';
-  static String customerJobAssignmentPay(int id) => '/customer/job-assignments//pay';
+  static String customerCard(int id) => '/customer/cards/$id';
+  static String customerCardDefault(int id) => '/customer/cards/$id/default';
+  static String customerCardFreeze(int id) => '/customer/cards/$id/freeze';
+  static String customerJobAssignmentPay(int id) => '/customer/job-assignments/$id/pay';
 }
