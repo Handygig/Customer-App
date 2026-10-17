@@ -2,6 +2,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const String welcome = '/';
+  static const String languageSelection = '/language-selection';
   static const String mobileNumber = '/mobile-number';
   static const String otpVerification = '/otp-verification';
   static const String customerDetails = '/customer-details';

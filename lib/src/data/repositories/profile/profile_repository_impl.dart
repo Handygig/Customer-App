@@ -9,6 +9,7 @@ import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/core/errors/failures.dart';
 import 'package:customer_app/core/services/dio_client.dart';
 import 'package:customer_app/core/services/network_service.dart';
+import 'package:customer_app/core/services/language_manager.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
 import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
 import 'package:customer_app/src/domain/entities/profile/property.dart';
@@ -135,6 +136,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<Either<Failure, UserProfile>> getUserProfile() async {
+    if (_networkService != null && !await _networkService.isConnected()) {
+      if (_profile.id.isNotEmpty) return Right(_profile);
+      return const Left(NetworkFailure(errorMessage: 'No internet connection'));
+    }
     try {
       final response = await _dio.get(AppEndpoints.userProfile);
       final data = response.data;
@@ -345,6 +350,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<Either<Failure, void>> updateLanguage(String languageCode) async {
+    await LanguageManager.setLanguage(languageCode);
     _profile = _profile.copyWith(languageCode: languageCode);
     _profileController.add(_profile);
     return const Right(null);

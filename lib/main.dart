@@ -14,6 +14,10 @@ import 'package:customer_app/src/presentation/cubits/properties/property_cubit.d
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:customer_app/core/services/auth_manager.dart';
+import 'package:customer_app/core/services/language_manager.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
@@ -25,6 +29,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initServiceLocator();
+  await AuthManager.init();
+  await LanguageManager.init();
   runApp(const CustomerApp());
 }
 
@@ -54,16 +60,32 @@ class CustomerApp extends StatelessWidget {
               create: (context) => sl<JobRequestCubit>()..loadJobRequests(),
             ),
           ],
-          child: ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeModeNotifier,
-            builder: (context, mode, child) {
-              return MaterialApp.router(
-                title: 'Customer App',
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: mode,
-                routerConfig: AppRouter.router,
+          child: ValueListenableBuilder<Locale>(
+            valueListenable: LanguageManager.localeNotifier,
+            builder: (context, locale, _) {
+              return ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeModeNotifier,
+                builder: (context, mode, child) {
+                  return MaterialApp.router(
+                    title: 'Customer App',
+                    debugShowCheckedModeBanner: false,
+                    theme: AppTheme.lightTheme,
+                    darkTheme: AppTheme.darkTheme,
+                    themeMode: mode,
+                    locale: locale,
+                    supportedLocales: const [
+                      Locale('en'),
+                      Locale('si'),
+                      Locale('ta'),
+                    ],
+                    localizationsDelegates: const [
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    routerConfig: AppRouter.router,
+                  );
+                },
               );
             },
           ),
