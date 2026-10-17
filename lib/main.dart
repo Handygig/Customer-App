@@ -12,6 +12,7 @@ import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,6 +49,9 @@ class CustomerApp extends StatelessWidget {
             ),
             BlocProvider<CardCubit>(
               create: (context) => sl<CardCubit>()..loadCards(),
+            ),
+            BlocProvider<JobRequestCubit>(
+              create: (context) => sl<JobRequestCubit>()..loadJobRequests(),
             ),
           ],
           child: ValueListenableBuilder<ThemeMode>(

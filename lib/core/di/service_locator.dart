@@ -38,6 +38,12 @@ import 'package:customer_app/src/data/repositories/payments/payment_repository_i
 import 'package:customer_app/src/domain/usecases/payments/card_usecases.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
+import 'package:customer_app/src/data/data_sources/remote/job_requests/job_request_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/job_requests/job_request_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/job_requests/job_request_repository.dart';
+import 'package:customer_app/src/data/repositories/job_requests/job_request_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/job_requests/job_request_usecases.dart';
+import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -73,6 +79,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<PaymentRemoteDataSource>(
     () => PaymentRemoteDataSourceImpl(sl<Dio>()),
   );
+  sl.registerLazySingleton<JobRequestRemoteDataSource>(
+    () => JobRequestRemoteDataSourceImpl(sl<Dio>()),
+  );
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -98,6 +107,12 @@ Future<void> initServiceLocator() async {
   );
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(sl<Dio>(), sl<NetworkService>()),
+  );
+  sl.registerLazySingleton<JobRequestRepository>(
+    () => JobRequestRepositoryImpl(
+      sl<JobRequestRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
   );
 
   // Use Cases
@@ -163,6 +178,26 @@ Future<void> initServiceLocator() async {
     () => PayJobAssignmentUseCase(sl<PaymentRepository>()),
   );
 
+  // Job Request Usecases
+  sl.registerLazySingleton<GetJobRequestsUseCase>(
+    () => GetJobRequestsUseCase(sl<JobRequestRepository>()),
+  );
+  sl.registerLazySingleton<GetJobRequestDetailsUseCase>(
+    () => GetJobRequestDetailsUseCase(sl<JobRequestRepository>()),
+  );
+  sl.registerLazySingleton<CreateJobRequestUseCase>(
+    () => CreateJobRequestUseCase(sl<JobRequestRepository>()),
+  );
+  sl.registerLazySingleton<CancelJobRequestUseCase>(
+    () => CancelJobRequestUseCase(sl<JobRequestRepository>()),
+  );
+  sl.registerLazySingleton<GetJobRequestQuotationsUseCase>(
+    () => GetJobRequestQuotationsUseCase(sl<JobRequestRepository>()),
+  );
+  sl.registerLazySingleton<AcceptQuotationUseCase>(
+    () => AcceptQuotationUseCase(sl<JobRequestRepository>()),
+  );
+
   // Profile Usecases
   sl.registerLazySingleton<GetUserProfileUseCase>(
     () => GetUserProfileUseCase(sl<ProfileRepository>()),
@@ -210,6 +245,16 @@ Future<void> initServiceLocator() async {
       sl<SetDefaultCardUseCase>(),
       sl<ToggleFreezeCardUseCase>(),
       sl<PayJobAssignmentUseCase>(),
+    ),
+  );
+  sl.registerFactory<JobRequestCubit>(
+    () => JobRequestCubit(
+      sl<GetJobRequestsUseCase>(),
+      sl<GetJobRequestDetailsUseCase>(),
+      sl<CreateJobRequestUseCase>(),
+      sl<CancelJobRequestUseCase>(),
+      sl<GetJobRequestQuotationsUseCase>(),
+      sl<AcceptQuotationUseCase>(),
     ),
   );
 }

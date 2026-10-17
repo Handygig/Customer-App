@@ -35,4 +35,11 @@ class AppEndpoints {
   static String customerCardDefault(int id) => '/customer/cards/$id/default';
   static String customerCardFreeze(int id) => '/customer/cards/$id/freeze';
   static String customerJobAssignmentPay(int id) => '/customer/job-assignments/$id/pay';
+
+  // Job Requests & Quotations endpoints
+  static const String customerJobRequests = '/customer/job-requests';
+  static String customerJobRequest(int id) => '/customer/job-requests/$id';
+  static String customerJobRequestCancel(int id) => '/customer/job-requests/$id/cancel';
+  static String customerJobRequestQuotations(int id) => '/customer/job-requests/$id/quotations';
+  static String customerQuotationAccept(int id) => '/customer/quotations/$id/accept';
 }
