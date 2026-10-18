@@ -5,14 +5,16 @@ class ServiceCategoryModel extends ServiceCategoryEntity {
     required super.id,
     required super.name,
     super.description,
+    super.imageUrl,
     required super.isActive,
   });
 
   factory ServiceCategoryModel.fromJson(Map<String, dynamic> json) {
     return ServiceCategoryModel(
       id: _asInt(json['id']),
-      name: (json['name'] ?? '').toString().trim(),
+      name: (json['name'] ?? json['service_name'] ?? '').toString().trim(),
       description: json['description']?.toString().trim(),
+      imageUrl: json['image_url']?.toString().trim(),
       isActive: _asBool(json['is_active']),
     );
   }
@@ -22,6 +24,7 @@ class ServiceCategoryModel extends ServiceCategoryEntity {
       'id': id,
       'name': name,
       'description': description,
+      'image_url': imageUrl,
       'is_active': isActive,
     };
   }

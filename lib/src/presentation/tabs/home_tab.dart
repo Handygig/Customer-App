@@ -13,6 +13,8 @@ import 'package:customer_app/src/domain/repositories/profile/profile_repository.
 import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
@@ -43,6 +45,7 @@ class _HomeTabState extends State<HomeTab> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<JobAssignmentCubit>().loadAssignments();
+      context.read<ServiceCategoryCubit>().loadCategories();
     });
   }
 
@@ -126,45 +129,7 @@ class _HomeTabState extends State<HomeTab> {
     },
   ];
 
-  // Service categories with custom line art clip arts matching palette (#636B2F)
-  final List<Map<String, dynamic>> _serviceCategories = [
-    {
-      'title': 'Cleaning',
-      'image': 'assets/images/icon_cleaning.png',
-      'icon': Icons.cleaning_services_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Plumbing',
-      'image': 'assets/images/icon_plumbing.png',
-      'icon': Icons.plumbing_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Electrical',
-      'image': 'assets/images/icon_electrical.png',
-      'icon': Icons.electrical_services_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Painting',
-      'image': 'assets/images/icon_painting.png',
-      'icon': Icons.format_paint_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Gardening',
-      'image': 'assets/images/icon_gardening.png',
-      'icon': Icons.yard_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Appliances',
-      'image': 'assets/images/icon_appliances.png',
-      'icon': Icons.kitchen_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-  ];
+
 
   @override
   void dispose() {
@@ -1627,89 +1592,214 @@ class _HomeTabState extends State<HomeTab> {
         ),
         SizedBox(height: 14.h),
 
-        // Horizontal Scrolling Services List without circle containers & larger clip arts
+        // Horizontal Scrolling Services List dynamically fetched from ServiceCategoryCubit
         SizedBox(
           height: 120.h,
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: _serviceCategories.length,
-            separatorBuilder: (context, index) => SizedBox(width: 12.w),
-            itemBuilder: (context, index) {
-              final cat = _serviceCategories[index];
-              final String imagePath = (cat['image'] ?? '').toString();
-              final String titleStr = (cat['title'] ?? '').toString();
+          child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
+              if (state is ServiceCategoryLoading) {
+                return ListView.separated(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  separatorBuilder: (context, index) => SizedBox(width: 12.w),
+                  itemBuilder: (context, index) => Container(
+                    width: 110.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardColor(context),
+                      borderRadius: BorderRadius.circular(18.r),
+                      border: Border.all(color: AppColors.borderColor(context)),
+                    ),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20.r,
+                        height: 20.r,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                );
+              }
 
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AllServicesScreen(initialCategory: titleStr),
+              final activeCategories = (state is ServiceCategoryLoaded)
+                  ? state.categories.where((c) => c.isActive).toList()
+                  : <ServiceCategoryEntity>[];
+
+              if (activeCategories.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No categories available',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textBody,
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: activeCategories.length,
+                separatorBuilder: (context, index) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  final cat = activeCategories[index];
+                  final String titleStr = cat.name;
+                  final String? networkImageUrl = cat.imageUrl;
+                  final visuals = _resolveCategoryVisuals(cat.name);
+                  final String localAsset = (visuals['image'] ?? '').toString();
+                  final IconData fallbackIcon =
+                      (visuals['icon'] as IconData?) ?? Icons.design_services_rounded;
+
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              AllServicesScreen(initialCategory: titleStr),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 110.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardColor(context),
+                        borderRadius: BorderRadius.circular(18.r),
+                        border: Border.all(color: AppColors.borderColor(context)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.025),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 10.h,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 58.r,
+                            height: 58.r,
+                            child: networkImageUrl != null && networkImageUrl.isNotEmpty
+                                ? Image.network(
+                                    networkImageUrl,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      if (localAsset.isNotEmpty) {
+                                        return Image.asset(
+                                          localAsset,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => Icon(
+                                            fallbackIcon,
+                                            color: AppColors.primary,
+                                            size: 36.r,
+                                          ),
+                                        );
+                                      }
+                                      return Icon(
+                                        fallbackIcon,
+                                        color: AppColors.primary,
+                                        size: 36.r,
+                                      );
+                                    },
+                                  )
+                                : localAsset.isNotEmpty
+                                    ? Image.asset(
+                                        localAsset,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Icon(
+                                            fallbackIcon,
+                                            color: AppColors.primary,
+                                            size: 36.r,
+                                          );
+                                        },
+                                      )
+                                    : Icon(
+                                        fallbackIcon,
+                                        color: AppColors.primary,
+                                        size: 36.r,
+                                      ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            titleStr,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.headlineColor(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
-                child: Container(
-                  width: 110.w,
-                  decoration: BoxDecoration(
-                    color: AppColors.cardColor(context),
-                    borderRadius: BorderRadius.circular(18.r),
-                    border: Border.all(color: AppColors.borderColor(context)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.025),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 10.h,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Prominent Large Line Art Clip Art (without background circle)
-                      SizedBox(
-                        width: 58.r,
-                        height: 58.r,
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              (cat['icon'] as IconData?) ??
-                                  Icons.design_services_rounded,
-                              color: AppColors.primary,
-                              size: 36.r,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      Text(
-                        titleStr,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.headlineColor(context),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
           ),
         ),
       ],
     );
+  }
+
+  Map<String, dynamic> _resolveCategoryVisuals(String name) {
+    final key = name.toLowerCase().trim();
+    if (key.contains('clean')) {
+      return {
+        'image': 'assets/images/icon_cleaning.png',
+        'icon': Icons.cleaning_services_rounded,
+      };
+    } else if (key.contains('plumb')) {
+      return {
+        'image': 'assets/images/icon_plumbing.png',
+        'icon': Icons.plumbing_rounded,
+      };
+    } else if (key.contains('electr')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.electrical_services_rounded,
+      };
+    } else if (key.contains('paint')) {
+      return {
+        'image': 'assets/images/icon_painting.png',
+        'icon': Icons.format_paint_rounded,
+      };
+    } else if (key.contains('garden')) {
+      return {
+        'image': 'assets/images/icon_gardening.png',
+        'icon': Icons.yard_rounded,
+      };
+    } else if (key.contains('appliance')) {
+      return {
+        'image': 'assets/images/icon_appliances.png',
+        'icon': Icons.kitchen_rounded,
+      };
+    } else if (key.contains('hvac') || key.contains('ac')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.hvac_rounded,
+      };
+    } else if (key.contains('secur')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.shield_rounded,
+      };
+    }
+    return {
+      'image': '',
+      'icon': Icons.design_services_rounded,
+    };
   }
 
 }

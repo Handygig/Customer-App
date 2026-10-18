@@ -10,6 +10,7 @@ import 'package:customer_app/config/router/app_router.dart';
 import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
@@ -50,6 +51,9 @@ class CustomerApp extends StatelessWidget {
             BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
             BlocProvider<ServiceCategoryCubit>(
               create: (context) => sl<ServiceCategoryCubit>()..loadCategories(),
+            ),
+            BlocProvider<ServiceCubit>(
+              create: (context) => sl<ServiceCubit>()..loadServices(),
             ),
             BlocProvider<PropertyCubit>(
               create: (context) => sl<PropertyCubit>()..loadProperties(),

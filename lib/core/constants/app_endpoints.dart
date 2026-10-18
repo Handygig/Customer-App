@@ -24,6 +24,10 @@ class AppEndpoints {
 
   // Services endpoints
   static const String customerServiceCategories = '/customer/service-categories';
+  static const String customerServices = '/customer/services';
+  static String customerCategoryServices(int categoryId) =>
+      '/customer/service-categories/$categoryId/services';
+  static String customerService(int id) => '/customer/services/$id';
 
   // Properties endpoints
   static const String customerProperties = '/customer/properties';

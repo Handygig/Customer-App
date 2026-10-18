@@ -25,6 +25,12 @@ import 'package:customer_app/src/domain/repositories/services/service_category_r
 import 'package:customer_app/src/data/repositories/services/service_category_repository_impl.dart';
 import 'package:customer_app/src/domain/usecases/services/get_service_categories_usecase.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/data/data_sources/remote/services/service_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/services/service_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/services/service_repository.dart';
+import 'package:customer_app/src/data/repositories/services/service_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/services/get_services_usecase.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_cubit.dart';
 import 'package:customer_app/src/data/data_sources/remote/properties/property_remote_data_source.dart';
 import 'package:customer_app/src/data/data_sources/remote/properties/property_remote_data_source_impl.dart';
 import 'package:customer_app/src/domain/repositories/properties/property_repository.dart';
@@ -79,6 +85,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<ServiceCategoryRemoteDataSource>(
     () => ServiceCategoryRemoteDataSourceImpl(sl<Dio>()),
   );
+  sl.registerLazySingleton<ServiceRemoteDataSource>(
+    () => ServiceRemoteDataSourceImpl(sl<Dio>()),
+  );
   sl.registerLazySingleton<PropertyRemoteDataSource>(
     () => PropertyRemoteDataSourceImpl(sl<Dio>()),
   );
@@ -99,6 +108,12 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<ServiceCategoryRepository>(
     () => ServiceCategoryRepositoryImpl(
       sl<ServiceCategoryRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
+  );
+  sl.registerLazySingleton<ServiceRepository>(
+    () => ServiceRepositoryImpl(
+      sl<ServiceRemoteDataSource>(),
       sl<NetworkService>(),
     ),
   );
@@ -154,6 +169,9 @@ Future<void> initServiceLocator() async {
   // Services Usecases
   sl.registerLazySingleton<GetServiceCategoriesUseCase>(
     () => GetServiceCategoriesUseCase(sl<ServiceCategoryRepository>()),
+  );
+  sl.registerLazySingleton<GetServicesUseCase>(
+    () => GetServicesUseCase(sl<ServiceRepository>()),
   );
 
   // Properties Usecases
@@ -257,6 +275,9 @@ Future<void> initServiceLocator() async {
   );
   sl.registerFactory<ServiceCategoryCubit>(
     () => ServiceCategoryCubit(sl<GetServiceCategoriesUseCase>()),
+  );
+  sl.registerFactory<ServiceCubit>(
+    () => ServiceCubit(sl<GetServicesUseCase>()),
   );
   sl.registerFactory<PropertyCubit>(
     () => PropertyCubit(

@@ -58,15 +58,7 @@ class _SearchTabState extends State<SearchTab> {
   String _selectedCategory = 'All';
   ServiceProvider? _selectedProvider;
 
-  final List<String> _defaultServiceCategories = [
-    'All',
-    'Cleaning',
-    'Plumbing',
-    'Electrical',
-    'Painting',
-    'Gardening',
-    'HVAC',
-  ];
+
 
   final List<ServiceProvider> _allProviders = const [
     ServiceProvider(
@@ -556,10 +548,9 @@ class _SearchTabState extends State<SearchTab> {
       color: Colors.transparent, // Floating over map
       child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
         builder: (context, state) {
-          final categories = (state is ServiceCategoryLoaded &&
-                  state.categories.isNotEmpty)
-              ? ['All', ...state.categories.map((c) => c.name)]
-              : _defaultServiceCategories;
+          final categories = (state is ServiceCategoryLoaded)
+              ? ['All', ...state.categories.where((c) => c.isActive).map((c) => c.name)]
+              : const ['All'];
 
           return ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
