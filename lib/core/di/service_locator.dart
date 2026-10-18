@@ -56,6 +56,9 @@ import 'package:customer_app/src/domain/repositories/job_assignments/job_assignm
 import 'package:customer_app/src/data/repositories/job_assignments/job_assignment_repository_impl.dart';
 import 'package:customer_app/src/domain/usecases/job_assignments/job_assignment_usecases.dart';
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
+import 'package:customer_app/src/domain/repositories/notifications/notification_repository.dart';
+import 'package:customer_app/src/data/repositories/notifications/notification_repository_impl.dart';
+import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -143,6 +146,9 @@ Future<void> initServiceLocator() async {
       sl<JobAssignmentRemoteDataSource>(),
       sl<NetworkService>(),
     ),
+  );
+  sl.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(sl<Dio>(), sl<NetworkService>()),
   );
 
   // Use Cases
@@ -314,5 +320,8 @@ Future<void> initServiceLocator() async {
       sl<SubmitReviewUseCase>(),
       sl<SubmitDisputeUseCase>(),
     ),
+  );
+  sl.registerFactory<NotificationCubit>(
+    () => NotificationCubit(sl<NotificationRepository>()),
   );
 }

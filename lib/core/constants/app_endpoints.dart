@@ -62,4 +62,10 @@ class AppEndpoints {
   static const String customerRewards = '/customer/rewards';
   static const String customerRedeemPoints = '/customer/rewards/redeem';
   static const String customerApplyReferral = '/customer/referral/apply';
+
+  // Notifications & Alerts endpoints
+  static const String customerNotifications = '/customer/notifications';
+  static String customerNotificationRead(int id) => '/customer/notifications/$id/read';
+  static const String customerMarkAllNotificationsRead = '/customer/notifications/mark-all-read';
+  static String customerNotificationDelete(int id) => '/customer/notifications/$id';
 }

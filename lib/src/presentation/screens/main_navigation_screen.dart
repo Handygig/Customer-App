@@ -7,6 +7,9 @@ import 'package:customer_app/src/presentation/screens/auth/add_properties_screen
 import 'package:customer_app/src/presentation/tabs/home_tab.dart';
 import 'package:customer_app/src/presentation/tabs/jobs_tab.dart';
 import 'package:customer_app/src/presentation/tabs/search_tab.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/notifications/notification_state.dart';
 import 'package:customer_app/src/presentation/tabs/alerts_tab.dart';
 import 'package:customer_app/src/presentation/tabs/profile_tab.dart';
 
@@ -64,7 +67,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
                 const JobsTab(),
                 SearchTab(onBackTap: () => _onTabSelected(0)),
-                const AlertsTab(),
+                AlertsTab(onNavigateTab: _onTabSelected),
                 ProfileTab(onAddPropertyTap: _openAddProperties),
               ],
             ),
@@ -221,14 +224,61 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              child: Icon(
-                icon,
-                size: 23.r,
-                color: isSelected ? activeColor : inactiveColor,
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: Icon(
+                    icon,
+                    size: 23.r,
+                    color: isSelected ? activeColor : inactiveColor,
+                  ),
+                ),
+                if (index == 3)
+                  BlocBuilder<NotificationCubit, NotificationState>(
+                    builder: (context, notifState) {
+                      final count = notifState is NotificationLoaded
+                          ? notifState.unreadCount
+                          : 0;
+                      if (count == 0) return const SizedBox.shrink();
+                      return Positioned(
+                        top: -3.h,
+                        right: -6.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 4.w,
+                            vertical: 1.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD32F2F),
+                            borderRadius: BorderRadius.circular(8.r),
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 1.5,
+                            ),
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 16.r,
+                            minHeight: 16.r,
+                          ),
+                          child: Center(
+                            child: Text(
+                              count > 9 ? '9+' : '$count',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8.5.sp,
+                                fontWeight: FontWeight.w900,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
             SizedBox(height: 3.h),
             Text(
