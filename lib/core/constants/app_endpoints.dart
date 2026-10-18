@@ -52,4 +52,14 @@ class AppEndpoints {
   static String customerJobAssignment(int id) => '/customer/job-assignments/$id';
   static String customerJobAssignmentReviews(int id) => '/customer/job-assignments/$id/reviews';
   static String customerJobAssignmentDisputes(int id) => '/customer/job-assignments/$id/disputes';
+
+  // Exclusive Offers endpoints
+  static const String customerExclusiveOffers = '/customer/exclusive-offers';
+  static const String publicExclusiveOffers = '/exclusive-offers';
+  static const String customerClaimOffer = '/customer/exclusive-offers/claim';
+
+  // Rewards & Referrals endpoints
+  static const String customerRewards = '/customer/rewards';
+  static const String customerRedeemPoints = '/customer/rewards/redeem';
+  static const String customerApplyReferral = '/customer/referral/apply';
 }

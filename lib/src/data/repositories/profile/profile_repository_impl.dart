@@ -59,71 +59,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
     memberSinceYear: '2026',
   );
 
-  List<PaymentCard> _cards = [
-    const PaymentCard(
-      id: 'card_1',
-      cardholderName: 'Alex Johnson',
-      lastFourDigits: '4920',
-      expiryDate: '12/28',
-      brand: CardBrand.mastercard,
-      isDefault: true,
-      cardLimit: 43093.00,
-      gradientColors: [0xFF3D4127, 0xFF636B2F],
-    ),
-    const PaymentCard(
-      id: 'card_2',
-      cardholderName: 'Alex Johnson',
-      lastFourDigits: '8812',
-      expiryDate: '09/27',
-      brand: CardBrand.visa,
-      isDefault: false,
-      cardLimit: 15500.00,
-      gradientColors: [0xFF636B2F, 0xFFBAC095],
-    ),
-    const PaymentCard(
-      id: 'card_3',
-      cardholderName: 'Alex Johnson',
-      lastFourDigits: '3049',
-      expiryDate: '05/29',
-      brand: CardBrand.amex,
-      isDefault: false,
-      cardLimit: 25000.00,
-      gradientColors: [0xFF1F2414, 0xFF3D4127],
-    ),
-  ];
-
-  List<Property> _properties = [
-    const Property(
-      id: 'prop_1',
-      title: 'Primary Residence',
-      address: '742 Evergreen Terrace, Springfield',
-      type: PropertyType.villa,
-      bedrooms: 4,
-      areaSqft: 2800,
-      isPrimary: true,
-      imagePath: AppAssets.propertyVilla,
-    ),
-    const Property(
-      id: 'prop_2',
-      title: 'Downtown Apartment',
-      address: '101 Skyline Towers, Apt 4B',
-      type: PropertyType.apartment,
-      bedrooms: 2,
-      areaSqft: 1100,
-      isPrimary: false,
-      imagePath: AppAssets.propertyApartment,
-    ),
-    const Property(
-      id: 'prop_3',
-      title: 'Beach House',
-      address: '12 Ocean Drive, Malibu',
-      type: PropertyType.house,
-      bedrooms: 3,
-      areaSqft: 2100,
-      isPrimary: false,
-      imagePath: AppAssets.propertyCottage,
-    ),
-  ];
+  List<PaymentCard> _cards = [];
+  List<Property> _properties = [];
 
   @override
   Stream<UserProfile> watchUserProfile() async* {
@@ -210,13 +147,59 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Stream<List<PaymentCard>> watchPaymentCards() async* {
-    yield _cards;
+    if (_cards.isNotEmpty) {
+      yield _cards;
+    }
+    unawaited(getPaymentCards());
     yield* _cardsController.stream;
   }
 
   @override
   Future<Either<Failure, List<PaymentCard>>> getPaymentCards() async {
-    return Right(List.unmodifiable(_cards));
+    try {
+      final response = await _dio.get(AppEndpoints.customerCards);
+      final rawData = response.data;
+      List<dynamic> items = [];
+      if (rawData is Map && rawData['data'] is List) {
+        items = rawData['data'] as List<dynamic>;
+      } else if (rawData is List) {
+        items = rawData;
+      }
+      _cards = items.map((e) {
+        final map = Map<String, dynamic>.from(e as Map);
+        final cardTypeStr = (map['card_type'] ?? 'visa').toString().toLowerCase();
+        CardBrand brand = CardBrand.visa;
+        if (cardTypeStr.contains('master')) {
+          brand = CardBrand.mastercard;
+        } else if (cardTypeStr.contains('amex')) {
+          brand = CardBrand.amex;
+        } else if (cardTypeStr.contains('discover')) {
+          brand = CardBrand.discover;
+        }
+
+        final masked = (map['masked_card_number'] ?? '').toString();
+        final lastFour = masked.length >= 4 ? masked.substring(masked.length - 4) : '0000';
+        return PaymentCard(
+          id: map['id']?.toString() ?? '',
+          cardholderName: map['card_holder_name']?.toString() ?? '',
+          lastFourDigits: lastFour,
+          expiryDate: map['expiry_date']?.toString() ?? '',
+          brand: brand,
+          isDefault: map['is_default'] == true || map['is_default'] == 1,
+          isFrozen: map['is_frozen'] == true || map['is_frozen'] == 1,
+          cardLimit: 5000.0,
+          gradientColors: brand == CardBrand.mastercard
+              ? const [0xFF3D4127, 0xFF636B2F]
+              : brand == CardBrand.visa
+                  ? const [0xFF636B2F, 0xFFBAC095]
+                  : const [0xFF1F2414, 0xFF3D4127],
+        );
+      }).toList();
+      _cardsController.add(_cards);
+      return Right(List.unmodifiable(_cards));
+    } catch (_) {
+      return Right(List.unmodifiable(_cards));
+    }
   }
 
   @override
@@ -275,13 +258,48 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Stream<List<Property>> watchProperties() async* {
-    yield _properties;
+    if (_properties.isNotEmpty) {
+      yield _properties;
+    }
+    unawaited(getProperties());
     yield* _propertiesController.stream;
   }
 
   @override
   Future<Either<Failure, List<Property>>> getProperties() async {
-    return Right(List.unmodifiable(_properties));
+    try {
+      final response = await _dio.get(AppEndpoints.customerProperties);
+      final rawData = response.data;
+      List<dynamic> items = [];
+      if (rawData is Map && rawData['data'] is List) {
+        items = rawData['data'] as List<dynamic>;
+      } else if (rawData is List) {
+        items = rawData;
+      }
+      _properties = items.map((e) {
+        final map = Map<String, dynamic>.from(e as Map);
+        final label = map['label']?.toString() ?? 'Property';
+        final addressLine = map['address_line']?.toString() ?? '';
+        final city = map['city']?.toString() ?? '';
+        final fullAddr = addressLine.isNotEmpty && city.isNotEmpty
+            ? '$addressLine, $city'
+            : (addressLine.isNotEmpty ? addressLine : city);
+        return Property(
+          id: map['id']?.toString() ?? '',
+          title: label,
+          address: fullAddr,
+          type: PropertyType.house,
+          bedrooms: 3,
+          areaSqft: 2000,
+          isPrimary: map['is_default'] == true || map['is_default'] == 1,
+          imagePath: AppAssets.propertyVilla,
+        );
+      }).toList();
+      _propertiesController.add(_properties);
+      return Right(List.unmodifiable(_properties));
+    } catch (_) {
+      return Right(List.unmodifiable(_properties));
+    }
   }
 
   @override
@@ -376,5 +394,92 @@ class ProfileRepositoryImpl implements ProfileRepository {
     _profileController.add(_profile);
     themeModeNotifier.value = enabled ? ThemeMode.dark : ThemeMode.light;
     return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getRewardsSummary() async {
+    try {
+      final response = await _dio.get(AppEndpoints.customerRewards);
+      final data = response.data;
+      if (data is Map && data['data'] is Map) {
+        final summary = Map<String, dynamic>.from(data['data'] as Map);
+        // Sync profile state
+        _profile = _profile.copyWith(
+          rewardPoints: (summary['reward_points'] as num?)?.toInt() ?? _profile.rewardPoints,
+          walletBalance: (summary['wallet_balance'] as num?)?.toDouble() ?? _profile.walletBalance,
+          membershipTier: summary['membership_tier']?.toString() ?? _profile.membershipTier,
+          referralCode: summary['referral_code']?.toString() ?? _profile.referralCode,
+        );
+        _profileController.add(_profile);
+        return Right(summary);
+      }
+      return const Left(APIFailure(errorMessage: 'Invalid response from server'));
+    } on DioException catch (e) {
+      debugPrint('⚠️ [ProfileRepositoryImpl.getRewardsSummary] DioException: ${e.message}');
+      final msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : (e.message ?? 'Failed to load rewards summary');
+      return Left(APIFailure(errorMessage: msg));
+    } catch (e, stackTrace) {
+      debugPrint('⚠️ [ProfileRepositoryImpl.getRewardsSummary] Error: $e');
+      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> redeemPoints(int points) async {
+    try {
+      final response = await _dio.post(
+        AppEndpoints.customerRedeemPoints,
+        data: {'points': points},
+      );
+      final data = response.data;
+      if (data is Map && data['data'] is Map) {
+        final resData = Map<String, dynamic>.from(data['data'] as Map);
+        _profile = _profile.copyWith(
+          rewardPoints: (resData['reward_points'] as num?)?.toInt() ?? (_profile.rewardPoints - points),
+          walletBalance: (resData['wallet_balance'] as num?)?.toDouble() ?? _profile.walletBalance,
+        );
+        _profileController.add(_profile);
+        return Right(resData);
+      }
+      return const Left(APIFailure(errorMessage: 'Invalid response from server'));
+    } on DioException catch (e) {
+      final msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : (e.message ?? 'Failed to redeem points');
+      return Left(APIFailure(errorMessage: msg));
+    } catch (e, stackTrace) {
+      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> applyReferralCode(String code) async {
+    try {
+      final response = await _dio.post(
+        AppEndpoints.customerApplyReferral,
+        data: {'referral_code': code},
+      );
+      final data = response.data;
+      if (data is Map && data['data'] is Map) {
+        final resData = Map<String, dynamic>.from(data['data'] as Map);
+        if (resData['wallet_balance'] != null) {
+          _profile = _profile.copyWith(
+            walletBalance: (resData['wallet_balance'] as num).toDouble(),
+          );
+          _profileController.add(_profile);
+        }
+        return Right(resData);
+      }
+      return const Left(APIFailure(errorMessage: 'Invalid response from server'));
+    } on DioException catch (e) {
+      final msg = (e.response?.data is Map && e.response?.data['message'] != null)
+          ? e.response!.data['message'].toString()
+          : (e.message ?? 'Failed to apply referral code');
+      return Left(APIFailure(errorMessage: msg));
+    } catch (e, stackTrace) {
+      return Left(APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
   }
 }

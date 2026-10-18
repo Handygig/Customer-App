@@ -15,9 +15,16 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
+import 'package:customer_app/src/domain/entities/services/service_category_entity.dart';
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
+import 'package:customer_app/src/domain/repositories/offers/offer_repository.dart';
+import 'package:customer_app/src/data/repositories/offers/offer_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
+import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
+import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onAddPropertyTap;
@@ -34,10 +41,9 @@ class _HomeTabState extends State<HomeTab> {
   int _selectedPropertyIndex = 0;
 
   final PageController _offersPageController = PageController();
+  final OfferRepository _offerRepository = OfferRepositoryImpl();
   final PageController _propertiesPageController = PageController(
-    viewportFraction: 0.78,
-    initialPage:
-        999, // 999 is a multiple of 3 (999 % 3 == 0) for seamless infinite looping
+    viewportFraction: 0.85,
   );
 
   @override
@@ -46,88 +52,49 @@ class _HomeTabState extends State<HomeTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<JobAssignmentCubit>().loadAssignments();
       context.read<ServiceCategoryCubit>().loadCategories();
+      context.read<PropertyCubit>().loadProperties();
+      _loadOffers();
     });
   }
 
-  // Mock properties data with high quality cover image assets
-  final List<Map<String, dynamic>> _properties = [
-    {
-      'title': 'Rosewood Cottage',
-      'type': 'VILLA',
-      'address': 'Kandy Suburbs',
-      'sqft': '3,400 sq ft',
-      'image': 'assets/images/property_cottage.png',
-      'color': AppColors.primary,
-      'activeJobs': 2,
-      'isPrimary': true,
-    },
-    {
-      'title': 'Sunset Luxury Villa',
-      'type': 'RESORT',
-      'address': '742 Evergreen Terrace, SF',
-      'sqft': '4,200 sq ft',
-      'image': 'assets/images/property_villa.png',
-      'color': AppColors.primaryLight,
-      'activeJobs': 1,
-      'isPrimary': false,
-    },
-    {
-      'title': 'Astra Tower Penthouse',
-      'type': 'APARTMENT',
-      'address': '104 Market St, Suite 4B, SF',
-      'sqft': '1,850 sq ft',
-      'image': 'assets/images/property_apartment.png',
-      'color': AppColors.primaryDark,
-      'activeJobs': 0,
-      'isPrimary': false,
-    },
-  ];
+  Future<void> _loadOffers() async {
+    final result = await _offerRepository.getExclusiveOffers();
+    if (mounted) {
+      result.fold(
+        (failure) {
+          debugPrint('⚠️ [_loadOffers] Error loading offers: ${failure.errorMessage}');
+        },
+        (offers) {
+          debugPrint('🎯 [_loadOffers] Loaded ${offers.length} exclusive offers');
+          setState(() {
+            _offers = offers.map((o) => o.toMap()).toList();
+            if (_selectedOfferIndex >= _offers.length) {
+              _selectedOfferIndex = 0;
+            }
+          });
+        },
+      );
+    }
+  }
 
-  // Mock offers data using user palette colors (#636B2F, #BAC095, #D4DE95, #3D4127)
-  final List<Map<String, dynamic>> _offers = [
-    {
-      'badge': 'EXCLUSIVE OFFER',
-      'title': 'Spring Deep Cleaning',
-      'discount': '30% OFF',
-      'description': 'Complete home sanitization with eco-safe solutions',
-      'code': 'CLEAN30',
-      'gradient': [
-        AppColors.primaryDark, // #3D4127
-        AppColors.primary, // #636B2F
-        AppColors.sage, // #BAC095
-      ],
-      'accent': AppColors.accentLime, // #D4DE95
-      'icon': Icons.auto_awesome_rounded,
-    },
-    {
-      'badge': 'SEASONAL SPECIAL',
-      'title': 'Lawn & Garden Care',
-      'discount': 'FREE SOIL TEST',
-      'description': 'Book 2 garden trimming sessions & get free soil analysis',
-      'code': 'GARDENFREE',
-      'gradient': [
-        AppColors.primary, // #636B2F
-        AppColors.primaryDark, // #3D4127
-        AppColors.sage, // #BAC095
-      ],
-      'accent': AppColors.accentLime,
-      'icon': Icons.yard_rounded,
-    },
-    {
-      'badge': 'MAINTENANCE PACK',
-      'title': 'HVAC & Plumbing Check',
-      'discount': '\$50 CASHBACK',
-      'description': 'Certified inspection for air filters and water pipes',
-      'code': 'SECURE50',
-      'gradient': [
-        AppColors.primaryDark,
-        AppColors.primary,
-        AppColors.primaryDark,
-      ],
-      'accent': AppColors.accentLime,
-      'icon': Icons.shield_rounded,
-    },
-  ];
+  void _claimOffer(Map<String, dynamic> offer) {
+    HapticFeedback.lightImpact();
+    final code = offer['code']?.toString() ?? '';
+    if (code.isNotEmpty) {
+      _offerRepository.claimOffer(code);
+      Clipboard.setData(ClipboardData(text: code));
+      DynamicIslandToast.showSuccess(
+        context,
+        'Offer code "$code" applied! Navigating to services...',
+      );
+    }
+    widget.onNavigateTab?.call(2);
+  }
+
+
+
+  // Dynamically loaded offers from API
+  List<Map<String, dynamic>> _offers = [];
 
 
 
@@ -177,6 +144,7 @@ class _HomeTabState extends State<HomeTab> {
     final ongoingAssignments = assignmentState is JobAssignmentLoaded
         ? assignmentState.assignments.where((a) => a.isOngoing).toList()
         : context.watch<JobAssignmentCubit>().currentAssignments.where((a) => a.isOngoing).toList();
+    final properties = context.watch<PropertyCubit>().currentProperties;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor(context),
@@ -193,7 +161,12 @@ class _HomeTabState extends State<HomeTab> {
               strokeWidth: 2.8,
               onRefresh: () async {
                 HapticFeedback.mediumImpact();
-                await context.read<JobAssignmentCubit>().loadAssignments(forceRefresh: true);
+                await Future.wait([
+                  context.read<JobAssignmentCubit>().loadAssignments(forceRefresh: true),
+                  context.read<ServiceCategoryCubit>().loadCategories(),
+                  context.read<PropertyCubit>().loadProperties(forceRefresh: true),
+                  _loadOffers(),
+                ]);
                 if (context.mounted) {
                   DynamicIslandToast.showSuccess(
                     context,
@@ -211,7 +184,7 @@ class _HomeTabState extends State<HomeTab> {
                     SizedBox(height: 16.h),
 
                     // 1. Added Properties Carousel
-                    _buildCoverFlowPropertiesSection(),
+                    _buildCoverFlowPropertiesSection(properties),
 
                     SizedBox(height: 16.h),
 
@@ -454,7 +427,9 @@ class _HomeTabState extends State<HomeTab> {
   // ---------------------------------------------------------------------------
   // 2. COVER FLOW ADDED PROPERTIES SECTION (MATCHING DESIGN REFERENCE)
   // ---------------------------------------------------------------------------
-  Widget _buildCoverFlowPropertiesSection() {
+  // 1. ADDED PROPERTIES SECTION (COVER FLOW CAROUSEL)
+  // ---------------------------------------------------------------------------
+  Widget _buildCoverFlowPropertiesSection(List<PropertyEntity> properties) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -484,7 +459,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(width: 6.w),
                   Text(
-                    '(${_properties.length})',
+                    '(${properties.length})',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w600,
@@ -493,145 +468,260 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                 ],
               ),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const PropertiesManagementScreen(),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Manage',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         SizedBox(height: 14.h),
 
-        // Cover Flow Card Carousel with Left/Right Navigation Arrow Buttons
-        SizedBox(
-          height: 270.h,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // PageView Carousel with Infinite Looping & Blurred Background Depth
-              PageView.builder(
-                controller: _propertiesPageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _selectedPropertyIndex = index % _properties.length;
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final realIndex = index % _properties.length;
-                  final prop = _properties[realIndex];
-                  final isSelected = realIndex == _selectedPropertyIndex;
-
-                  return AnimatedScale(
-                    scale: isSelected ? 1.0 : 0.84,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeOutCubic,
-                    child: AnimatedOpacity(
-                      opacity: isSelected ? 1.0 : 0.6,
-                      duration: const Duration(milliseconds: 250),
-                      child: _buildPropertyCoverCard(prop, isSelected),
+        if (properties.isEmpty)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                if (widget.onAddPropertyTap != null) {
+                  widget.onAddPropertyTap!();
+                } else {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AddNewPropertyScreen(),
                     ),
                   );
-                },
+                }
+              },
+              child: Container(
+                height: 140.h,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceColor(context),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: AppColors.borderColor(context),
+                    width: 1.5,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(10.r),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.add_home_work_rounded,
+                        color: AppColors.primary,
+                        size: 26.r,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    Text(
+                      'No properties added yet',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.headlineColor(context),
+                      ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      'Tap to register your first property',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp,
+                        color: AppColors.mutedTextColor(context),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
+          )
+        else if (properties.length == 1)
+          // Single Property Hero Card - full width without slider or cloning
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: SizedBox(
+              height: 270.h,
+              child: _buildPropertyCoverCard(properties.first, 0, true),
+            ),
+          )
+        else ...[
+          // Cover Flow Card Carousel with Left/Right Navigation Arrow Buttons
+          SizedBox(
+            height: 270.h,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PageView.builder(
+                  controller: _propertiesPageController,
+                  itemCount: properties.length,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: (index) {
+                    setState(() {
+                      _selectedPropertyIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final prop = properties[index];
+                    final isSelected = index == _selectedPropertyIndex;
 
-              // Left Infinite Arrow Navigation Button
-              Positioned(
-                left: 12.w,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _propertiesPageController.previousPage(
-                      duration: const Duration(milliseconds: 300),
+                    return AnimatedScale(
+                      scale: isSelected ? 1.0 : 0.86,
+                      duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOutCubic,
+                      child: AnimatedOpacity(
+                        opacity: isSelected ? 1.0 : 0.65,
+                        duration: const Duration(milliseconds: 250),
+                        child: _buildPropertyCoverCard(prop, index, isSelected),
+                      ),
                     );
                   },
-                  child: Container(
-                    width: 44.r,
-                    height: 44.r,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF282B2E).withValues(alpha: 0.85),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.chevron_left_rounded,
-                      color: Colors.white,
-                      size: 28.r,
+                ),
+
+                // Left Arrow Navigation Button
+                Positioned(
+                  left: 12.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      if (_selectedPropertyIndex > 0) {
+                        _propertiesPageController.previousPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                        );
+                      } else {
+                        _propertiesPageController.animateToPage(
+                          properties.length - 1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 44.r,
+                      height: 44.r,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF282B2E).withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.chevron_left_rounded,
+                        color: Colors.white,
+                        size: 28.r,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              // Right Infinite Arrow Navigation Button
-              Positioned(
-                right: 12.w,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _propertiesPageController.nextPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOutCubic,
-                    );
-                  },
-                  child: Container(
-                    width: 44.r,
-                    height: 44.r,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF282B2E).withValues(alpha: 0.85),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white,
-                      size: 28.r,
+                // Right Arrow Navigation Button
+                Positioned(
+                  right: 12.w,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      if (_selectedPropertyIndex < properties.length - 1) {
+                        _propertiesPageController.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                        );
+                      } else {
+                        _propertiesPageController.animateToPage(
+                          0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 44.r,
+                      height: 44.r,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF282B2E).withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white,
+                        size: 28.r,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
-        SizedBox(height: 12.h),
+          SizedBox(height: 12.h),
 
-        // Page Indicator Dots below Carousel
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            _properties.length,
-            (index) => AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              margin: EdgeInsets.symmetric(horizontal: 3.w),
-              width: _selectedPropertyIndex == index ? 22.w : 7.w,
-              height: 7.h,
-              decoration: BoxDecoration(
-                color: _selectedPropertyIndex == index
-                    ? AppColors
-                          .primary // #636B2F
-                    : AppColors.sage.withValues(alpha: 0.5), // #BAC095
-                borderRadius: BorderRadius.circular(6.r),
+          // Page Indicator Dots below Carousel
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              properties.length,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: EdgeInsets.symmetric(horizontal: 3.w),
+                width: _selectedPropertyIndex == index ? 22.w : 7.w,
+                height: 7.h,
+                decoration: BoxDecoration(
+                  color: _selectedPropertyIndex == index
+                      ? AppColors.primary
+                      : AppColors.sage.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildPropertyCoverCard(Map<String, dynamic> prop, bool isSelected) {
-    final String imagePath = (prop['image'] ?? '').toString();
-    final String title = (prop['title'] ?? '').toString();
-    final String type = (prop['type'] ?? '').toString();
-    final String address = (prop['address'] ?? '').toString();
+  Widget _buildPropertyCoverCard(PropertyEntity prop, int index, bool isSelected) {
+    const images = [
+      'assets/images/property_cottage.png',
+      'assets/images/property_villa.png',
+      'assets/images/property_apartment.png',
+    ];
+    final String imagePath = images[index % images.length];
+    final String title = prop.label;
+    final String type = prop.city.isNotEmpty
+        ? prop.city.toUpperCase()
+        : (prop.isDefault ? 'PRIMARY' : 'RESIDENCE');
+    final String address = prop.fullAddress;
 
     return Container(
       decoration: BoxDecoration(
@@ -662,7 +752,7 @@ class _HomeTabState extends State<HomeTab> {
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: (prop['color'] as Color?) ?? AppColors.primary,
+                  color: AppColors.primary,
                   child: const Center(
                     child: Icon(
                       Icons.home_work_rounded,
@@ -1283,6 +1373,9 @@ class _HomeTabState extends State<HomeTab> {
   // 4. EXCLUSIVE OFFERS & PROMOS SECTION
   // ---------------------------------------------------------------------------
   Widget _buildOffersSection() {
+    if (_offers.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1419,7 +1512,7 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                         SizedBox(width: 4.w),
                         Text(
-                          offer['badge'] as String,
+                          (offer['badge'] ?? 'EXCLUSIVE OFFER').toString(),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10.5.sp,
                             fontWeight: FontWeight.w800,
@@ -1431,7 +1524,7 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                   Text(
-                    offer['discount'] as String,
+                    (offer['discount'] ?? '').toString(),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w900,
@@ -1445,7 +1538,7 @@ class _HomeTabState extends State<HomeTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    offer['title'] as String,
+                    (offer['title'] ?? '').toString(),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w800,
@@ -1454,7 +1547,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(height: 3.h),
                   Text(
-                    offer['description'] as String,
+                    (offer['description'] ?? '').toString(),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11.5.sp,
                       fontWeight: FontWeight.w500,
@@ -1468,7 +1561,7 @@ class _HomeTabState extends State<HomeTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap: () => _copyCouponCode(offer['code'] as String),
+                    onTap: () => _copyCouponCode((offer['code'] ?? '').toString()),
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 10.w,
@@ -1504,10 +1597,7 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      widget.onNavigateTab?.call(2);
-                    },
+                    onTap: () => _claimOffer(offer),
                     child: Container(
                       padding: EdgeInsets.symmetric(
                         horizontal: 12.w,
@@ -1596,6 +1686,7 @@ class _HomeTabState extends State<HomeTab> {
         SizedBox(
           height: 120.h,
           child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
+            builder: (context, state) {
               if (state is ServiceCategoryLoading) {
                 return ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
@@ -1632,7 +1723,7 @@ class _HomeTabState extends State<HomeTab> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textBody,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 );
