@@ -13,6 +13,7 @@ import 'package:customer_app/src/presentation/cubits/services/service_category_c
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:customer_app/core/services/auth_manager.dart';
@@ -58,6 +59,9 @@ class CustomerApp extends StatelessWidget {
             ),
             BlocProvider<JobRequestCubit>(
               create: (context) => sl<JobRequestCubit>()..loadJobRequests(),
+            ),
+            BlocProvider<JobAssignmentCubit>(
+              create: (context) => sl<JobAssignmentCubit>()..loadAssignments(),
             ),
           ],
           child: ValueListenableBuilder<Locale>(

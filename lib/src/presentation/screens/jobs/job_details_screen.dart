@@ -11,6 +11,9 @@ import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cu
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_state.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
+import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
 import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
@@ -19,12 +22,16 @@ class JobDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? job;
   final JobRequestEntity? jobRequest;
   final int? jobRequestId;
+  final JobAssignmentEntity? jobAssignment;
+  final int? assignmentId;
 
   const JobDetailsScreen({
     super.key,
     this.job,
     this.jobRequest,
     this.jobRequestId,
+    this.jobAssignment,
+    this.assignmentId,
   });
 
   @override
@@ -33,25 +40,40 @@ class JobDetailsScreen extends StatefulWidget {
 
 class _JobDetailsScreenState extends State<JobDetailsScreen> {
   int? _resolvedJobId;
+  int? _resolvedAssignmentId;
 
   @override
   void initState() {
     super.initState();
+    _resolvedAssignmentId = widget.assignmentId ?? widget.jobAssignment?.id;
+    if (_resolvedAssignmentId == null &&
+        widget.job != null &&
+        widget.job!['isAssignment'] == true &&
+        widget.job!['rawId'] is int) {
+      _resolvedAssignmentId = widget.job!['rawId'] as int;
+    }
+
     _resolvedJobId = widget.jobRequestId ?? widget.jobRequest?.id;
     if (_resolvedJobId == null &&
         widget.job != null &&
+        widget.job!['isAssignment'] != true &&
         widget.job!['rawId'] is int) {
       _resolvedJobId = widget.job!['rawId'] as int;
     }
 
-    if (_resolvedJobId != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_resolvedAssignmentId != null) {
+        context
+            .read<JobAssignmentCubit>()
+            .loadAssignmentDetails(_resolvedAssignmentId!);
+      }
+      if (_resolvedJobId != null) {
         context.read<JobRequestCubit>().loadJobRequestDetails(_resolvedJobId!);
         context
             .read<JobRequestCubit>()
             .loadJobRequestQuotations(_resolvedJobId!);
-      });
-    }
+      }
+    });
   }
 
   Future<void> _confirmCancelRequest(BuildContext context, int? jobId) async {
@@ -198,6 +220,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             context,
             'Quotation accepted! Job assigned to ${quote.provider?.name ?? 'Provider'}.',
           );
+          context.read<JobRequestCubit>().loadJobRequests(forceRefresh: true);
+          context.read<JobAssignmentCubit>().loadAssignments(forceRefresh: true);
         } else {
           final state = context.read<JobRequestCubit>().state;
           final error = state is JobRequestError
@@ -212,6 +236,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final jobCubit = context.watch<JobRequestCubit>();
+    final assignmentCubit = context.watch<JobAssignmentCubit>();
+
+    final activeAssignment = (_resolvedAssignmentId != null &&
+            assignmentCubit.selectedAssignment?.id == _resolvedAssignmentId)
+        ? assignmentCubit.selectedAssignment
+        : widget.jobAssignment;
+
     final activeRequest = (_resolvedJobId != null &&
             jobCubit.selectedJobRequest?.id == _resolvedJobId)
         ? jobCubit.selectedJobRequest
@@ -222,53 +253,105 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         ? jobCubit.quotationsFor(_resolvedJobId!)
         : (activeRequest?.quotations ?? const <QuotationEntity>[]);
 
-    final String jobId = activeRequest != null
-        ? 'REQ-#${activeRequest.id}'
-        : (widget.job?['id'] as String? ?? 'JOB-0000');
-    final String service = activeRequest != null
-        ? (activeRequest.serviceCategory?.name ?? activeRequest.description)
-        : (widget.job?['service'] as String? ?? 'Service Details');
-    final String descriptionText = activeRequest?.description ?? '';
-    final String property = activeRequest != null
-        ? (activeRequest.property?.label.isNotEmpty == true
-            ? '${activeRequest.property!.label} • ${activeRequest.property!.fullAddress}'
-            : (activeRequest.property?.fullAddress ?? 'Primary Location'))
-        : (widget.job?['property'] as String? ?? 'Primary Location');
-    final String providerName = activeRequest?.assignment?.providerName ??
-        (quotations.isNotEmpty
-            ? (quotations.first.provider?.name ?? 'Assigned Professional')
-            : (widget.job?['provider'] as String? ?? 'Awaiting Assignment'));
-    final String rating = activeRequest?.assignment != null
-        ? '4.9 ★'
-        : (widget.job?['rating'] as String? ?? 'New');
-
+    final String jobId;
+    final String service;
+    final String descriptionText;
+    final String property;
+    final String providerName;
+    final String rating;
     final String price;
-    if (activeRequest != null &&
-        activeRequest.assignment != null &&
-        quotations.isNotEmpty) {
-      final accepted = quotations.firstWhere(
-        (q) => q.isAccepted,
-        orElse: () => quotations.first,
-      );
-      price = '\$${accepted.quotedPrice.toStringAsFixed(2)}';
-    } else if (quotations.isNotEmpty) {
-      final lowest =
-          quotations.map((q) => q.quotedPrice).reduce((a, b) => a < b ? a : b);
-      price = '\$${lowest.toStringAsFixed(2)}';
-    } else {
-      price = widget.job?['price'] as String? ?? '\$0.00';
-    }
-
-    final String date = activeRequest?.preferredDate != null
-        ? DateFormat('EEE, MMM d • hh:mm a')
-            .format(activeRequest!.preferredDate!)
-        : (widget.job?['date'] as String? ?? 'Scheduled Date');
-
+    final String date;
     final String status;
     final String type;
     final Color statusColor;
     final Color statusBg;
-    if (activeRequest != null) {
+
+    if (activeAssignment != null) {
+      jobId = 'JOB-#${activeAssignment.id}';
+      service = activeAssignment.jobRequest?.serviceCategory?.name ??
+          (activeAssignment.jobRequest?.description.isNotEmpty == true
+              ? activeAssignment.jobRequest!.description
+              : (widget.job?['service'] as String? ?? 'Service Assignment'));
+      descriptionText = activeAssignment.jobRequest?.description ?? '';
+      property = activeAssignment.jobRequest?.property?.label.isNotEmpty == true
+          ? '${activeAssignment.jobRequest!.property!.label} • ${activeAssignment.jobRequest!.property!.fullAddress}'
+          : (activeAssignment.jobRequest?.property?.fullAddress ??
+              (widget.job?['property'] as String? ?? 'Service Location'));
+      providerName = activeAssignment.providerName ??
+          (activeAssignment.companyName ??
+              (widget.job?['provider'] as String? ?? 'Assigned Professional'));
+      rating = '4.9 ★';
+
+      if (activeAssignment.payment != null) {
+        price = '\$${activeAssignment.payment!.amount.toStringAsFixed(2)}';
+      } else if (activeAssignment.quotation != null) {
+        price =
+            '\$${activeAssignment.quotation!.quotedPrice.toStringAsFixed(2)}';
+      } else {
+        price = widget.job?['price'] as String? ?? '\$0.00';
+      }
+
+      final dateVal = activeAssignment.startDate ??
+          activeAssignment.assignedAt ??
+          activeAssignment.jobRequest?.preferredDate;
+      date = dateVal != null
+          ? DateFormat('EEE, MMM d • hh:mm a').format(dateVal)
+          : (widget.job?['date'] as String? ?? 'Scheduled Date');
+
+      if (activeAssignment.isCancelled) {
+        status = 'Cancelled';
+        type = 'cancelled';
+        statusColor = const Color(0xFFDC2626);
+        statusBg = const Color(0xFFFEE2E2);
+      } else if (activeAssignment.isCompleted) {
+        status = 'Completed';
+        type = 'completed';
+        statusColor = AppColors.primaryDark;
+        statusBg = const Color(0xFFF3F6E6);
+      } else {
+        status = activeAssignment.status.isNotEmpty
+            ? activeAssignment.status.replaceAll('_', ' ').toUpperCase()
+            : 'SCHEDULED';
+        type = 'ongoing';
+        statusColor = AppColors.primaryDark;
+        statusBg = const Color(0xFFF3F6E6);
+      }
+    } else if (activeRequest != null) {
+      jobId = 'REQ-#${activeRequest.id}';
+      service = activeRequest.serviceCategory?.name ??
+          (activeRequest.description.isNotEmpty
+              ? activeRequest.description
+              : 'Service Details');
+      descriptionText = activeRequest.description;
+      property = activeRequest.property?.label.isNotEmpty == true
+          ? '${activeRequest.property!.label} • ${activeRequest.property!.fullAddress}'
+          : (activeRequest.property?.fullAddress ?? 'Primary Location');
+      providerName = activeRequest.assignment?.providerName ??
+          (quotations.isNotEmpty
+              ? (quotations.first.provider?.name ?? 'Assigned Professional')
+              : 'Awaiting Assignment');
+      rating = activeRequest.assignment != null ? '4.9 ★' : 'New';
+
+      if (activeRequest.assignment != null && quotations.isNotEmpty) {
+        final accepted = quotations.firstWhere(
+          (q) => q.isAccepted,
+          orElse: () => quotations.first,
+        );
+        price = '\$${accepted.quotedPrice.toStringAsFixed(2)}';
+      } else if (quotations.isNotEmpty) {
+        final lowest = quotations
+            .map((q) => q.quotedPrice)
+            .reduce((a, b) => a < b ? a : b);
+        price = '\$${lowest.toStringAsFixed(2)}';
+      } else {
+        price = widget.job?['price'] as String? ?? '\$0.00';
+      }
+
+      date = activeRequest.preferredDate != null
+          ? DateFormat('EEE, MMM d • hh:mm a')
+              .format(activeRequest.preferredDate!)
+          : (widget.job?['date'] as String? ?? 'Scheduled Date');
+
       if (activeRequest.isCancelled) {
         status = 'Cancelled';
         type = 'cancelled';
@@ -298,6 +381,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         statusBg = const Color(0xFFFEF3C7);
       }
     } else {
+      jobId = widget.job?['id'] as String? ?? 'JOB-0000';
+      service = widget.job?['service'] as String? ?? 'Service Details';
+      descriptionText = '';
+      property = widget.job?['property'] as String? ?? 'Primary Location';
+      providerName = widget.job?['provider'] as String? ?? 'Awaiting Assignment';
+      rating = widget.job?['rating'] as String? ?? 'New';
+      price = widget.job?['price'] as String? ?? '\$0.00';
+      date = widget.job?['date'] as String? ?? 'Scheduled Date';
       status = widget.job?['status'] as String? ?? 'Pending';
       type = widget.job?['type'] as String? ?? 'ongoing';
       statusColor =
@@ -327,6 +418,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               statusBg,
               canCancel: canCancel,
               onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
+              onDispute: (activeAssignment != null &&
+                      activeAssignment.hasDispute != true)
+                  ? () => _showDisputeModal(
+                        context,
+                        assignmentId: activeAssignment.id,
+                        providerName: providerName,
+                      )
+                  : null,
             ),
 
             // Scrollable Content
@@ -337,15 +436,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 strokeWidth: 2.8,
                 onRefresh: () async {
                   HapticFeedback.mediumImpact();
+                  final List<Future<dynamic>> futures = [];
                   if (_resolvedJobId != null) {
-                    await Future.wait([
-                      context
-                          .read<JobRequestCubit>()
-                          .loadJobRequestDetails(_resolvedJobId!),
-                      context
-                          .read<JobRequestCubit>()
-                          .loadJobRequestQuotations(_resolvedJobId!),
-                    ]);
+                    futures.add(context
+                        .read<JobRequestCubit>()
+                        .loadJobRequestDetails(_resolvedJobId!));
+                    futures.add(context
+                        .read<JobRequestCubit>()
+                        .loadJobRequestQuotations(_resolvedJobId!));
+                  }
+                  if (_resolvedAssignmentId != null) {
+                    futures.add(context
+                        .read<JobAssignmentCubit>()
+                        .loadAssignmentDetails(_resolvedAssignmentId!));
+                  }
+                  if (futures.isNotEmpty) {
+                    await Future.wait(futures);
                   } else {
                     await Future.delayed(const Duration(milliseconds: 500));
                   }
@@ -380,6 +486,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       ),
                       SizedBox(height: 20.h),
 
+                      // Dispute Banner (if active dispute exists)
+                      if (activeAssignment?.hasDispute == true) ...[
+                        _buildDisputeBanner(),
+                        SizedBox(height: 20.h),
+                      ],
+
                       // Received Provider Quotations Section
                       if (_resolvedJobId != null || quotations.isNotEmpty) ...[
                         _buildQuotationsSection(
@@ -408,12 +520,41 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       SizedBox(height: 20.h),
 
                       // Price & Payment Details Section
-                      _buildPriceBreakdownSection(price, type),
+                      _buildPriceBreakdownSection(
+                        price,
+                        type,
+                        assignment: activeAssignment,
+                        job: widget.job ??
+                            {
+                              'id': jobId,
+                              'service': service,
+                              'property': property,
+                              'provider': providerName,
+                              'price': price,
+                              'date': date,
+                              'status': status,
+                              'type': type,
+                              'rawId': _resolvedJobId ?? _resolvedAssignmentId,
+                            },
+                      ),
                       SizedBox(height: 20.h),
 
                       // Location & Property Details
                       _buildLocationCard(property),
-                      SizedBox(height: 30.h),
+                      SizedBox(height: 20.h),
+
+                      // Dispute Section (for assignments when no active dispute yet)
+                      if (activeAssignment != null &&
+                          activeAssignment.hasDispute != true) ...[
+                        _buildDisputeTriggerCard(
+                          context,
+                          activeAssignment,
+                          providerName,
+                        ),
+                        SizedBox(height: 30.h),
+                      ] else ...[
+                        SizedBox(height: 10.h),
+                      ],
                     ],
                   ),
                 ),
@@ -437,10 +578,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     'date': date,
                     'status': status,
                     'type': type,
-                    'rawId': _resolvedJobId,
+                    'rawId': _resolvedJobId ?? _resolvedAssignmentId,
                   },
               canCancel: canCancel,
               onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
+              quotations: quotations,
+              assignment: activeAssignment,
+              resolvedJobId: _resolvedJobId,
+              resolvedAssignmentId: _resolvedAssignmentId,
             ),
           ],
         ),
@@ -456,6 +601,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     Color statusBg, {
     bool canCancel = false,
     VoidCallback? onCancel,
+    VoidCallback? onDispute,
   }) {
     return Container(
       width: double.infinity,
@@ -501,7 +647,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   color: Colors.white,
                 ),
               ),
-              if (canCancel && onCancel != null)
+              if ((canCancel && onCancel != null) || onDispute != null)
                 PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.more_vert_rounded,
@@ -511,32 +657,57 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   onSelected: (value) {
-                    if (value == 'cancel') {
+                    if (value == 'cancel' && onCancel != null) {
                       onCancel();
+                    } else if (value == 'dispute' && onDispute != null) {
+                      onDispute();
                     }
                   },
                   itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'cancel',
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.cancel_outlined,
-                            color: const Color(0xFFDC2626),
-                            size: 18.r,
-                          ),
-                          SizedBox(width: 10.w),
-                          Text(
-                            'Cancel Request',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w600,
+                    if (canCancel && onCancel != null)
+                      PopupMenuItem(
+                        value: 'cancel',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.cancel_outlined,
                               color: const Color(0xFFDC2626),
-                              fontSize: 13.sp,
+                              size: 18.r,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Cancel Request',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFDC2626),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    if (onDispute != null)
+                      PopupMenuItem(
+                        value: 'dispute',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.shield_outlined,
+                              color: const Color(0xFFDC2626),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Report Dispute',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFDC2626),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 )
               else
@@ -1470,7 +1641,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
-  Widget _buildPriceBreakdownSection(String priceStr, String type) {
+  Widget _buildPriceBreakdownSection(
+    String priceStr,
+    String type, {
+    JobAssignmentEntity? assignment,
+    Map<String, dynamic>? job,
+  }) {
     double basePrice = 120.0;
     try {
       final clean = priceStr.replaceAll(RegExp(r'[^0-9.]'), '');
@@ -1558,8 +1734,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 SizedBox(width: 10.w),
                 Expanded(
                   child: Text(
-                    type == 'completed'
-                        ? 'Paid with Visa ending in •••• 4242'
+                    (type == 'completed' ||
+                            assignment?.payment?.isPaid == true)
+                        ? 'Paid in full via Card'
                         : 'Payment method authorization active',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5.sp,
@@ -1571,6 +1748,48 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ],
             ),
           ),
+          if (assignment != null &&
+              (assignment.payment == null ||
+                  assignment.payment?.isPaid != true)) ...[
+            SizedBox(height: 14.h),
+            SizedBox(
+              width: double.infinity,
+              height: 46.h,
+              child: ElevatedButton.icon(
+                onPressed: () => _showPayJobAssignmentModal(
+                  context,
+                  job ??
+                      {
+                        'id': assignment.id,
+                        'service': assignment
+                                .jobRequest?.serviceCategory?.name ??
+                            'Service Assignment',
+                        'provider': assignment.providerName ?? 'Provider',
+                        'price': priceStr,
+                      },
+                ),
+                icon: Icon(
+                  Icons.payment_rounded,
+                  size: 16.r,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  'Pay for Service Now',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5.sp,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryDark,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1685,6 +1904,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     Map<String, dynamic> job, {
     bool canCancel = false,
     VoidCallback? onCancel,
+    List<QuotationEntity> quotations = const [],
+    JobAssignmentEntity? assignment,
+    int? resolvedJobId,
+    int? resolvedAssignmentId,
   }) {
     return Container(
       width: double.infinity,
@@ -1820,10 +2043,42 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ],
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _showPayJobAssignmentModal(context, job),
-                  icon: Icon(Icons.payment_rounded, size: 18.r),
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    if (quotations.isEmpty) {
+                      DynamicIslandToast.showInfo(
+                        context,
+                        'Waiting for provider quotations...',
+                      );
+                      return;
+                    }
+                    final jobId = resolvedJobId;
+                    if (jobId == null) {
+                      DynamicIslandToast.showError(
+                        context,
+                        'Job request ID not found',
+                      );
+                      return;
+                    }
+                    if (quotations.length == 1) {
+                      _confirmAcceptQuotation(
+                        context,
+                        quotations.first,
+                        jobId,
+                      );
+                    } else {
+                      _showSelectQuotationModal(
+                        context,
+                        quotations,
+                        jobId,
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.check_circle_outline_rounded, size: 18.r),
                   label: Text(
-                    'Pay & Approve',
+                    quotations.length > 1
+                        ? 'Approve Quote (${quotations.length})'
+                        : 'Approve Quotation',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w800,
@@ -1844,68 +2099,78 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         'completed' => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Rate Provider Banner Trigger Card
-            GestureDetector(
-              onTap: () => _showRateProviderModal(context, job),
-              child: Container(
-                margin: EdgeInsets.only(bottom: 12.h),
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: const Color(0xFFFFE082),
-                    width: 1.2,
+            // Rate Provider Banner Trigger Card (only if not yet reviewed)
+            if (assignment?.hasReviewed != true)
+              GestureDetector(
+                onTap: () => _showRateProviderModal(
+                  context,
+                  assignmentId:
+                      assignment?.id ?? resolvedAssignmentId ?? 0,
+                  providerName: providerName,
+                  serviceTitle: service,
+                ),
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: const Color(0xFFFFE082),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFF3C4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.star_rounded,
+                          color: const Color(0xFFD97706),
+                          size: 20.r,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'How was $providerName?',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF92400E),
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'Tap to rate & review your service',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: const Color(0xFFD97706),
+                        size: 14.r,
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(8.r),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFF3C4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.star_rounded,
-                        color: const Color(0xFFD97706),
-                        size: 20.r,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'How was ${job['provider'] as String? ?? 'this Pro'}?',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF92400E),
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Tap to rate & review your service',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFFB45309),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: const Color(0xFFD97706),
-                      size: 14.r,
-                    ),
-                  ],
-                ),
               ),
-            ),
 
             Row(
               children: [
@@ -1936,25 +2201,48 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _showRateProviderModal(context, job),
+                    onPressed: assignment?.hasReviewed == true
+                        ? null
+                        : () => _showRateProviderModal(
+                              context,
+                              assignmentId: assignment?.id ??
+                                  resolvedAssignmentId ??
+                                  0,
+                              providerName: providerName,
+                              serviceTitle: service,
+                            ),
                     icon: Icon(
-                      Icons.star_rounded,
+                      assignment?.hasReviewed == true
+                          ? Icons.check_circle_rounded
+                          : Icons.star_rounded,
                       size: 16.r,
-                      color: const Color(0xFFD97706),
+                      color: assignment?.hasReviewed == true
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFD97706),
                     ),
                     label: Text(
-                      'Rate Pro',
+                      assignment?.hasReviewed == true
+                          ? 'Reviewed'
+                          : 'Rate Pro',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF92400E),
+                        color: assignment?.hasReviewed == true
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF92400E),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFFBEB),
-                      foregroundColor: const Color(0xFF92400E),
-                      side: const BorderSide(
-                        color: Color(0xFFFFE082),
+                      backgroundColor: assignment?.hasReviewed == true
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFFFBEB),
+                      foregroundColor: assignment?.hasReviewed == true
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFF92400E),
+                      side: BorderSide(
+                        color: assignment?.hasReviewed == true
+                            ? const Color(0xFF86EFAC)
+                            : const Color(0xFFFFE082),
                         width: 1.2,
                       ),
                       padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -2367,21 +2655,23 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
-  void _showRateProviderModal(BuildContext context, Map<String, dynamic> job) {
+  void _showRateProviderModal(
+    BuildContext context, {
+    required int assignmentId,
+    required String providerName,
+    required String serviceTitle,
+  }) {
     HapticFeedback.mediumImpact();
-    final String provider = job['provider'] as String? ?? 'Apex Electricians';
-    final String service =
-        job['service'] as String? ?? 'Electrical Maintenance';
-
     int currentRating = 5;
     final Set<String> selectedTags = {'On-Time ⏰', 'Clean Work 🧹'};
     final TextEditingController commentCtrl = TextEditingController();
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (bottomSheetCtx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
@@ -2452,7 +2742,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                               radius: 24.r,
                               backgroundColor: AppColors.primaryDark,
                               child: Text(
-                                provider
+                                providerName
                                     .split(' ')
                                     .map((e) => e.isEmpty ? '' : e[0])
                                     .take(2)
@@ -2470,7 +2760,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    provider,
+                                    providerName,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 15.sp,
                                       fontWeight: FontWeight.w800,
@@ -2479,7 +2769,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                                   ),
                                   SizedBox(height: 2.h),
                                   Text(
-                                    service,
+                                    serviceTitle,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12.sp,
                                       color: AppColors.textMuted,
@@ -2512,12 +2802,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                           final starIndex = index + 1;
                           final isSelected = starIndex <= currentRating;
                           return GestureDetector(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setModalState(() {
-                                currentRating = starIndex;
-                              });
-                            },
+                            onTap: isSubmitting
+                                ? null
+                                : () {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() {
+                                      currentRating = starIndex;
+                                    });
+                                  },
                             child: Padding(
                               padding: EdgeInsets.symmetric(horizontal: 4.w),
                               child: Icon(
@@ -2563,47 +2855,48 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       Wrap(
                         spacing: 8.w,
                         runSpacing: 8.h,
-                        children:
-                            [
-                              'On-Time ⏰',
-                              'Professional 👔',
-                              'Clean Work 🧹',
-                              'Fast Service ⚡',
-                              'Fair Price 🏷️',
-                              'Friendly 😊',
-                            ].map((tag) {
-                              final isSelected = selectedTags.contains(tag);
-                              return FilterChip(
-                                selected: isSelected,
-                                label: Text(tag),
-                                labelStyle: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.sp,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.primaryDark
-                                      : AppColors.textHeadline,
-                                ),
-                                selectedColor: AppColors.cardSelectedBg,
-                                backgroundColor: Colors.grey.shade100,
-                                side: BorderSide(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : Colors.grey.shade300,
-                                ),
-                                onSelected: (val) {
-                                  HapticFeedback.selectionClick();
-                                  setModalState(() {
-                                    if (val) {
-                                      selectedTags.add(tag);
-                                    } else {
-                                      selectedTags.remove(tag);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
+                        children: [
+                          'On-Time ⏰',
+                          'Professional 👔',
+                          'Clean Work 🧹',
+                          'Fast Service ⚡',
+                          'Fair Price 🏷️',
+                          'Friendly 😊',
+                        ].map((tag) {
+                          final isSelected = selectedTags.contains(tag);
+                          return FilterChip(
+                            selected: isSelected,
+                            label: Text(tag),
+                            labelStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? AppColors.primaryDark
+                                  : AppColors.textHeadline,
+                            ),
+                            selectedColor: AppColors.cardSelectedBg,
+                            backgroundColor: Colors.grey.shade100,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey.shade300,
+                            ),
+                            onSelected: isSubmitting
+                                ? null
+                                : (val) {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() {
+                                      if (val) {
+                                        selectedTags.add(tag);
+                                      } else {
+                                        selectedTags.remove(tag);
+                                      }
+                                    });
+                                  },
+                          );
+                        }).toList(),
                       ),
 
                       SizedBox(height: 18.h),
@@ -2612,9 +2905,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       TextField(
                         controller: commentCtrl,
                         maxLines: 3,
+                        enabled: !isSubmitting,
                         style: GoogleFonts.plusJakartaSans(fontSize: 13.sp),
                         decoration: InputDecoration(
-                          hintText: 'Write a public review for $provider...',
+                          hintText:
+                              'Write a public review for $providerName...',
                           hintStyle: GoogleFonts.plusJakartaSans(
                             color: AppColors.textMuted,
                             fontSize: 13.sp,
@@ -2645,14 +2940,59 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         width: double.infinity,
                         height: 52.h,
                         child: ElevatedButton(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            DynamicIslandToast.showSuccess(
-                              context,
-                              'Thank you! Review submitted for $provider ⭐',
-                            );
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: isSubmitting
+                              ? null
+                              : () async {
+                                  if (assignmentId <= 0) {
+                                    DynamicIslandToast.showError(
+                                      context,
+                                      'Assignment ID not found for review',
+                                    );
+                                    return;
+                                  }
+
+                                  HapticFeedback.mediumImpact();
+                                  setModalState(() {
+                                    isSubmitting = true;
+                                  });
+
+                                  final comment = commentCtrl.text.trim();
+                                  final success = await context
+                                      .read<JobAssignmentCubit>()
+                                      .submitReview(
+                                        assignmentId,
+                                        rating: currentRating,
+                                        comment: comment.isNotEmpty
+                                            ? comment
+                                            : null,
+                                      );
+
+                                  if (context.mounted &&
+                                      bottomSheetCtx.mounted) {
+                                    setModalState(() {
+                                      isSubmitting = false;
+                                    });
+                                    if (success) {
+                                      Navigator.of(bottomSheetCtx).pop();
+                                      DynamicIslandToast.showSuccess(
+                                        context,
+                                        'Thank you! Review submitted for $providerName ⭐',
+                                      );
+                                    } else {
+                                      final cubitState = context
+                                          .read<JobAssignmentCubit>()
+                                          .state;
+                                      final msg =
+                                          cubitState is JobAssignmentError
+                                              ? cubitState.message
+                                              : 'Failed to submit review';
+                                      DynamicIslandToast.showError(
+                                        context,
+                                        msg,
+                                      );
+                                    }
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryDark,
                             shape: RoundedRectangleBorder(
@@ -2660,13 +3000,356 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                             ),
                             elevation: 2,
                           ),
-                          child: Text(
-                            'Submit Review',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                          child: isSubmitting
+                              ? SizedBox(
+                                  width: 22.r,
+                                  height: 22.r,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.2,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit Review',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDisputeModal(
+    BuildContext context, {
+    required int assignmentId,
+    required String providerName,
+  }) {
+    HapticFeedback.mediumImpact();
+    final TextEditingController reasonCtrl = TextEditingController();
+    String? selectedCategory;
+    bool isSubmitting = false;
+
+    final categories = [
+      'Work Incomplete',
+      'Poor Workmanship',
+      'Provider No-Show',
+      'Overcharged',
+      'Unprofessional Conduct',
+      'Property Damage',
+      'Other',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(28.r),
+                  ),
+                ),
+                padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Drag Handle
+                      Center(
+                        child: Container(
+                          width: 44.w,
+                          height: 4.5.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(8.r),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFEE2E2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.shield_outlined,
+                                  color: const Color(0xFFDC2626),
+                                  size: 20.r,
+                                ),
+                              ),
+                              SizedBox(width: 10.w),
+                              Text(
+                                'Report Dispute',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textHeadline,
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textMuted,
+                              size: 22.r,
                             ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'Raise an issue regarding $providerName for investigation and mediation by the HandyGig support team.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          color: AppColors.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Category chips
+                      Text(
+                        'Select Issue Category',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeadline,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children: categories.map((cat) {
+                          final isSelected = selectedCategory == cat;
+                          return ChoiceChip(
+                            label: Text(cat),
+                            selected: isSelected,
+                            selectedColor: const Color(0xFFFEE2E2),
+                            backgroundColor: const Color(0xFFF9FAFB),
+                            labelStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? const Color(0xFFDC2626)
+                                  : AppColors.textHeadline,
+                            ),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? const Color(0xFFFCA5A5)
+                                  : const Color(0xFFE5E7EB),
+                            ),
+                            onSelected: isSubmitting
+                                ? null
+                                : (selected) {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() {
+                                      selectedCategory = selected ? cat : null;
+                                      if (selected && reasonCtrl.text.isEmpty) {
+                                        reasonCtrl.text = '[$cat]: ';
+                                        reasonCtrl.selection =
+                                            TextSelection.fromPosition(
+                                          TextPosition(
+                                            offset: reasonCtrl.text.length,
+                                          ),
+                                        );
+                                      }
+                                    });
+                                  },
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 18.h),
+
+                      // Detailed Reason
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Reason / Description *',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textHeadline,
+                            ),
+                          ),
+                          Text(
+                            '${reasonCtrl.text.length}/2000',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5.sp,
+                              color: reasonCtrl.text.length > 2000
+                                  ? Colors.red
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      TextField(
+                        controller: reasonCtrl,
+                        maxLines: 4,
+                        maxLength: 2000,
+                        enabled: !isSubmitting,
+                        buildCounter: (context,
+                                {required currentLength,
+                                required isFocused,
+                                maxLength}) =>
+                            null,
+                        onChanged: (_) => setModalState(() {}),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13.sp),
+                        decoration: InputDecoration(
+                          hintText:
+                              'Describe in detail what occurred, including dates, missed promises, or damages...',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: AppColors.textMuted,
+                            fontSize: 13.sp,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFBFBFB),
+                          contentPadding: EdgeInsets.all(14.w),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE2E7D3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDC2626),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20.h),
+
+                      // Submit Dispute Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.h,
+                        child: ElevatedButton.icon(
+                          onPressed: (isSubmitting ||
+                                  reasonCtrl.text.trim().isEmpty)
+                              ? null
+                              : () async {
+                                  if (assignmentId <= 0) {
+                                    DynamicIslandToast.showError(
+                                      context,
+                                      'Assignment ID not found for dispute',
+                                    );
+                                    return;
+                                  }
+
+                                  final reason = reasonCtrl.text.trim();
+                                  if (reason.length < 5) {
+                                    DynamicIslandToast.showError(
+                                      context,
+                                      'Please provide a meaningful reason (at least 5 characters)',
+                                    );
+                                    return;
+                                  }
+
+                                  HapticFeedback.mediumImpact();
+                                  setModalState(() {
+                                    isSubmitting = true;
+                                  });
+
+                                  final success = await context
+                                      .read<JobAssignmentCubit>()
+                                      .submitDispute(
+                                        assignmentId,
+                                        reason: reason,
+                                      );
+
+                                  if (context.mounted &&
+                                      bottomSheetCtx.mounted) {
+                                    setModalState(() {
+                                      isSubmitting = false;
+                                    });
+                                    if (success) {
+                                      Navigator.of(bottomSheetCtx).pop();
+                                      DynamicIslandToast.showSuccess(
+                                        context,
+                                        'Dispute submitted. HandyGig support has been notified.',
+                                      );
+                                    } else {
+                                      final cubitState = context
+                                          .read<JobAssignmentCubit>()
+                                          .state;
+                                      final msg =
+                                          cubitState is JobAssignmentError
+                                              ? cubitState.message
+                                              : 'Failed to submit dispute';
+                                      DynamicIslandToast.showError(
+                                        context,
+                                        msg,
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: isSubmitting
+                              ? const SizedBox.shrink()
+                              : Icon(
+                                  Icons.gavel_rounded,
+                                  size: 18.r,
+                                  color: Colors.white,
+                                ),
+                          label: isSubmitting
+                              ? SizedBox(
+                                  width: 22.r,
+                                  height: 22.r,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.2,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit Dispute to Support',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26.r),
+                            ),
+                            elevation: 2,
                           ),
                         ),
                       ),
@@ -2678,6 +3361,285 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           },
         );
       },
+    );
+  }
+
+  void _showSelectQuotationModal(
+    BuildContext context,
+    List<QuotationEntity> quotations,
+    int jobId,
+  ) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetCtx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+          ),
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44.w,
+                  height: 4.5.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Select Quotation to Approve',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textHeadline,
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                'Choose a quotation from providers who applied for this task.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5.sp,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: quotations.length,
+                  separatorBuilder: (_, _) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final quote = quotations[index];
+                    return Container(
+                      padding: EdgeInsets.all(14.r),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FBF6),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFE2E7D3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                quote.provider?.name ??
+                                    (quote.provider?.id != null
+                                        ? 'Provider #${quote.provider!.id}'
+                                        : 'Provider'),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                              Text(
+                                '\$${quote.quotedPrice.toStringAsFixed(2)}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF16A34A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (quote.message != null &&
+                              quote.message!.isNotEmpty) ...[
+                            SizedBox(height: 6.h),
+                            Text(
+                              quote.message!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: 10.h),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(bottomSheetCtx).pop();
+                                _confirmAcceptQuotation(
+                                  context,
+                                  quote,
+                                  jobId,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryDark,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Accept & Assign',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDisputeBanner() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFEE2E2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.shield_outlined,
+              color: const Color(0xFFDC2626),
+              size: 20.r,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dispute Active (Under Investigation)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF991B1B),
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  'A dispute has been submitted for this assignment. HandyGig support is reviewing the issue and mediating with the provider.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFFB91C1C),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisputeTriggerCard(
+    BuildContext context,
+    JobAssignmentEntity assignment,
+    String providerName,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFE8ECD8), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2).withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(
+              Icons.gavel_rounded,
+              color: const Color(0xFFDC2626),
+              size: 20.r,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need Help with this Task?',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textHeadline,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Encountered an issue with quality, payment or conduct?',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          TextButton(
+            onPressed: () => _showDisputeModal(
+              context,
+              assignmentId: assignment.id,
+              providerName: providerName,
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFDC2626),
+              padding: EdgeInsets.symmetric(
+                horizontal: 10.w,
+                vertical: 6.h,
+              ),
+            ),
+            child: Text(
+              'Dispute',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5.sp,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -43,21 +43,44 @@ class JobRequestCubit extends Cubit<JobRequestState> {
     }
 
     final result = await _getJobRequestsUseCase();
-    result.fold(
-      (failure) {
+    await result.fold(
+      (failure) async {
         emit(JobRequestError(
           failure.errorMessage,
           currentJobRequests: _cachedRequests,
           selectedJobRequest: _selectedJobRequest,
         ));
       },
-      (requests) {
+      (requests) async {
         _cachedRequests = requests;
         emit(JobRequestLoaded(
           List.unmodifiable(_cachedRequests),
           selectedJobRequest: _selectedJobRequest,
           quotationsByJobId: Map.unmodifiable(_quotationsByJobId),
         ));
+
+        // Fetch quotations for pending requests
+        final pending = requests.where((r) => r.isPending).toList();
+        if (pending.isNotEmpty) {
+          final updated = await Future.wait(requests.map((r) async {
+            if (!r.isPending) return r;
+            final quoteRes = await _getJobRequestQuotationsUseCase(r.id);
+            return quoteRes.fold(
+              (_) => r,
+              (quotes) {
+                _quotationsByJobId[r.id] = quotes;
+                return r.copyWith(quotations: quotes);
+              },
+            );
+          }));
+
+          _cachedRequests = updated;
+          emit(JobRequestLoaded(
+            List.unmodifiable(_cachedRequests),
+            selectedJobRequest: _selectedJobRequest,
+            quotationsByJobId: Map.unmodifiable(_quotationsByJobId),
+          ));
+        }
       },
     );
   }

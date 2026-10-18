@@ -44,6 +44,12 @@ import 'package:customer_app/src/domain/repositories/job_requests/job_request_re
 import 'package:customer_app/src/data/repositories/job_requests/job_request_repository_impl.dart';
 import 'package:customer_app/src/domain/usecases/job_requests/job_request_usecases.dart';
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
+import 'package:customer_app/src/data/data_sources/remote/job_assignments/job_assignment_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/job_assignments/job_assignment_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/job_assignments/job_assignment_repository.dart';
+import 'package:customer_app/src/data/repositories/job_assignments/job_assignment_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/job_assignments/job_assignment_usecases.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -82,6 +88,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<JobRequestRemoteDataSource>(
     () => JobRequestRemoteDataSourceImpl(sl<Dio>()),
   );
+  sl.registerLazySingleton<JobAssignmentRemoteDataSource>(
+    () => JobAssignmentRemoteDataSourceImpl(sl<Dio>()),
+  );
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
@@ -111,6 +120,12 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<JobRequestRepository>(
     () => JobRequestRepositoryImpl(
       sl<JobRequestRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
+  );
+  sl.registerLazySingleton<JobAssignmentRepository>(
+    () => JobAssignmentRepositoryImpl(
+      sl<JobAssignmentRemoteDataSource>(),
       sl<NetworkService>(),
     ),
   );
@@ -198,6 +213,20 @@ Future<void> initServiceLocator() async {
     () => AcceptQuotationUseCase(sl<JobRequestRepository>()),
   );
 
+  // Job Assignment Usecases
+  sl.registerLazySingleton<GetJobAssignmentsUseCase>(
+    () => GetJobAssignmentsUseCase(sl<JobAssignmentRepository>()),
+  );
+  sl.registerLazySingleton<GetJobAssignmentDetailsUseCase>(
+    () => GetJobAssignmentDetailsUseCase(sl<JobAssignmentRepository>()),
+  );
+  sl.registerLazySingleton<SubmitReviewUseCase>(
+    () => SubmitReviewUseCase(sl<JobAssignmentRepository>()),
+  );
+  sl.registerLazySingleton<SubmitDisputeUseCase>(
+    () => SubmitDisputeUseCase(sl<JobAssignmentRepository>()),
+  );
+
   // Profile Usecases
   sl.registerLazySingleton<GetUserProfileUseCase>(
     () => GetUserProfileUseCase(sl<ProfileRepository>()),
@@ -255,6 +284,14 @@ Future<void> initServiceLocator() async {
       sl<CancelJobRequestUseCase>(),
       sl<GetJobRequestQuotationsUseCase>(),
       sl<AcceptQuotationUseCase>(),
+    ),
+  );
+  sl.registerFactory<JobAssignmentCubit>(
+    () => JobAssignmentCubit(
+      sl<GetJobAssignmentsUseCase>(),
+      sl<GetJobAssignmentDetailsUseCase>(),
+      sl<SubmitReviewUseCase>(),
+      sl<SubmitDisputeUseCase>(),
     ),
   );
 }

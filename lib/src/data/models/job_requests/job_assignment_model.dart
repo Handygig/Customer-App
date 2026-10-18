@@ -1,4 +1,7 @@
 import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
+import 'package:customer_app/src/data/models/job_requests/job_request_model.dart';
+import 'package:customer_app/src/data/models/payments/payment_model.dart';
+import 'package:customer_app/src/data/models/job_requests/quotation_model.dart';
 
 class JobAssignmentModel extends JobAssignmentEntity {
   const JobAssignmentModel({
@@ -12,6 +15,11 @@ class JobAssignmentModel extends JobAssignmentEntity {
     super.providerPhone,
     super.providerImage,
     super.companyName,
+    super.jobRequest,
+    super.payment,
+    super.quotation,
+    super.hasReviewed,
+    super.hasDispute,
   });
 
   factory JobAssignmentModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +28,15 @@ class JobAssignmentModel extends JobAssignmentEntity {
         : null;
     final company = json['company'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(json['company'] as Map)
+        : null;
+    final jobRequestJson = json['job_request'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['job_request'] as Map)
+        : null;
+    final paymentJson = json['payment'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['payment'] as Map)
+        : null;
+    final quotationJson = json['quotation'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['quotation'] as Map)
         : null;
 
     return JobAssignmentModel(
@@ -33,6 +50,15 @@ class JobAssignmentModel extends JobAssignmentEntity {
       providerPhone: provider?['phone']?.toString(),
       providerImage: provider?['profile_image']?.toString(),
       companyName: company?['name']?.toString(),
+      jobRequest: jobRequestJson != null
+          ? JobRequestModel.fromJson(jobRequestJson)
+          : null,
+      payment: paymentJson != null ? PaymentModel.fromJson(paymentJson) : null,
+      quotation: quotationJson != null
+          ? QuotationModel.fromJson(quotationJson)
+          : null,
+      hasReviewed: json['has_reviewed'] == true,
+      hasDispute: json['has_dispute'] == true,
     );
   }
 
@@ -52,6 +78,17 @@ class JobAssignmentModel extends JobAssignmentEntity {
             }
           : null,
       'company': companyName != null ? {'name': companyName} : null,
+      'job_request': jobRequest is JobRequestModel
+          ? (jobRequest as JobRequestModel).toJson()
+          : null,
+      'payment': payment is PaymentModel
+          ? (payment as PaymentModel).toJson()
+          : null,
+      'quotation': quotation is QuotationModel
+          ? (quotation as QuotationModel).toJson()
+          : null,
+      'has_reviewed': hasReviewed,
+      'has_dispute': hasDispute,
     };
   }
 
@@ -72,3 +109,4 @@ class JobAssignmentModel extends JobAssignmentEntity {
     return DateTime.tryParse(value.toString());
   }
 }
+

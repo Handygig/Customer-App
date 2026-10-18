@@ -10,6 +10,10 @@ class DynamicIslandToast {
     _showToast(context, message, false);
   }
 
+  static void showInfo(BuildContext context, String message) {
+    _showToast(context, message, false);
+  }
+
   static void showError(BuildContext context, String message) {
     _showToast(context, message, true);
   }

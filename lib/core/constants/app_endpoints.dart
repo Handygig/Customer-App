@@ -42,4 +42,10 @@ class AppEndpoints {
   static String customerJobRequestCancel(int id) => '/customer/job-requests/$id/cancel';
   static String customerJobRequestQuotations(int id) => '/customer/job-requests/$id/quotations';
   static String customerQuotationAccept(int id) => '/customer/quotations/$id/accept';
+
+  // Job Assignments, Reviews & Disputes endpoints
+  static const String customerJobAssignments = '/customer/job-assignments';
+  static String customerJobAssignment(int id) => '/customer/job-assignments/$id';
+  static String customerJobAssignmentReviews(int id) => '/customer/job-assignments/$id/reviews';
+  static String customerJobAssignmentDisputes(int id) => '/customer/job-assignments/$id/disputes';
 }
