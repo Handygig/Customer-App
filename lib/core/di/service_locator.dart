@@ -59,6 +59,8 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/domain/repositories/notifications/notification_repository.dart';
 import 'package:customer_app/src/data/repositories/notifications/notification_repository_impl.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
+import 'package:customer_app/src/domain/repositories/faq/faq_repository.dart';
+import 'package:customer_app/src/data/repositories/faq/faq_repository_impl.dart';
 
 final sl = GetIt.instance;
 
@@ -149,6 +151,9 @@ Future<void> initServiceLocator() async {
   );
   sl.registerLazySingleton<NotificationRepository>(
     () => NotificationRepositoryImpl(sl<Dio>(), sl<NetworkService>()),
+  );
+  sl.registerLazySingleton<FaqRepository>(
+    () => FaqRepositoryImpl(sl<Dio>(), sl<NetworkService>()),
   );
 
   // Use Cases

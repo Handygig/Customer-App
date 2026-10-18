@@ -68,4 +68,9 @@ class AppEndpoints {
   static String customerNotificationRead(int id) => '/customer/notifications/$id/read';
   static const String customerMarkAllNotificationsRead = '/customer/notifications/mark-all-read';
   static String customerNotificationDelete(int id) => '/customer/notifications/$id';
+
+  // FAQ endpoints
+  static const String customerFaqs = '/customer/faqs';
+  static const String publicFaqs = '/faqs';
+  static const String faqCategories = '/faqs/categories';
 }

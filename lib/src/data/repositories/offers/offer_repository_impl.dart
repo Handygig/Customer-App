@@ -1,7 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/core/constants/app_endpoints.dart';
 import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/core/errors/failures.dart';
