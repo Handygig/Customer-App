@@ -3,14 +3,22 @@ import 'package:customer_app/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:customer_app/config/theme/app_theme.dart';
 import 'package:customer_app/config/router/app_router.dart';
 import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
+
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:customer_app/core/services/auth_manager.dart';
+import 'package:customer_app/core/services/language_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +26,13 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initServiceLocator();
+  await AuthManager.init();
+  await LanguageManager.init();
   runApp(const CustomerApp());
 }
 
@@ -41,23 +52,48 @@ class CustomerApp extends StatelessWidget {
             BlocProvider<ServiceCategoryCubit>(
               create: (context) => sl<ServiceCategoryCubit>()..loadCategories(),
             ),
+            BlocProvider<ServiceCubit>(
+              create: (context) => sl<ServiceCubit>()..loadServices(),
+            ),
             BlocProvider<PropertyCubit>(
               create: (context) => sl<PropertyCubit>()..loadProperties(),
             ),
             BlocProvider<CardCubit>(
               create: (context) => sl<CardCubit>()..loadCards(),
             ),
+            BlocProvider<JobRequestCubit>(
+              create: (context) => sl<JobRequestCubit>()..loadJobRequests(),
+            ),
+            BlocProvider<JobAssignmentCubit>(
+              create: (context) => sl<JobAssignmentCubit>()..loadAssignments(),
+            ),
           ],
-          child: ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeModeNotifier,
-            builder: (context, mode, child) {
-              return MaterialApp.router(
-                title: 'Customer App',
-                debugShowCheckedModeBanner: false,
-                theme: AppTheme.lightTheme,
-                darkTheme: AppTheme.darkTheme,
-                themeMode: mode,
-                routerConfig: AppRouter.router,
+          child: ValueListenableBuilder<Locale>(
+            valueListenable: LanguageManager.localeNotifier,
+            builder: (context, locale, _) {
+              return ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeModeNotifier,
+                builder: (context, mode, child) {
+                  return MaterialApp.router(
+                    title: 'Customer App',
+                    debugShowCheckedModeBanner: false,
+                    theme: AppTheme.lightTheme,
+                    darkTheme: AppTheme.darkTheme,
+                    themeMode: mode,
+                    locale: locale,
+                    supportedLocales: const [
+                      Locale('en'),
+                      Locale('si'),
+                      Locale('ta'),
+                    ],
+                    localizationsDelegates: const [
+                      GlobalMaterialLocalizations.delegate,
+                      GlobalWidgetsLocalizations.delegate,
+                      GlobalCupertinoLocalizations.delegate,
+                    ],
+                    routerConfig: AppRouter.router,
+                  );
+                },
               );
             },
           ),

@@ -1,0 +1,60 @@
+import 'package:dartz/dartz.dart';
+import 'package:customer_app/core/errors/failures.dart';
+import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
+import 'package:customer_app/src/domain/entities/job_assignments/review_entity.dart';
+import 'package:customer_app/src/domain/entities/job_assignments/dispute_entity.dart';
+import 'package:customer_app/src/domain/repositories/job_assignments/job_assignment_repository.dart';
+
+class GetJobAssignmentsUseCase {
+  final JobAssignmentRepository _repository;
+
+  GetJobAssignmentsUseCase(this._repository);
+
+  Future<Either<Failure, List<JobAssignmentEntity>>> call() {
+    return _repository.getJobAssignments();
+  }
+}
+
+class GetJobAssignmentDetailsUseCase {
+  final JobAssignmentRepository _repository;
+
+  GetJobAssignmentDetailsUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int id) {
+    return _repository.getJobAssignment(id);
+  }
+}
+
+class SubmitReviewUseCase {
+  final JobAssignmentRepository _repository;
+
+  SubmitReviewUseCase(this._repository);
+
+  Future<Either<Failure, ReviewEntity>> call(
+    int assignmentId, {
+    required int rating,
+    String? comment,
+  }) {
+    return _repository.submitReview(
+      assignmentId,
+      rating: rating,
+      comment: comment,
+    );
+  }
+}
+
+class SubmitDisputeUseCase {
+  final JobAssignmentRepository _repository;
+
+  SubmitDisputeUseCase(this._repository);
+
+  Future<Either<Failure, DisputeEntity>> call(
+    int assignmentId, {
+    required String reason,
+  }) {
+    return _repository.submitDispute(
+      assignmentId,
+      reason: reason,
+    );
+  }
+}

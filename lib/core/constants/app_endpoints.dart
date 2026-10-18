@@ -19,18 +19,37 @@ class AppEndpoints {
   static const String customerRegister = '/customer/register';
   static const String customerLogin = '/customer/login';
   static const String customerCompleteProfile = '/customer/complete-profile';
+  static const String logout = '/auth/logout';
+  static const String userProfile = '/user/profile';
 
   // Services endpoints
   static const String customerServiceCategories = '/customer/service-categories';
+  static const String customerServices = '/customer/services';
+  static String customerCategoryServices(int categoryId) =>
+      '/customer/service-categories/$categoryId/services';
+  static String customerService(int id) => '/customer/services/$id';
 
   // Properties endpoints
   static const String customerProperties = '/customer/properties';
-  static String customerProperty(int id) => '/customer/properties/';
+  static String customerProperty(int id) => '/customer/properties/$id';
 
   // Payment Cards & Payments endpoints
   static const String customerCards = '/customer/cards';
-  static String customerCard(int id) => '/customer/cards/';
-  static String customerCardDefault(int id) => '/customer/cards//default';
-  static String customerCardFreeze(int id) => '/customer/cards//freeze';
-  static String customerJobAssignmentPay(int id) => '/customer/job-assignments//pay';
+  static String customerCard(int id) => '/customer/cards/$id';
+  static String customerCardDefault(int id) => '/customer/cards/$id/default';
+  static String customerCardFreeze(int id) => '/customer/cards/$id/freeze';
+  static String customerJobAssignmentPay(int id) => '/customer/job-assignments/$id/pay';
+
+  // Job Requests & Quotations endpoints
+  static const String customerJobRequests = '/customer/job-requests';
+  static String customerJobRequest(int id) => '/customer/job-requests/$id';
+  static String customerJobRequestCancel(int id) => '/customer/job-requests/$id/cancel';
+  static String customerJobRequestQuotations(int id) => '/customer/job-requests/$id/quotations';
+  static String customerQuotationAccept(int id) => '/customer/quotations/$id/accept';
+
+  // Job Assignments, Reviews & Disputes endpoints
+  static const String customerJobAssignments = '/customer/job-assignments';
+  static String customerJobAssignment(int id) => '/customer/job-assignments/$id';
+  static String customerJobAssignmentReviews(int id) => '/customer/job-assignments/$id/reviews';
+  static String customerJobAssignmentDisputes(int id) => '/customer/job-assignments/$id/disputes';
 }

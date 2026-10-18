@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/services/language_manager.dart';
 import 'package:customer_app/src/data/models/language/language_model.dart';
 import 'package:customer_app/src/presentation/screens/auth/mobile_number_screen.dart';
 import 'package:customer_app/src/presentation/screens/language/widgets/language_option_card.dart';
@@ -36,6 +37,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
   @override
   void initState() {
     super.initState();
+    _selectedLanguageCode = LanguageManager.currentLanguageCode;
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -92,12 +94,15 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
     widget.onLanguageSelected?.call(selectedLang);
   }
 
-  void _handleContinue() {
+  Future<void> _handleContinue() async {
     HapticFeedback.mediumImpact();
+    await LanguageManager.setLanguage(_selectedLanguageCode);
+    if (!mounted) return;
+
     if (widget.onContinue != null) {
       widget.onContinue!();
     } else {
-      Navigator.of(context).push(
+      Navigator.of(context).pushReplacement(
         CupertinoPageRoute(builder: (context) => const MobileNumberScreen()),
       );
     }

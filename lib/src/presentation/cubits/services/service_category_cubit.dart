@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:customer_app/src/domain/entities/services/service_category_entity.dart';
 import 'package:customer_app/src/domain/usecases/services/get_service_categories_usecase.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 
@@ -20,5 +21,11 @@ class ServiceCategoryCubit extends Cubit<ServiceCategoryState> {
       (failure) => emit(ServiceCategoryError(failure.errorMessage)),
       (categories) => emit(ServiceCategoryLoaded(categories)),
     );
+  }
+
+  List<ServiceCategoryEntity> get categories {
+    final s = state;
+    if (s is ServiceCategoryLoaded) return s.categories;
+    return const [];
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:customer_app/core/errors/auth_exception.dart';
@@ -196,6 +197,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return UserModel.fromJson(userJson);
     } on DioException catch (error) {
       throw AuthException(_dioMessage(error));
+    }
+  }
+
+  @override
+  Future<void> logout() async {
+    try {
+      await _dio.post(AppEndpoints.logout);
+    } on DioException catch (e) {
+      debugPrint('⚠️ [AuthRemoteDataSourceImpl.logout] Error: ${e.message}');
     }
   }
 

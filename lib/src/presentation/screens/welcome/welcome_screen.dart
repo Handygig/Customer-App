@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/services/auth_manager.dart';
+import 'package:customer_app/core/services/language_manager.dart';
 import 'package:customer_app/src/presentation/screens/language/language_selection_screen.dart';
-import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -70,19 +73,28 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     super.dispose();
   }
 
-  void _navigateToLanguageScreen(BuildContext context) {
+  Future<void> _handleGetStarted(BuildContext context) async {
     HapticFeedback.mediumImpact();
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (context) => const LanguageSelectionScreen()),
-    );
-  }
 
-  void _bypassRegistrationForDev(BuildContext context) {
-    HapticFeedback.heavyImpact();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
-      (route) => false,
-    );
+    // Check if the user has already completed language setup
+    final hasSelected = await LanguageManager.checkHasSelectedLanguage();
+    if (!context.mounted) return;
+
+    if (hasSelected) {
+      // Returning user / language already configured: skip language selection screen!
+      if (AuthManager.isLoggedIn) {
+        context.goNamed(AppRoutes.mainNavigation);
+      } else {
+        context.goNamed(AppRoutes.mobileNumber);
+      }
+    } else {
+      // First-time user setup: show language selection once
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (context) => const LanguageSelectionScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -388,13 +400,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                             bottom: 20.h,
                                             top: 16.h,
                                           ),
-                                          child: Column(
-                                            children: [
-                                              _buildGetStartedButton(context),
-                                              SizedBox(height: 10.h),
-                                              _buildDevBypassButton(context),
-                                            ],
-                                          ),
+                                          child: _buildGetStartedButton(context),
                                         ),
                                       ],
                                     ),
@@ -449,7 +455,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       width: double.infinity,
       height: 56.h,
       child: ElevatedButton(
-        onPressed: () => _navigateToLanguageScreen(context),
+        onPressed: () => _handleGetStarted(context),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.buttonBackground,
           foregroundColor: AppColors.buttonText,
@@ -478,36 +484,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               size: 22,
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDevBypassButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48.h,
-      child: OutlinedButton.icon(
-        onPressed: () => _bypassRegistrationForDev(context),
-        icon: Icon(
-          Icons.developer_mode_rounded,
-          color: const Color(0xFFD97706),
-          size: 20.r,
-        ),
-        label: Text(
-          'Skip Registration (Dev Bypass)',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14.5.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFFD97706),
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xFFFEF3C7),
-          side: const BorderSide(color: Color(0xFFF59E0B), width: 1.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.r),
-          ),
         ),
       ),
     );

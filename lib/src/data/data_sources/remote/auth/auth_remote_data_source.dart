@@ -30,5 +30,7 @@ abstract class AuthRemoteDataSource {
     String? profileImagePath,
   });
 
+  Future<void> logout();
+
   Future<void> signOutFirebase();
 }

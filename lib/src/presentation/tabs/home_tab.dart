@@ -1,9 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/di/service_locator.dart';
+import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
+import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
+import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
+import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
@@ -28,6 +39,15 @@ class _HomeTabState extends State<HomeTab> {
     initialPage:
         999, // 999 is a multiple of 3 (999 % 3 == 0) for seamless infinite looping
   );
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<JobAssignmentCubit>().loadAssignments();
+      context.read<ServiceCategoryCubit>().loadCategories();
+    });
+  }
 
   // Mock properties data with high quality cover image assets
   final List<Map<String, dynamic>> _properties = [
@@ -60,36 +80,6 @@ class _HomeTabState extends State<HomeTab> {
       'color': AppColors.primaryDark,
       'activeJobs': 0,
       'isPrimary': false,
-    },
-  ];
-
-  // Mock ongoing jobs data
-  final List<Map<String, dynamic>> _ongoingJobs = [
-    {
-      'id': 'JOB-9842',
-      'service': 'Deep Home Sanitization & Cleaning',
-      'property': 'Rosewood Cottage',
-      'providerName': 'David Miller (Pro Cleaner)',
-      'providerRating': '4.9 ★',
-      'status': 'In Progress',
-      'progress': 0.65,
-      'statusColor': AppColors.accentLime,
-      'scheduledTime': 'Today • 02:00 PM - 05:00 PM',
-      'category': 'Cleaning',
-      'icon': Icons.cleaning_services_rounded,
-    },
-    {
-      'id': 'JOB-9845',
-      'service': 'HVAC Filter & Air Quality Service',
-      'property': 'Sunset Luxury Villa',
-      'providerName': 'Marcus Vance (Certified Tech)',
-      'providerRating': '4.8 ★',
-      'status': 'Pro En Route',
-      'progress': 0.35,
-      'statusColor': const Color(0xFFE5A00D),
-      'scheduledTime': 'Today • 04:30 PM',
-      'category': 'AC & HVAC',
-      'icon': Icons.hvac_rounded,
     },
   ];
 
@@ -139,50 +129,7 @@ class _HomeTabState extends State<HomeTab> {
     },
   ];
 
-  // Service categories with custom line art clip arts matching palette (#636B2F)
-  final List<Map<String, dynamic>> _serviceCategories = [
-    {
-      'title': 'Cleaning',
-      'image': 'assets/images/icon_cleaning.png',
-      'icon': Icons.cleaning_services_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Plumbing',
-      'image': 'assets/images/icon_plumbing.png',
-      'icon': Icons.plumbing_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Electrical',
-      'image': 'assets/images/icon_electrical.png',
-      'icon': Icons.electrical_services_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Painting',
-      'image': 'assets/images/icon_painting.png',
-      'icon': Icons.format_paint_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Gardening',
-      'image': 'assets/images/icon_gardening.png',
-      'icon': Icons.yard_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-    {
-      'title': 'Appliances',
-      'image': 'assets/images/icon_appliances.png',
-      'icon': Icons.kitchen_rounded,
-      'color': const Color(0xFFF2F5ED),
-    },
-  ];
 
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -226,6 +173,11 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final assignmentState = context.watch<JobAssignmentCubit>().state;
+    final ongoingAssignments = assignmentState is JobAssignmentLoaded
+        ? assignmentState.assignments.where((a) => a.isOngoing).toList()
+        : context.watch<JobAssignmentCubit>().currentAssignments.where((a) => a.isOngoing).toList();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor(context),
       body: Column(
@@ -241,7 +193,7 @@ class _HomeTabState extends State<HomeTab> {
               strokeWidth: 2.8,
               onRefresh: () async {
                 HapticFeedback.mediumImpact();
-                await Future.delayed(const Duration(milliseconds: 1200));
+                await context.read<JobAssignmentCubit>().loadAssignments(forceRefresh: true);
                 if (context.mounted) {
                   DynamicIslandToast.showSuccess(
                     context,
@@ -269,7 +221,7 @@ class _HomeTabState extends State<HomeTab> {
                     SizedBox(height: 16.h),
 
                     // 3. Ongoing Jobs Section
-                    _buildOngoingJobsSection(),
+                    _buildOngoingJobsSection(ongoingAssignments),
 
                     SizedBox(height: 16.h),
 
@@ -320,51 +272,84 @@ class _HomeTabState extends State<HomeTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Row(
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 44.r,
-                      height: 44.r,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
-                        color: AppColors.primary,
-                      ),
-                      child: Center(
-                        child: Text(
-                          'A',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w800,
+                child: StreamBuilder<UserProfile>(
+                  stream: (sl.isRegistered<ProfileRepository>()
+                          ? sl<ProfileRepository>()
+                          : ProfileRepositoryImpl())
+                      .watchUserProfile(),
+                  builder: (context, snapshot) {
+                    final firstName = snapshot.data?.firstName.trim() ?? '';
+                    final displayName = firstName.isNotEmpty
+                        ? firstName
+                        : (snapshot.data?.fullName.trim().isNotEmpty == true
+                            ? snapshot.data!.fullName.trim()
+                            : '');
+                    final greeting = displayName.isNotEmpty
+                        ? 'Good Morning, $displayName'
+                        : 'Good Morning';
+                    final initial = displayName.isNotEmpty
+                        ? displayName[0].toUpperCase()
+                        : 'U';
+                    final profileImage = snapshot.data?.profileImageUrl;
+
+                    return Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 44.r,
+                          height: 44.r,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.primary, width: 2),
+                            color: AppColors.primary,
+                            image: (profileImage != null && profileImage.isNotEmpty)
+                                ? DecorationImage(
+                                    image: NetworkImage(profileImage),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                           ),
+                          child: (profileImage == null || profileImage.isEmpty)
+                              ? Center(
+                                  child: Text(
+                                    initial,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white,
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Good Morning, Alex',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: AppColors.headlineColor(context),
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      greeting,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: AppColors.headlineColor(context),
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text('👋', style: TextStyle(fontSize: 14.sp)),
+                                ],
                               ),
-                              SizedBox(width: 4.w),
-                              Text('👋', style: TextStyle(fontSize: 14.sp)),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -838,7 +823,7 @@ class _HomeTabState extends State<HomeTab> {
   // ---------------------------------------------------------------------------
   // 3. ONGOING JOBS SECTION
   // ---------------------------------------------------------------------------
-  Widget _buildOngoingJobsSection() {
+  Widget _buildOngoingJobsSection(List<JobAssignmentEntity> ongoingJobs) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Column(
@@ -877,7 +862,7 @@ class _HomeTabState extends State<HomeTab> {
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Text(
-                      '${_ongoingJobs.length} Active',
+                      '${ongoingJobs.length} Active',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w700,
@@ -905,33 +890,92 @@ class _HomeTabState extends State<HomeTab> {
           ),
           SizedBox(height: 16.h),
 
-          ListView.separated(
-            padding: EdgeInsets.zero,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _ongoingJobs.length,
-            separatorBuilder: (context, index) => SizedBox(height: 12.h),
-            itemBuilder: (context, index) {
-              final job = _ongoingJobs[index];
-              return _buildOngoingJobCard(job);
-            },
-          ),
+          if (ongoingJobs.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 24.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: AppColors.cardColor(context),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: AppColors.borderColor(context)),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.calendar_month_outlined,
+                    size: 36.r,
+                    color: AppColors.mutedTextColor(context),
+                  ),
+                  SizedBox(height: 10.h),
+                  Text(
+                    'No Ongoing Jobs',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.headlineColor(context),
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    'Active assignments in progress will show up here.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      color: AppColors.mutedTextColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: ongoingJobs.length,
+              separatorBuilder: (context, index) => SizedBox(height: 12.h),
+              itemBuilder: (context, index) {
+                final job = ongoingJobs[index];
+                return _buildOngoingJobCard(job);
+              },
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildOngoingJobCard(Map<String, dynamic> job) {
-    final String type = job['type'] as String? ?? 'ongoing';
-    final int currentStep = switch (type) {
-      'waiting' => 0,
-      'to_approve' => 1,
-      'ongoing' => 2,
-      'completed' => 3,
-      _ => 2,
-    };
+  Widget _buildOngoingJobCard(JobAssignmentEntity job) {
+    final int currentStep = job.isInProgress ? 2 : 1;
+    final steps = const ['Requested', 'Approved', 'In Progress', 'Completed'];
 
-    final steps = ['Requested', 'Approved', 'In Progress', 'Completed'];
+    final serviceName = job.jobRequest?.serviceCategory?.name ??
+        (job.jobRequest?.description.isNotEmpty == true
+            ? job.jobRequest!.description
+            : 'Service Assignment #${job.id}');
+
+    final propertyText = job.jobRequest?.property?.label.isNotEmpty == true
+        ? '${job.jobRequest!.property!.label} • ${job.jobRequest!.property!.fullAddress}'
+        : (job.jobRequest?.property?.fullAddress.isNotEmpty == true
+            ? job.jobRequest!.property!.fullAddress
+            : 'Service Location');
+
+    final statusText = job.isInProgress
+        ? 'IN PROGRESS'
+        : (job.isScheduled
+            ? 'SCHEDULED'
+            : job.status.replaceAll('_', ' ').toUpperCase());
+
+    final statusColor = job.isInProgress
+        ? AppColors.accentLime
+        : const Color(0xFFE5A00D);
+
+    final providerName = job.providerName ?? (job.companyName ?? 'Assigned Pro');
+
+    final scheduledTimeStr = job.startDate != null
+        ? DateFormat('MMM dd, yyyy • hh:mm a').format(job.startDate!)
+        : (job.assignedAt != null
+            ? DateFormat('MMM dd, yyyy').format(job.assignedAt!)
+            : 'Scheduled');
 
     return Container(
       decoration: BoxDecoration(
@@ -961,7 +1005,7 @@ class _HomeTabState extends State<HomeTab> {
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: Icon(
-                  job['icon'] as IconData,
+                  Icons.handyman_rounded,
                   color: AppColors.iconColor(context),
                   size: 26.r,
                 ),
@@ -972,7 +1016,9 @@ class _HomeTabState extends State<HomeTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      job['service'] as String,
+                      serviceName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w800,
@@ -989,12 +1035,16 @@ class _HomeTabState extends State<HomeTab> {
                           color: AppColors.mutedTextColor(context),
                         ),
                         SizedBox(width: 3.w),
-                        Text(
-                          job['property'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.secondaryTextColor(context),
+                        Expanded(
+                          child: Text(
+                            propertyText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.secondaryTextColor(context),
+                            ),
                           ),
                         ),
                       ],
@@ -1002,24 +1052,25 @@ class _HomeTabState extends State<HomeTab> {
                   ],
                 ),
               ),
+              SizedBox(width: 8.w),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: (job['statusColor'] as Color).withValues(alpha: 0.12),
+                  color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10.r),
                   border: Border.all(
-                    color: (job['statusColor'] as Color).withValues(alpha: 0.3),
+                    color: statusColor.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
                 child: Text(
-                  job['status'] as String,
+                  statusText,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,
-                    color: (job['statusColor'] as Color) == AppColors.accentLime
+                    color: statusColor == AppColors.accentLime
                         ? AppColors.primary
-                        : job['statusColor'] as Color,
+                        : statusColor,
                   ),
                 ),
               ),
@@ -1049,7 +1100,9 @@ class _HomeTabState extends State<HomeTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      job['providerName'] as String,
+                      providerName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.5.sp,
                         fontWeight: FontWeight.w700,
@@ -1065,12 +1118,16 @@ class _HomeTabState extends State<HomeTab> {
                           color: AppColors.primary,
                         ),
                         SizedBox(width: 4.w),
-                        Text(
-                          job['scheduledTime'] as String,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.mutedTextColor(context),
+                        Expanded(
+                          child: Text(
+                            scheduledTimeStr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.mutedTextColor(context),
+                            ),
                           ),
                         ),
                       ],
@@ -1078,13 +1135,17 @@ class _HomeTabState extends State<HomeTab> {
                   ],
                 ),
               ),
+              SizedBox(width: 8.w),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => JobDetailsScreen(job: job),
+                      builder: (context) => JobDetailsScreen(
+                        jobAssignment: job,
+                        assignmentId: job.id,
+                      ),
                     ),
                   );
                 },
@@ -1151,8 +1212,8 @@ class _HomeTabState extends State<HomeTab> {
                                 shape: BoxShape.circle,
                                 color: isPassed
                                     ? (isCurrent
-                                          ? AppColors.primary
-                                          : AppColors.primaryDark)
+                                        ? AppColors.primary
+                                        : AppColors.primaryDark)
                                     : AppColors.borderColor(context),
                                 border: isCurrent
                                     ? Border.all(
@@ -1531,89 +1592,214 @@ class _HomeTabState extends State<HomeTab> {
         ),
         SizedBox(height: 14.h),
 
-        // Horizontal Scrolling Services List without circle containers & larger clip arts
+        // Horizontal Scrolling Services List dynamically fetched from ServiceCategoryCubit
         SizedBox(
           height: 120.h,
-          child: ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: 20.w),
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: _serviceCategories.length,
-            separatorBuilder: (context, index) => SizedBox(width: 12.w),
-            itemBuilder: (context, index) {
-              final cat = _serviceCategories[index];
-              final String imagePath = (cat['image'] ?? '').toString();
-              final String titleStr = (cat['title'] ?? '').toString();
+          child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
+              if (state is ServiceCategoryLoading) {
+                return ListView.separated(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  separatorBuilder: (context, index) => SizedBox(width: 12.w),
+                  itemBuilder: (context, index) => Container(
+                    width: 110.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardColor(context),
+                      borderRadius: BorderRadius.circular(18.r),
+                      border: Border.all(color: AppColors.borderColor(context)),
+                    ),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20.r,
+                        height: 20.r,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                );
+              }
 
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AllServicesScreen(initialCategory: titleStr),
+              final activeCategories = (state is ServiceCategoryLoaded)
+                  ? state.categories.where((c) => c.isActive).toList()
+                  : <ServiceCategoryEntity>[];
+
+              if (activeCategories.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No categories available',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textBody,
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: activeCategories.length,
+                separatorBuilder: (context, index) => SizedBox(width: 12.w),
+                itemBuilder: (context, index) {
+                  final cat = activeCategories[index];
+                  final String titleStr = cat.name;
+                  final String? networkImageUrl = cat.imageUrl;
+                  final visuals = _resolveCategoryVisuals(cat.name);
+                  final String localAsset = (visuals['image'] ?? '').toString();
+                  final IconData fallbackIcon =
+                      (visuals['icon'] as IconData?) ?? Icons.design_services_rounded;
+
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              AllServicesScreen(initialCategory: titleStr),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 110.w,
+                      decoration: BoxDecoration(
+                        color: AppColors.cardColor(context),
+                        borderRadius: BorderRadius.circular(18.r),
+                        border: Border.all(color: AppColors.borderColor(context)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.025),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 10.h,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 58.r,
+                            height: 58.r,
+                            child: networkImageUrl != null && networkImageUrl.isNotEmpty
+                                ? Image.network(
+                                    networkImageUrl,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      if (localAsset.isNotEmpty) {
+                                        return Image.asset(
+                                          localAsset,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => Icon(
+                                            fallbackIcon,
+                                            color: AppColors.primary,
+                                            size: 36.r,
+                                          ),
+                                        );
+                                      }
+                                      return Icon(
+                                        fallbackIcon,
+                                        color: AppColors.primary,
+                                        size: 36.r,
+                                      );
+                                    },
+                                  )
+                                : localAsset.isNotEmpty
+                                    ? Image.asset(
+                                        localAsset,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Icon(
+                                            fallbackIcon,
+                                            color: AppColors.primary,
+                                            size: 36.r,
+                                          );
+                                        },
+                                      )
+                                    : Icon(
+                                        fallbackIcon,
+                                        color: AppColors.primary,
+                                        size: 36.r,
+                                      ),
+                          ),
+                          SizedBox(height: 6.h),
+                          Text(
+                            titleStr,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.headlineColor(context),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
-                child: Container(
-                  width: 110.w,
-                  decoration: BoxDecoration(
-                    color: AppColors.cardColor(context),
-                    borderRadius: BorderRadius.circular(18.r),
-                    border: Border.all(color: AppColors.borderColor(context)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.025),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 10.h,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Prominent Large Line Art Clip Art (without background circle)
-                      SizedBox(
-                        width: 58.r,
-                        height: 58.r,
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              (cat['icon'] as IconData?) ??
-                                  Icons.design_services_rounded,
-                              color: AppColors.primary,
-                              size: 36.r,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 6.h),
-                      Text(
-                        titleStr,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.headlineColor(context),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
           ),
         ),
       ],
     );
+  }
+
+  Map<String, dynamic> _resolveCategoryVisuals(String name) {
+    final key = name.toLowerCase().trim();
+    if (key.contains('clean')) {
+      return {
+        'image': 'assets/images/icon_cleaning.png',
+        'icon': Icons.cleaning_services_rounded,
+      };
+    } else if (key.contains('plumb')) {
+      return {
+        'image': 'assets/images/icon_plumbing.png',
+        'icon': Icons.plumbing_rounded,
+      };
+    } else if (key.contains('electr')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.electrical_services_rounded,
+      };
+    } else if (key.contains('paint')) {
+      return {
+        'image': 'assets/images/icon_painting.png',
+        'icon': Icons.format_paint_rounded,
+      };
+    } else if (key.contains('garden')) {
+      return {
+        'image': 'assets/images/icon_gardening.png',
+        'icon': Icons.yard_rounded,
+      };
+    } else if (key.contains('appliance')) {
+      return {
+        'image': 'assets/images/icon_appliances.png',
+        'icon': Icons.kitchen_rounded,
+      };
+    } else if (key.contains('hvac') || key.contains('ac')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.hvac_rounded,
+      };
+    } else if (key.contains('secur')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.shield_rounded,
+      };
+    }
+    return {
+      'image': '',
+      'icon': Icons.design_services_rounded,
+    };
   }
 
 }

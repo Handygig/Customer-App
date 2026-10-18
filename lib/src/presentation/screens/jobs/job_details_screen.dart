@@ -1,33 +1,405 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/domain/entities/job_requests/job_request_entity.dart';
+import 'package:customer_app/src/domain/entities/job_requests/quotation_entity.dart';
+import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_requests/job_request_state.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
+import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
 import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
+import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
-class JobDetailsScreen extends StatelessWidget {
-  final Map<String, dynamic> job;
+class JobDetailsScreen extends StatefulWidget {
+  final Map<String, dynamic>? job;
+  final JobRequestEntity? jobRequest;
+  final int? jobRequestId;
+  final JobAssignmentEntity? jobAssignment;
+  final int? assignmentId;
 
-  const JobDetailsScreen({super.key, required this.job});
+  const JobDetailsScreen({
+    super.key,
+    this.job,
+    this.jobRequest,
+    this.jobRequestId,
+    this.jobAssignment,
+    this.assignmentId,
+  });
+
+  @override
+  State<JobDetailsScreen> createState() => _JobDetailsScreenState();
+}
+
+class _JobDetailsScreenState extends State<JobDetailsScreen> {
+  int? _resolvedJobId;
+  int? _resolvedAssignmentId;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolvedAssignmentId = widget.assignmentId ?? widget.jobAssignment?.id;
+    if (_resolvedAssignmentId == null &&
+        widget.job != null &&
+        widget.job!['isAssignment'] == true &&
+        widget.job!['rawId'] is int) {
+      _resolvedAssignmentId = widget.job!['rawId'] as int;
+    }
+
+    _resolvedJobId = widget.jobRequestId ?? widget.jobRequest?.id;
+    if (_resolvedJobId == null &&
+        widget.job != null &&
+        widget.job!['isAssignment'] != true &&
+        widget.job!['rawId'] is int) {
+      _resolvedJobId = widget.job!['rawId'] as int;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_resolvedAssignmentId != null) {
+        context
+            .read<JobAssignmentCubit>()
+            .loadAssignmentDetails(_resolvedAssignmentId!);
+      }
+      if (_resolvedJobId != null) {
+        context.read<JobRequestCubit>().loadJobRequestDetails(_resolvedJobId!);
+        context
+            .read<JobRequestCubit>()
+            .loadJobRequestQuotations(_resolvedJobId!);
+      }
+    });
+  }
+
+  Future<void> _confirmCancelRequest(BuildContext context, int? jobId) async {
+    if (jobId == null) {
+      DynamicIslandToast.showError(context, 'Cannot cancel: Job ID not found.');
+      return;
+    }
+
+    HapticFeedback.mediumImpact();
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Text(
+          'Cancel Job Request?',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w800,
+            fontSize: 18.sp,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to cancel this job request? Providers will no longer be able to submit quotes for this job.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13.5.sp,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(
+              'Keep Request',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: Text(
+              'Yes, Cancel',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldCancel == true && context.mounted) {
+      final success =
+          await context.read<JobRequestCubit>().cancelJobRequest(jobId);
+      if (context.mounted) {
+        if (success) {
+          DynamicIslandToast.showSuccess(
+              context, 'Job request cancelled successfully');
+          Navigator.pop(context);
+        } else {
+          final state = context.read<JobRequestCubit>().state;
+          final error = state is JobRequestError
+              ? state.message
+              : 'Failed to cancel job request';
+          DynamicIslandToast.showError(context, error);
+        }
+      }
+    }
+  }
+
+  Future<void> _confirmAcceptQuotation(
+    BuildContext context,
+    QuotationEntity quote,
+    int jobId,
+  ) async {
+    HapticFeedback.mediumImpact();
+    final shouldAccept = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Text(
+          'Accept Quotation?',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w800,
+            fontSize: 18.sp,
+          ),
+        ),
+        content: Text(
+          'Accept quote from ${quote.provider?.name ?? 'Provider'} for \$${quote.quotedPrice.toStringAsFixed(2)}? This will assign the job to this provider.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13.5.sp,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(
+              'Review Later',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryDark,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: Text(
+              'Accept & Assign',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldAccept == true && context.mounted) {
+      final success = await context
+          .read<JobRequestCubit>()
+          .acceptQuotation(quote.id, jobId);
+      if (context.mounted) {
+        if (success) {
+          DynamicIslandToast.showSuccess(
+            context,
+            'Quotation accepted! Job assigned to ${quote.provider?.name ?? 'Provider'}.',
+          );
+          context.read<JobRequestCubit>().loadJobRequests(forceRefresh: true);
+          context.read<JobAssignmentCubit>().loadAssignments(forceRefresh: true);
+        } else {
+          final state = context.read<JobRequestCubit>().state;
+          final error = state is JobRequestError
+              ? state.message
+              : 'Failed to accept quotation';
+          DynamicIslandToast.showError(context, error);
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final String jobId = job['id'] as String? ?? 'JOB-0000';
-    final String service = job['service'] as String? ?? 'Service Details';
-    final String property = job['property'] as String? ?? 'Primary Location';
-    final String providerName =
-        job['provider'] as String? ?? 'Assigned Professional';
-    final String rating = job['rating'] as String? ?? '4.9 ★';
-    final String price = job['price'] as String? ?? '\$0.00';
-    final String date = job['date'] as String? ?? 'Scheduled Date';
-    final String status = job['status'] as String? ?? 'Pending';
-    final String type = job['type'] as String? ?? 'ongoing';
-    final Color statusColor =
-        job['statusColor'] as Color? ?? AppColors.primaryDark;
-    final Color statusBg = job['statusBg'] as Color? ?? const Color(0xFFF3F6E6);
+    final jobCubit = context.watch<JobRequestCubit>();
+    final assignmentCubit = context.watch<JobAssignmentCubit>();
+
+    final activeAssignment = (_resolvedAssignmentId != null &&
+            assignmentCubit.selectedAssignment?.id == _resolvedAssignmentId)
+        ? assignmentCubit.selectedAssignment
+        : widget.jobAssignment;
+
+    final activeRequest = (_resolvedJobId != null &&
+            jobCubit.selectedJobRequest?.id == _resolvedJobId)
+        ? jobCubit.selectedJobRequest
+        : (widget.jobRequest ??
+            (widget.job?['jobRequest'] as JobRequestEntity?));
+
+    final quotations = (_resolvedJobId != null)
+        ? jobCubit.quotationsFor(_resolvedJobId!)
+        : (activeRequest?.quotations ?? const <QuotationEntity>[]);
+
+    final String jobId;
+    final String service;
+    final String descriptionText;
+    final String property;
+    final String providerName;
+    final String rating;
+    final String price;
+    final String date;
+    final String status;
+    final String type;
+    final Color statusColor;
+    final Color statusBg;
+
+    if (activeAssignment != null) {
+      jobId = 'JOB-#${activeAssignment.id}';
+      service = activeAssignment.jobRequest?.serviceCategory?.name ??
+          (activeAssignment.jobRequest?.description.isNotEmpty == true
+              ? activeAssignment.jobRequest!.description
+              : (widget.job?['service'] as String? ?? 'Service Assignment'));
+      descriptionText = activeAssignment.jobRequest?.description ?? '';
+      property = activeAssignment.jobRequest?.property?.label.isNotEmpty == true
+          ? '${activeAssignment.jobRequest!.property!.label} • ${activeAssignment.jobRequest!.property!.fullAddress}'
+          : (activeAssignment.jobRequest?.property?.fullAddress ??
+              (widget.job?['property'] as String? ?? 'Service Location'));
+      providerName = activeAssignment.providerName ??
+          (activeAssignment.companyName ??
+              (widget.job?['provider'] as String? ?? 'Assigned Professional'));
+      rating = '4.9 ★';
+
+      if (activeAssignment.payment != null) {
+        price = '\$${activeAssignment.payment!.amount.toStringAsFixed(2)}';
+      } else if (activeAssignment.quotation != null) {
+        price =
+            '\$${activeAssignment.quotation!.quotedPrice.toStringAsFixed(2)}';
+      } else {
+        price = widget.job?['price'] as String? ?? '\$0.00';
+      }
+
+      final dateVal = activeAssignment.startDate ??
+          activeAssignment.assignedAt ??
+          activeAssignment.jobRequest?.preferredDate;
+      date = dateVal != null
+          ? DateFormat('EEE, MMM d • hh:mm a').format(dateVal)
+          : (widget.job?['date'] as String? ?? 'Scheduled Date');
+
+      if (activeAssignment.isCancelled) {
+        status = 'Cancelled';
+        type = 'cancelled';
+        statusColor = const Color(0xFFDC2626);
+        statusBg = const Color(0xFFFEE2E2);
+      } else if (activeAssignment.isCompleted) {
+        status = 'Completed';
+        type = 'completed';
+        statusColor = AppColors.primaryDark;
+        statusBg = const Color(0xFFF3F6E6);
+      } else {
+        status = activeAssignment.status.isNotEmpty
+            ? activeAssignment.status.replaceAll('_', ' ').toUpperCase()
+            : 'SCHEDULED';
+        type = 'ongoing';
+        statusColor = AppColors.primaryDark;
+        statusBg = const Color(0xFFF3F6E6);
+      }
+    } else if (activeRequest != null) {
+      jobId = 'REQ-#${activeRequest.id}';
+      service = activeRequest.serviceCategory?.name ??
+          (activeRequest.description.isNotEmpty
+              ? activeRequest.description
+              : 'Service Details');
+      descriptionText = activeRequest.description;
+      property = activeRequest.property?.label.isNotEmpty == true
+          ? '${activeRequest.property!.label} • ${activeRequest.property!.fullAddress}'
+          : (activeRequest.property?.fullAddress ?? 'Primary Location');
+      providerName = activeRequest.assignment?.providerName ??
+          (quotations.isNotEmpty
+              ? (quotations.first.provider?.name ?? 'Assigned Professional')
+              : 'Awaiting Assignment');
+      rating = activeRequest.assignment != null ? '4.9 ★' : 'New';
+
+      if (activeRequest.assignment != null && quotations.isNotEmpty) {
+        final accepted = quotations.firstWhere(
+          (q) => q.isAccepted,
+          orElse: () => quotations.first,
+        );
+        price = '\$${accepted.quotedPrice.toStringAsFixed(2)}';
+      } else if (quotations.isNotEmpty) {
+        final lowest = quotations
+            .map((q) => q.quotedPrice)
+            .reduce((a, b) => a < b ? a : b);
+        price = '\$${lowest.toStringAsFixed(2)}';
+      } else {
+        price = widget.job?['price'] as String? ?? '\$0.00';
+      }
+
+      date = activeRequest.preferredDate != null
+          ? DateFormat('EEE, MMM d • hh:mm a')
+              .format(activeRequest.preferredDate!)
+          : (widget.job?['date'] as String? ?? 'Scheduled Date');
+
+      if (activeRequest.isCancelled) {
+        status = 'Cancelled';
+        type = 'cancelled';
+        statusColor = const Color(0xFFDC2626);
+        statusBg = const Color(0xFFFEE2E2);
+      } else if (activeRequest.isCompleted) {
+        status = 'Completed';
+        type = 'completed';
+        statusColor = AppColors.primaryDark;
+        statusBg = const Color(0xFFF3F6E6);
+      } else if (activeRequest.isAssigned) {
+        status = activeRequest.assignment?.status.isNotEmpty == true
+            ? activeRequest.assignment!.status.toUpperCase()
+            : 'In Progress';
+        type = 'ongoing';
+        statusColor = AppColors.primaryDark;
+        statusBg = const Color(0xFFF3F6E6);
+      } else if (quotations.isNotEmpty) {
+        status = '${quotations.length} Quote(s)';
+        type = 'to_approve';
+        statusColor = const Color(0xFF2563EB);
+        statusBg = const Color(0xFFDBEAFE);
+      } else {
+        status = 'Waiting';
+        type = 'waiting';
+        statusColor = const Color(0xFFD97706);
+        statusBg = const Color(0xFFFEF3C7);
+      }
+    } else {
+      jobId = widget.job?['id'] as String? ?? 'JOB-0000';
+      service = widget.job?['service'] as String? ?? 'Service Details';
+      descriptionText = '';
+      property = widget.job?['property'] as String? ?? 'Primary Location';
+      providerName = widget.job?['provider'] as String? ?? 'Awaiting Assignment';
+      rating = widget.job?['rating'] as String? ?? 'New';
+      price = widget.job?['price'] as String? ?? '\$0.00';
+      date = widget.job?['date'] as String? ?? 'Scheduled Date';
+      status = widget.job?['status'] as String? ?? 'Pending';
+      type = widget.job?['type'] as String? ?? 'ongoing';
+      statusColor =
+          widget.job?['statusColor'] as Color? ?? AppColors.primaryDark;
+      statusBg = widget.job?['statusBg'] as Color? ?? const Color(0xFFF3F6E6);
+    }
+
     final IconData icon =
-        job['icon'] as IconData? ?? Icons.cleaning_services_rounded;
+        widget.job?['icon'] as IconData? ?? Icons.cleaning_services_rounded;
+    final bool canCancel = activeRequest?.canCancel ??
+        (type == 'waiting' || status == 'Pending' || status == 'Waiting');
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -38,7 +410,23 @@ class JobDetailsScreen extends StatelessWidget {
         body: Column(
           children: [
             // Top Dark Header Section
-            _buildTopHeader(context, jobId, status, statusColor, statusBg),
+            _buildTopHeader(
+              context,
+              jobId,
+              status,
+              statusColor,
+              statusBg,
+              canCancel: canCancel,
+              onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
+              onDispute: (activeAssignment != null &&
+                      activeAssignment.hasDispute != true)
+                  ? () => _showDisputeModal(
+                        context,
+                        assignmentId: activeAssignment.id,
+                        providerName: providerName,
+                      )
+                  : null,
+            ),
 
             // Scrollable Content
             Expanded(
@@ -48,7 +436,25 @@ class JobDetailsScreen extends StatelessWidget {
                 strokeWidth: 2.8,
                 onRefresh: () async {
                   HapticFeedback.mediumImpact();
-                  await Future.delayed(const Duration(milliseconds: 1000));
+                  final List<Future<dynamic>> futures = [];
+                  if (_resolvedJobId != null) {
+                    futures.add(context
+                        .read<JobRequestCubit>()
+                        .loadJobRequestDetails(_resolvedJobId!));
+                    futures.add(context
+                        .read<JobRequestCubit>()
+                        .loadJobRequestQuotations(_resolvedJobId!));
+                  }
+                  if (_resolvedAssignmentId != null) {
+                    futures.add(context
+                        .read<JobAssignmentCubit>()
+                        .loadAssignmentDetails(_resolvedAssignmentId!));
+                  }
+                  if (futures.isNotEmpty) {
+                    await Future.wait(futures);
+                  } else {
+                    await Future.delayed(const Duration(milliseconds: 500));
+                  }
                   if (context.mounted) {
                     DynamicIslandToast.showSuccess(
                       context,
@@ -68,8 +474,35 @@ class JobDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Job Overview Card
-                      _buildJobOverviewCard(service, property, date, icon),
+                      _buildJobOverviewCard(
+                        service,
+                        property,
+                        date,
+                        icon,
+                        description: descriptionText.isNotEmpty &&
+                                descriptionText != service
+                            ? descriptionText
+                            : null,
+                      ),
                       SizedBox(height: 20.h),
+
+                      // Dispute Banner (if active dispute exists)
+                      if (activeAssignment?.hasDispute == true) ...[
+                        _buildDisputeBanner(),
+                        SizedBox(height: 20.h),
+                      ],
+
+                      // Received Provider Quotations Section
+                      if (_resolvedJobId != null || quotations.isNotEmpty) ...[
+                        _buildQuotationsSection(
+                          context,
+                          quotations,
+                          _resolvedJobId,
+                          activeRequest?.isPending ??
+                              (status == 'Waiting' || status == 'Pending'),
+                        ),
+                        SizedBox(height: 20.h),
+                      ],
 
                       // Job Progress Timeline
                       _buildProgressTimeline(type),
@@ -87,12 +520,41 @@ class JobDetailsScreen extends StatelessWidget {
                       SizedBox(height: 20.h),
 
                       // Price & Payment Details Section
-                      _buildPriceBreakdownSection(price, type),
+                      _buildPriceBreakdownSection(
+                        price,
+                        type,
+                        assignment: activeAssignment,
+                        job: widget.job ??
+                            {
+                              'id': jobId,
+                              'service': service,
+                              'property': property,
+                              'provider': providerName,
+                              'price': price,
+                              'date': date,
+                              'status': status,
+                              'type': type,
+                              'rawId': _resolvedJobId ?? _resolvedAssignmentId,
+                            },
+                      ),
                       SizedBox(height: 20.h),
 
                       // Location & Property Details
                       _buildLocationCard(property),
-                      SizedBox(height: 30.h),
+                      SizedBox(height: 20.h),
+
+                      // Dispute Section (for assignments when no active dispute yet)
+                      if (activeAssignment != null &&
+                          activeAssignment.hasDispute != true) ...[
+                        _buildDisputeTriggerCard(
+                          context,
+                          activeAssignment,
+                          providerName,
+                        ),
+                        SizedBox(height: 30.h),
+                      ] else ...[
+                        SizedBox(height: 10.h),
+                      ],
                     ],
                   ),
                 ),
@@ -100,7 +562,31 @@ class JobDetailsScreen extends StatelessWidget {
             ),
 
             // Bottom Action Footer
-            _buildBottomActionBar(context, type, providerName, service, jobId),
+            _buildBottomActionBar(
+              context,
+              type,
+              providerName,
+              service,
+              jobId,
+              widget.job ??
+                  {
+                    'id': jobId,
+                    'service': service,
+                    'property': property,
+                    'provider': providerName,
+                    'price': price,
+                    'date': date,
+                    'status': status,
+                    'type': type,
+                    'rawId': _resolvedJobId ?? _resolvedAssignmentId,
+                  },
+              canCancel: canCancel,
+              onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
+              quotations: quotations,
+              assignment: activeAssignment,
+              resolvedJobId: _resolvedJobId,
+              resolvedAssignmentId: _resolvedAssignmentId,
+            ),
           ],
         ),
       ),
@@ -112,8 +598,11 @@ class JobDetailsScreen extends StatelessWidget {
     String jobId,
     String status,
     Color statusColor,
-    Color statusBg,
-  ) {
+    Color statusBg, {
+    bool canCancel = false,
+    VoidCallback? onCancel,
+    VoidCallback? onDispute,
+  }) {
     return Container(
       width: double.infinity,
       color: AppColors.primaryDark,
@@ -158,14 +647,78 @@ class JobDetailsScreen extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              IconButton(
-                onPressed: () {},
-                icon: Icon(
-                  Icons.more_vert_rounded,
-                  color: Colors.white,
-                  size: 22.r,
+              if ((canCancel && onCancel != null) || onDispute != null)
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: Colors.white,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14.r),
+                  ),
+                  onSelected: (value) {
+                    if (value == 'cancel' && onCancel != null) {
+                      onCancel();
+                    } else if (value == 'dispute' && onDispute != null) {
+                      onDispute();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    if (canCancel && onCancel != null)
+                      PopupMenuItem(
+                        value: 'cancel',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.cancel_outlined,
+                              color: const Color(0xFFDC2626),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Cancel Request',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFDC2626),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (onDispute != null)
+                      PopupMenuItem(
+                        value: 'dispute',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.shield_outlined,
+                              color: const Color(0xFFDC2626),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Report Dispute',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFDC2626),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                )
+              else
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    color: Colors.white.withValues(alpha: 0.5),
+                    size: 22.r,
+                  ),
                 ),
-              ),
             ],
           ),
           SizedBox(height: 16.h),
@@ -230,8 +783,9 @@ class JobDetailsScreen extends StatelessWidget {
     String service,
     String property,
     String date,
-    IconData icon,
-  ) {
+    IconData icon, {
+    String? description,
+  }) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.r),
@@ -320,12 +874,450 @@ class JobDetailsScreen extends StatelessWidget {
               ),
             ],
           ),
+          if (description != null && description.isNotEmpty) ...[
+            SizedBox(height: 14.h),
+            const Divider(height: 1, color: Color(0xFFEFF2E4)),
+            SizedBox(height: 14.h),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Job Details & Notes',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                SizedBox(height: 6.h),
+                Text(
+                  description,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    color: AppColors.primaryDark,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuotationsSection(
+    BuildContext context,
+    List<QuotationEntity> quotations,
+    int? jobId,
+    bool canAccept,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: const Color(0xFFE8ECD8), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDark.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Provider Quotations',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: quotations.isEmpty
+                      ? const Color(0xFFFEF3C7)
+                      : const Color(0xFFDBEAFE),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Text(
+                  quotations.isEmpty
+                      ? 'Waiting for Quotes'
+                      : '${quotations.length} Received',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: quotations.isEmpty
+                        ? const Color(0xFFD97706)
+                        : const Color(0xFF1D4ED8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          if (quotations.isEmpty) ...[
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: const Color(0xFFF0F1EA)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36.r,
+                    height: 36.r,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFEF3C7),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.hourglass_top_rounded,
+                        color: const Color(0xFFD97706),
+                        size: 18.r,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'No quotes submitted yet',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          'Service providers in your area will review your request shortly.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5.sp,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: quotations.length,
+              separatorBuilder: (_, _) => SizedBox(height: 12.h),
+              itemBuilder: (context, index) {
+                final quote = quotations[index];
+                return _buildQuotationCard(
+                  context,
+                  quote,
+                  jobId,
+                  canAccept: canAccept && quote.isPending,
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuotationCard(
+    BuildContext context,
+    QuotationEntity quote,
+    int? jobId, {
+    required bool canAccept,
+  }) {
+    final providerName = quote.provider?.name ?? 'Service Professional';
+    final rating = quote.provider?.rating != null
+        ? '${quote.provider!.rating!.toStringAsFixed(1)} ★'
+        : 'Top Rated';
+
+    final Color badgeBg;
+    final Color badgeColor;
+    final String badgeText;
+
+    if (quote.isAccepted) {
+      badgeBg = const Color(0xFFDCFCE7);
+      badgeColor = const Color(0xFF16A34A);
+      badgeText = 'Accepted';
+    } else if (quote.isRejected) {
+      badgeBg = const Color(0xFFFEE2E2);
+      badgeColor = const Color(0xFFDC2626);
+      badgeText = 'Declined';
+    } else {
+      badgeBg = const Color(0xFFEFF6FF);
+      badgeColor = const Color(0xFF2563EB);
+      badgeText = 'Pending';
+    }
+
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFBF7),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: quote.isAccepted
+              ? const Color(0xFF86EFAC)
+              : const Color(0xFFE2E6D5),
+          width: quote.isAccepted ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 20.r,
+                backgroundColor: AppColors.primaryDark,
+                child: Text(
+                  providerName.isNotEmpty ? providerName[0].toUpperCase() : 'P',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            providerName,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryDark,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: badgeBg,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            badgeText,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w700,
+                              color: badgeColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 2.h),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.star_rounded,
+                          size: 14.r,
+                          color: const Color(0xFFD97706),
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          rating,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                        if (quote.estimatedDuration != null &&
+                            quote.estimatedDuration!.isNotEmpty) ...[
+                          Text(
+                            ' • ',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5.sp,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          Icon(
+                            Icons.schedule_rounded,
+                            size: 13.r,
+                            color: AppColors.textMuted,
+                          ),
+                          SizedBox(width: 3.w),
+                          Text(
+                            quote.estimatedDuration!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5.sp,
+                              color: AppColors.textMuted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (quote.message != null && quote.message!.isNotEmpty) ...[
+            SizedBox(height: 10.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(10.r),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(color: const Color(0xFFECEFE4)),
+              ),
+              child: Text(
+                quote.message!,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  color: AppColors.textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+          SizedBox(height: 12.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quote Price',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11.sp,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '\$${quote.quotedPrice.toStringAsFixed(2)}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ],
+              ),
+              if (canAccept && jobId != null)
+                ElevatedButton.icon(
+                  onPressed: () => _confirmAcceptQuotation(context, quote, jobId),
+                  icon: Icon(Icons.check_circle_outline_rounded, size: 16.r),
+                  label: Text(
+                    'Accept Quote',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 10.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
   }
 
   Widget _buildProgressTimeline(String type) {
+    if (type == 'cancelled') {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(18.r),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(22.r),
+          border: Border.all(color: const Color(0xFFFECACA), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36.r,
+              height: 36.r,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEE2E2),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.cancel_rounded,
+                  color: const Color(0xFFDC2626),
+                  size: 20.r,
+                ),
+              ),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Request Cancelled',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF991B1B),
+                    ),
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'This job request was cancelled. No further quotes can be submitted.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      color: const Color(0xFFB91C1C),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final int currentStep = switch (type) {
       'waiting' => 0,
       'to_approve' => 1,
@@ -649,7 +1641,12 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceBreakdownSection(String priceStr, String type) {
+  Widget _buildPriceBreakdownSection(
+    String priceStr,
+    String type, {
+    JobAssignmentEntity? assignment,
+    Map<String, dynamic>? job,
+  }) {
     double basePrice = 120.0;
     try {
       final clean = priceStr.replaceAll(RegExp(r'[^0-9.]'), '');
@@ -737,8 +1734,9 @@ class JobDetailsScreen extends StatelessWidget {
                 SizedBox(width: 10.w),
                 Expanded(
                   child: Text(
-                    type == 'completed'
-                        ? 'Paid with Visa ending in •••• 4242'
+                    (type == 'completed' ||
+                            assignment?.payment?.isPaid == true)
+                        ? 'Paid in full via Card'
                         : 'Payment method authorization active',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5.sp,
@@ -750,6 +1748,48 @@ class JobDetailsScreen extends StatelessWidget {
               ],
             ),
           ),
+          if (assignment != null &&
+              (assignment.payment == null ||
+                  assignment.payment?.isPaid != true)) ...[
+            SizedBox(height: 14.h),
+            SizedBox(
+              width: double.infinity,
+              height: 46.h,
+              child: ElevatedButton.icon(
+                onPressed: () => _showPayJobAssignmentModal(
+                  context,
+                  job ??
+                      {
+                        'id': assignment.id,
+                        'service': assignment
+                                .jobRequest?.serviceCategory?.name ??
+                            'Service Assignment',
+                        'provider': assignment.providerName ?? 'Provider',
+                        'price': priceStr,
+                      },
+                ),
+                icon: Icon(
+                  Icons.payment_rounded,
+                  size: 16.r,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  'Pay for Service Now',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5.sp,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryDark,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -861,7 +1901,14 @@ class JobDetailsScreen extends StatelessWidget {
     String providerName,
     String service,
     String jobId,
-  ) {
+    Map<String, dynamic> job, {
+    bool canCancel = false,
+    VoidCallback? onCancel,
+    List<QuotationEntity> quotations = const [],
+    JobAssignmentEntity? assignment,
+    int? resolvedJobId,
+    int? resolvedAssignmentId,
+  }) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -881,126 +1928,249 @@ class JobDetailsScreen extends StatelessWidget {
         ],
       ),
       child: switch (type) {
+        'cancelled' => Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2),
+              borderRadius: BorderRadius.circular(14.r),
+            ),
+            child: Center(
+              child: Text(
+                'Job Request Cancelled',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFDC2626),
+                ),
+              ),
+            ),
+          ),
+        'waiting' => Row(
+            children: [
+              if (canCancel && onCancel != null) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: onCancel,
+                    icon: Icon(
+                      Icons.cancel_outlined,
+                      size: 16.r,
+                      color: const Color(0xFFDC2626),
+                    ),
+                    label: Text(
+                      'Cancel Request',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFDC2626),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      side: const BorderSide(
+                        color: Color(0xFFFCA5A5),
+                        width: 1.2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+              ],
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    if (_resolvedJobId != null) {
+                      context
+                          .read<JobRequestCubit>()
+                          .loadJobRequestDetails(_resolvedJobId!);
+                      context
+                          .read<JobRequestCubit>()
+                          .loadJobRequestQuotations(_resolvedJobId!);
+                      DynamicIslandToast.showSuccess(
+                        context,
+                        'Checking for quotes...',
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.refresh_rounded, size: 16.r),
+                  label: Text(
+                    'Refresh Quotes',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         'to_approve' => Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.pop(context);
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  side: const BorderSide(color: Color(0xFFDC2626)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+            children: [
+              if (canCancel && onCancel != null) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: onCancel,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: 14.h),
+                      side: const BorderSide(color: Color(0xFFDC2626)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel Request',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFDC2626),
+                      ),
+                    ),
                   ),
                 ),
-                child: Text(
-                  'Decline',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFDC2626),
+                SizedBox(width: 14.w),
+              ],
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    if (quotations.isEmpty) {
+                      DynamicIslandToast.showInfo(
+                        context,
+                        'Waiting for provider quotations...',
+                      );
+                      return;
+                    }
+                    final jobId = resolvedJobId;
+                    if (jobId == null) {
+                      DynamicIslandToast.showError(
+                        context,
+                        'Job request ID not found',
+                      );
+                      return;
+                    }
+                    if (quotations.length == 1) {
+                      _confirmAcceptQuotation(
+                        context,
+                        quotations.first,
+                        jobId,
+                      );
+                    } else {
+                      _showSelectQuotationModal(
+                        context,
+                        quotations,
+                        jobId,
+                      );
+                    }
+                  },
+                  icon: Icon(Icons.check_circle_outline_rounded, size: 18.r),
+                  label: Text(
+                    quotations.length > 1
+                        ? 'Approve Quote (${quotations.length})'
+                        : 'Approve Quotation',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  DynamicIslandToast.showSuccess(
-                    context,
-                    'Estimate Approved Successfully!',
-                  );
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryDark,
-                  padding: EdgeInsets.symmetric(vertical: 14.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
-                  ),
-                ),
-                child: Text(
-                  'Approve',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
         'completed' => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Rate Provider Banner Trigger Card
-            GestureDetector(
-              onTap: () => _showRateProviderModal(context, job),
-              child: Container(
-                margin: EdgeInsets.only(bottom: 12.h),
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: const Color(0xFFFFE082),
-                    width: 1.2,
+            // Rate Provider Banner Trigger Card (only if not yet reviewed)
+            if (assignment?.hasReviewed != true)
+              GestureDetector(
+                onTap: () => _showRateProviderModal(
+                  context,
+                  assignmentId:
+                      assignment?.id ?? resolvedAssignmentId ?? 0,
+                  providerName: providerName,
+                  serviceTitle: service,
+                ),
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 12.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: const Color(0xFFFFE082),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFF3C4),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.star_rounded,
+                          color: const Color(0xFFD97706),
+                          size: 20.r,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'How was $providerName?',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.5.sp,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF92400E),
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'Tap to rate & review your service',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: const Color(0xFFD97706),
+                        size: 14.r,
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(8.r),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFFF3C4),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.star_rounded,
-                        color: const Color(0xFFD97706),
-                        size: 20.r,
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'How was ${job['provider'] as String? ?? 'this Pro'}?',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF92400E),
-                            ),
-                          ),
-                          SizedBox(height: 2.h),
-                          Text(
-                            'Tap to rate & review your service',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFFB45309),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      color: const Color(0xFFD97706),
-                      size: 14.r,
-                    ),
-                  ],
-                ),
               ),
-            ),
 
             Row(
               children: [
@@ -1031,25 +2201,48 @@ class JobDetailsScreen extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _showRateProviderModal(context, job),
+                    onPressed: assignment?.hasReviewed == true
+                        ? null
+                        : () => _showRateProviderModal(
+                              context,
+                              assignmentId: assignment?.id ??
+                                  resolvedAssignmentId ??
+                                  0,
+                              providerName: providerName,
+                              serviceTitle: service,
+                            ),
                     icon: Icon(
-                      Icons.star_rounded,
+                      assignment?.hasReviewed == true
+                          ? Icons.check_circle_rounded
+                          : Icons.star_rounded,
                       size: 16.r,
-                      color: const Color(0xFFD97706),
+                      color: assignment?.hasReviewed == true
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFD97706),
                     ),
                     label: Text(
-                      'Rate Pro',
+                      assignment?.hasReviewed == true
+                          ? 'Reviewed'
+                          : 'Rate Pro',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF92400E),
+                        color: assignment?.hasReviewed == true
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFF92400E),
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFFBEB),
-                      foregroundColor: const Color(0xFF92400E),
-                      side: const BorderSide(
-                        color: Color(0xFFFFE082),
+                      backgroundColor: assignment?.hasReviewed == true
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFFFBEB),
+                      foregroundColor: assignment?.hasReviewed == true
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFF92400E),
+                      side: BorderSide(
+                        color: assignment?.hasReviewed == true
+                            ? const Color(0xFF86EFAC)
+                            : const Color(0xFFFFE082),
                         width: 1.2,
                       ),
                       padding: EdgeInsets.symmetric(vertical: 12.h),
@@ -1462,21 +2655,23 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _showRateProviderModal(BuildContext context, Map<String, dynamic> job) {
+  void _showRateProviderModal(
+    BuildContext context, {
+    required int assignmentId,
+    required String providerName,
+    required String serviceTitle,
+  }) {
     HapticFeedback.mediumImpact();
-    final String provider = job['provider'] as String? ?? 'Apex Electricians';
-    final String service =
-        job['service'] as String? ?? 'Electrical Maintenance';
-
     int currentRating = 5;
     final Set<String> selectedTags = {'On-Time ⏰', 'Clean Work 🧹'};
     final TextEditingController commentCtrl = TextEditingController();
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (bottomSheetCtx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
@@ -1547,7 +2742,7 @@ class JobDetailsScreen extends StatelessWidget {
                               radius: 24.r,
                               backgroundColor: AppColors.primaryDark,
                               child: Text(
-                                provider
+                                providerName
                                     .split(' ')
                                     .map((e) => e.isEmpty ? '' : e[0])
                                     .take(2)
@@ -1565,7 +2760,7 @@ class JobDetailsScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    provider,
+                                    providerName,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 15.sp,
                                       fontWeight: FontWeight.w800,
@@ -1574,7 +2769,7 @@ class JobDetailsScreen extends StatelessWidget {
                                   ),
                                   SizedBox(height: 2.h),
                                   Text(
-                                    service,
+                                    serviceTitle,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12.sp,
                                       color: AppColors.textMuted,
@@ -1607,12 +2802,14 @@ class JobDetailsScreen extends StatelessWidget {
                           final starIndex = index + 1;
                           final isSelected = starIndex <= currentRating;
                           return GestureDetector(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setModalState(() {
-                                currentRating = starIndex;
-                              });
-                            },
+                            onTap: isSubmitting
+                                ? null
+                                : () {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() {
+                                      currentRating = starIndex;
+                                    });
+                                  },
                             child: Padding(
                               padding: EdgeInsets.symmetric(horizontal: 4.w),
                               child: Icon(
@@ -1658,47 +2855,48 @@ class JobDetailsScreen extends StatelessWidget {
                       Wrap(
                         spacing: 8.w,
                         runSpacing: 8.h,
-                        children:
-                            [
-                              'On-Time ⏰',
-                              'Professional 👔',
-                              'Clean Work 🧹',
-                              'Fast Service ⚡',
-                              'Fair Price 🏷️',
-                              'Friendly 😊',
-                            ].map((tag) {
-                              final isSelected = selectedTags.contains(tag);
-                              return FilterChip(
-                                selected: isSelected,
-                                label: Text(tag),
-                                labelStyle: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.sp,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.primaryDark
-                                      : AppColors.textHeadline,
-                                ),
-                                selectedColor: AppColors.cardSelectedBg,
-                                backgroundColor: Colors.grey.shade100,
-                                side: BorderSide(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : Colors.grey.shade300,
-                                ),
-                                onSelected: (val) {
-                                  HapticFeedback.selectionClick();
-                                  setModalState(() {
-                                    if (val) {
-                                      selectedTags.add(tag);
-                                    } else {
-                                      selectedTags.remove(tag);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
+                        children: [
+                          'On-Time ⏰',
+                          'Professional 👔',
+                          'Clean Work 🧹',
+                          'Fast Service ⚡',
+                          'Fair Price 🏷️',
+                          'Friendly 😊',
+                        ].map((tag) {
+                          final isSelected = selectedTags.contains(tag);
+                          return FilterChip(
+                            selected: isSelected,
+                            label: Text(tag),
+                            labelStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? AppColors.primaryDark
+                                  : AppColors.textHeadline,
+                            ),
+                            selectedColor: AppColors.cardSelectedBg,
+                            backgroundColor: Colors.grey.shade100,
+                            side: BorderSide(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : Colors.grey.shade300,
+                            ),
+                            onSelected: isSubmitting
+                                ? null
+                                : (val) {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() {
+                                      if (val) {
+                                        selectedTags.add(tag);
+                                      } else {
+                                        selectedTags.remove(tag);
+                                      }
+                                    });
+                                  },
+                          );
+                        }).toList(),
                       ),
 
                       SizedBox(height: 18.h),
@@ -1707,9 +2905,11 @@ class JobDetailsScreen extends StatelessWidget {
                       TextField(
                         controller: commentCtrl,
                         maxLines: 3,
+                        enabled: !isSubmitting,
                         style: GoogleFonts.plusJakartaSans(fontSize: 13.sp),
                         decoration: InputDecoration(
-                          hintText: 'Write a public review for $provider...',
+                          hintText:
+                              'Write a public review for $providerName...',
                           hintStyle: GoogleFonts.plusJakartaSans(
                             color: AppColors.textMuted,
                             fontSize: 13.sp,
@@ -1740,14 +2940,59 @@ class JobDetailsScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 52.h,
                         child: ElevatedButton(
-                          onPressed: () {
-                            HapticFeedback.mediumImpact();
-                            DynamicIslandToast.showSuccess(
-                              context,
-                              'Thank you! Review submitted for $provider ⭐',
-                            );
-                            Navigator.of(context).pop();
-                          },
+                          onPressed: isSubmitting
+                              ? null
+                              : () async {
+                                  if (assignmentId <= 0) {
+                                    DynamicIslandToast.showError(
+                                      context,
+                                      'Assignment ID not found for review',
+                                    );
+                                    return;
+                                  }
+
+                                  HapticFeedback.mediumImpact();
+                                  setModalState(() {
+                                    isSubmitting = true;
+                                  });
+
+                                  final comment = commentCtrl.text.trim();
+                                  final success = await context
+                                      .read<JobAssignmentCubit>()
+                                      .submitReview(
+                                        assignmentId,
+                                        rating: currentRating,
+                                        comment: comment.isNotEmpty
+                                            ? comment
+                                            : null,
+                                      );
+
+                                  if (context.mounted &&
+                                      bottomSheetCtx.mounted) {
+                                    setModalState(() {
+                                      isSubmitting = false;
+                                    });
+                                    if (success) {
+                                      Navigator.of(bottomSheetCtx).pop();
+                                      DynamicIslandToast.showSuccess(
+                                        context,
+                                        'Thank you! Review submitted for $providerName ⭐',
+                                      );
+                                    } else {
+                                      final cubitState = context
+                                          .read<JobAssignmentCubit>()
+                                          .state;
+                                      final msg =
+                                          cubitState is JobAssignmentError
+                                              ? cubitState.message
+                                              : 'Failed to submit review';
+                                      DynamicIslandToast.showError(
+                                        context,
+                                        msg,
+                                      );
+                                    }
+                                  }
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryDark,
                             shape: RoundedRectangleBorder(
@@ -1755,13 +3000,356 @@ class JobDetailsScreen extends StatelessWidget {
                             ),
                             elevation: 2,
                           ),
-                          child: Text(
-                            'Submit Review',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                          child: isSubmitting
+                              ? SizedBox(
+                                  width: 22.r,
+                                  height: 22.r,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.2,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit Review',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDisputeModal(
+    BuildContext context, {
+    required int assignmentId,
+    required String providerName,
+  }) {
+    HapticFeedback.mediumImpact();
+    final TextEditingController reasonCtrl = TextEditingController();
+    String? selectedCategory;
+    bool isSubmitting = false;
+
+    final categories = [
+      'Work Incomplete',
+      'Poor Workmanship',
+      'Provider No-Show',
+      'Overcharged',
+      'Unprofessional Conduct',
+      'Property Damage',
+      'Other',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(28.r),
+                  ),
+                ),
+                padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Drag Handle
+                      Center(
+                        child: Container(
+                          width: 44.w,
+                          height: 4.5.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(8.r),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFEE2E2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.shield_outlined,
+                                  color: const Color(0xFFDC2626),
+                                  size: 20.r,
+                                ),
+                              ),
+                              SizedBox(width: 10.w),
+                              Text(
+                                'Report Dispute',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textHeadline,
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.close_rounded,
+                              color: AppColors.textMuted,
+                              size: 22.r,
                             ),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'Raise an issue regarding $providerName for investigation and mediation by the HandyGig support team.',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          color: AppColors.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+
+                      // Category chips
+                      Text(
+                        'Select Issue Category',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeadline,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children: categories.map((cat) {
+                          final isSelected = selectedCategory == cat;
+                          return ChoiceChip(
+                            label: Text(cat),
+                            selected: isSelected,
+                            selectedColor: const Color(0xFFFEE2E2),
+                            backgroundColor: const Color(0xFFF9FAFB),
+                            labelStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? const Color(0xFFDC2626)
+                                  : AppColors.textHeadline,
+                            ),
+                            side: BorderSide(
+                              color: isSelected
+                                  ? const Color(0xFFFCA5A5)
+                                  : const Color(0xFFE5E7EB),
+                            ),
+                            onSelected: isSubmitting
+                                ? null
+                                : (selected) {
+                                    HapticFeedback.selectionClick();
+                                    setModalState(() {
+                                      selectedCategory = selected ? cat : null;
+                                      if (selected && reasonCtrl.text.isEmpty) {
+                                        reasonCtrl.text = '[$cat]: ';
+                                        reasonCtrl.selection =
+                                            TextSelection.fromPosition(
+                                          TextPosition(
+                                            offset: reasonCtrl.text.length,
+                                          ),
+                                        );
+                                      }
+                                    });
+                                  },
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 18.h),
+
+                      // Detailed Reason
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Reason / Description *',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textHeadline,
+                            ),
+                          ),
+                          Text(
+                            '${reasonCtrl.text.length}/2000',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.5.sp,
+                              color: reasonCtrl.text.length > 2000
+                                  ? Colors.red
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      TextField(
+                        controller: reasonCtrl,
+                        maxLines: 4,
+                        maxLength: 2000,
+                        enabled: !isSubmitting,
+                        buildCounter: (context,
+                                {required currentLength,
+                                required isFocused,
+                                maxLength}) =>
+                            null,
+                        onChanged: (_) => setModalState(() {}),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 13.sp),
+                        decoration: InputDecoration(
+                          hintText:
+                              'Describe in detail what occurred, including dates, missed promises, or damages...',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: AppColors.textMuted,
+                            fontSize: 13.sp,
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFFBFBFB),
+                          contentPadding: EdgeInsets.all(14.w),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide:
+                                const BorderSide(color: Color(0xFFE2E7D3)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFDC2626),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20.h),
+
+                      // Submit Dispute Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.h,
+                        child: ElevatedButton.icon(
+                          onPressed: (isSubmitting ||
+                                  reasonCtrl.text.trim().isEmpty)
+                              ? null
+                              : () async {
+                                  if (assignmentId <= 0) {
+                                    DynamicIslandToast.showError(
+                                      context,
+                                      'Assignment ID not found for dispute',
+                                    );
+                                    return;
+                                  }
+
+                                  final reason = reasonCtrl.text.trim();
+                                  if (reason.length < 5) {
+                                    DynamicIslandToast.showError(
+                                      context,
+                                      'Please provide a meaningful reason (at least 5 characters)',
+                                    );
+                                    return;
+                                  }
+
+                                  HapticFeedback.mediumImpact();
+                                  setModalState(() {
+                                    isSubmitting = true;
+                                  });
+
+                                  final success = await context
+                                      .read<JobAssignmentCubit>()
+                                      .submitDispute(
+                                        assignmentId,
+                                        reason: reason,
+                                      );
+
+                                  if (context.mounted &&
+                                      bottomSheetCtx.mounted) {
+                                    setModalState(() {
+                                      isSubmitting = false;
+                                    });
+                                    if (success) {
+                                      Navigator.of(bottomSheetCtx).pop();
+                                      DynamicIslandToast.showSuccess(
+                                        context,
+                                        'Dispute submitted. HandyGig support has been notified.',
+                                      );
+                                    } else {
+                                      final cubitState = context
+                                          .read<JobAssignmentCubit>()
+                                          .state;
+                                      final msg =
+                                          cubitState is JobAssignmentError
+                                              ? cubitState.message
+                                              : 'Failed to submit dispute';
+                                      DynamicIslandToast.showError(
+                                        context,
+                                        msg,
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: isSubmitting
+                              ? const SizedBox.shrink()
+                              : Icon(
+                                  Icons.gavel_rounded,
+                                  size: 18.r,
+                                  color: Colors.white,
+                                ),
+                          label: isSubmitting
+                              ? SizedBox(
+                                  width: 22.r,
+                                  height: 22.r,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.2,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit Dispute to Support',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26.r),
+                            ),
+                            elevation: 2,
                           ),
                         ),
                       ),
@@ -1773,6 +3361,285 @@ class JobDetailsScreen extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  void _showSelectQuotationModal(
+    BuildContext context,
+    List<QuotationEntity> quotations,
+    int jobId,
+  ) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetCtx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+          ),
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44.w,
+                  height: 4.5.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'Select Quotation to Approve',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textHeadline,
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Text(
+                'Choose a quotation from providers who applied for this task.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5.sp,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: quotations.length,
+                  separatorBuilder: (_, _) => SizedBox(height: 12.h),
+                  itemBuilder: (context, index) {
+                    final quote = quotations[index];
+                    return Container(
+                      padding: EdgeInsets.all(14.r),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FBF6),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFE2E7D3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                quote.provider?.name ??
+                                    (quote.provider?.id != null
+                                        ? 'Provider #${quote.provider!.id}'
+                                        : 'Provider'),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primaryDark,
+                                ),
+                              ),
+                              Text(
+                                '\$${quote.quotedPrice.toStringAsFixed(2)}',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF16A34A),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (quote.message != null &&
+                              quote.message!.isNotEmpty) ...[
+                            SizedBox(height: 6.h),
+                            Text(
+                              quote.message!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: 10.h),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(bottomSheetCtx).pop();
+                                _confirmAcceptQuotation(
+                                  context,
+                                  quote,
+                                  jobId,
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryDark,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                              child: Text(
+                                'Accept & Assign',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDisputeBanner() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFFCA5A5), width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFEE2E2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.shield_outlined,
+              color: const Color(0xFFDC2626),
+              size: 20.r,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dispute Active (Under Investigation)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF991B1B),
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                Text(
+                  'A dispute has been submitted for this assignment. HandyGig support is reviewing the issue and mediating with the provider.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5.sp,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFFB91C1C),
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDisputeTriggerCard(
+    BuildContext context,
+    JobAssignmentEntity assignment,
+    String providerName,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFE8ECD8), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.r),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2).withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(10.r),
+            ),
+            child: Icon(
+              Icons.gavel_rounded,
+              color: const Color(0xFFDC2626),
+              size: 20.r,
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Need Help with this Task?',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textHeadline,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  'Encountered an issue with quality, payment or conduct?',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.5.sp,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8.w),
+          TextButton(
+            onPressed: () => _showDisputeModal(
+              context,
+              assignmentId: assignment.id,
+              providerName: providerName,
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFDC2626),
+              padding: EdgeInsets.symmetric(
+                horizontal: 10.w,
+                vertical: 6.h,
+              ),
+            ),
+            child: Text(
+              'Dispute',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5.sp,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1791,5 +3658,377 @@ class JobDetailsScreen extends StatelessWidget {
       default:
         return 'Select a rating';
     }
+  }
+
+  void _showPayJobAssignmentModal(
+    BuildContext context,
+    Map<String, dynamic> job,
+  ) {
+    HapticFeedback.mediumImpact();
+    final String service = job['service'] as String? ?? 'Service Assignment';
+    final String provider = job['provider'] as String? ?? 'Assigned Pro';
+    final String price = job['price'] as String? ?? '\$0.00';
+
+    int assignmentId = 1;
+    if (job['assignment_id'] is int) {
+      assignmentId = job['assignment_id'] as int;
+    } else if (job['assignment_id'] is String) {
+      assignmentId = int.tryParse(job['assignment_id'] as String) ?? 1;
+    } else if (job['id'] is int) {
+      assignmentId = job['id'] as int;
+    } else if (job['id'] is String) {
+      final digits = (job['id'] as String).replaceAll(RegExp(r'\D'), '');
+      assignmentId = int.tryParse(digits) ?? 1;
+    }
+
+    final cardCubit = context.read<CardCubit>();
+    cardCubit.loadCards(silent: true);
+
+    int? selectedId = cardCubit.selectedCard?.id ??
+        (cardCubit.cards.isNotEmpty ? cardCubit.cards.first.id : null);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return BlocBuilder<CardCubit, CardState>(
+              bloc: cardCubit,
+              builder: (context, cardState) {
+                final cards = cardCubit.cards;
+                final isLoading = cardState is CardLoading;
+
+                if (selectedId == null && cards.isNotEmpty) {
+                  final active = cards.firstWhere(
+                    (c) => c.isDefault && !c.isFrozen,
+                    orElse: () => cards.firstWhere(
+                      (c) => !c.isFrozen,
+                      orElse: () => cards.first,
+                    ),
+                  );
+                  selectedId = active.id;
+                }
+
+                return Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(28.r),
+                    ),
+                  ),
+                  padding: EdgeInsets.fromLTRB(
+                    20.w,
+                    16.h,
+                    20.w,
+                    MediaQuery.of(context).padding.bottom + 20.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 44.w,
+                          height: 4.h,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD6DBBA),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Pay & Complete Job',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primaryDark,
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F6E6),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              price,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        '$service • $provider',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 18.h),
+                      Text(
+                        'Select Payment Card',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      if (cards.isEmpty)
+                        Container(
+                          padding: EdgeInsets.all(16.r),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFBFBFB),
+                            borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: const Color(0xFFE8ECD8)),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                'No payment cards available.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              SizedBox(height: 10.h),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(bottomSheetContext);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const PaymentMethodsScreen(),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryDark,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Add Card in Settings',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Flexible(
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: cards.length,
+                            separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                            itemBuilder: (context, index) {
+                              final card = cards[index];
+                              final isSelected = selectedId == card.id;
+                              final isFrozen = card.isFrozen;
+
+                              return InkWell(
+                                onTap: isFrozen
+                                    ? null
+                                    : () {
+                                        setModalState(() {
+                                          selectedId = card.id;
+                                        });
+                                      },
+                                borderRadius: BorderRadius.circular(14.r),
+                                child: Container(
+                                  padding: EdgeInsets.all(12.r),
+                                  decoration: BoxDecoration(
+                                    color: isFrozen
+                                        ? const Color(0xFFF3F4F6)
+                                        : (isSelected
+                                            ? const Color(0xFFF3F6E6)
+                                            : Colors.white),
+                                    borderRadius: BorderRadius.circular(14.r),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primaryDark
+                                          : const Color(0xFFE8ECD8),
+                                      width: isSelected ? 1.8 : 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.credit_card_rounded,
+                                        color: isFrozen
+                                            ? Colors.grey
+                                            : AppColors.primaryDark,
+                                        size: 24.r,
+                                      ),
+                                      SizedBox(width: 12.w),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  '${card.cardType.toUpperCase()} •••• ${card.lastFourDigits}',
+                                                  style: GoogleFonts
+                                                      .plusJakartaSans(
+                                                    fontSize: 13.5.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: isFrozen
+                                                        ? Colors.grey
+                                                        : AppColors.primaryDark,
+                                                  ),
+                                                ),
+                                                if (card.isDefault) ...[
+                                                  SizedBox(width: 6.w),
+                                                  Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                      horizontal: 6.w,
+                                                      vertical: 2.h,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          AppColors.primaryDark,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        6.r,
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      'DEFAULT',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 9.sp,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                            SizedBox(height: 2.h),
+                                            Text(
+                                              isFrozen
+                                                  ? 'Card is Frozen - Unfreeze to use'
+                                                  : 'Expires ${card.expiryDate}',
+                                              style: GoogleFonts
+                                                  .plusJakartaSans(
+                                                fontSize: 11.5.sp,
+                                                color: isFrozen
+                                                    ? Colors.red
+                                                    : AppColors.textMuted,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (isSelected && !isFrozen)
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          color: AppColors.primaryDark,
+                                          size: 20.r,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      SizedBox(height: 20.h),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50.h,
+                        child: ElevatedButton(
+                          onPressed:
+                              (isLoading || selectedId == null || cards.isEmpty)
+                                  ? null
+                                  : () async {
+                                      HapticFeedback.mediumImpact();
+                                      final success = await cardCubit
+                                          .payJobAssignment(
+                                        jobAssignmentId: assignmentId,
+                                        cardId: selectedId!,
+                                      );
+                                      if (context.mounted &&
+                                          bottomSheetContext.mounted) {
+                                        if (success) {
+                                          Navigator.pop(bottomSheetContext);
+                                          DynamicIslandToast.showSuccess(
+                                            context,
+                                            'Payment successful! Assignment completed.',
+                                          );
+                                          Navigator.pop(context);
+                                        } else {
+                                          final err =
+                                              cardCubit.state is CardError
+                                                  ? (cardCubit.state
+                                                          as CardError)
+                                                      .message
+                                                  : 'Payment failed';
+                                          DynamicIslandToast.showError(
+                                            context,
+                                            err,
+                                          );
+                                        }
+                                      }
+                                    },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryDark,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.r),
+                            ),
+                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  height: 20.r,
+                                  width: 20.r,
+                                  child: const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Confirm & Pay $price',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 }

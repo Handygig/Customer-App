@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
+import 'package:customer_app/core/services/auth_manager.dart';
+import 'package:customer_app/src/presentation/screens/language/language_selection_screen.dart';
 import 'package:customer_app/src/presentation/screens/welcome/welcome_screen.dart';
 import 'package:customer_app/src/presentation/screens/auth/mobile_number_screen.dart';
 import 'package:customer_app/src/presentation/screens/auth/otp_verification_screen.dart';
@@ -9,7 +11,6 @@ import 'package:customer_app/src/presentation/screens/auth/add_properties_screen
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
 
-
 class AppRouter {
   AppRouter._();
 
@@ -17,12 +18,18 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: AppRoutes.welcome,
+    initialLocation:
+        AuthManager.isLoggedIn ? AppRoutes.mainNavigation : AppRoutes.welcome,
     routes: [
       GoRoute(
         path: AppRoutes.welcome,
         name: AppRoutes.welcome,
         builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.languageSelection,
+        name: AppRoutes.languageSelection,
+        builder: (context, state) => const LanguageSelectionScreen(),
       ),
       GoRoute(
         path: AppRoutes.mobileNumber,

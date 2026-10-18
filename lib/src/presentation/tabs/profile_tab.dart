@@ -2,13 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
 import 'package:customer_app/src/domain/entities/profile/property.dart';
 import 'package:customer_app/src/domain/entities/payments/card_entity.dart';
+import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
+import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
+import 'package:customer_app/src/presentation/blocs/auth/auth_event.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/screens/profile/edit_profile_screen.dart';
@@ -25,26 +31,35 @@ class ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repository = ProfileRepositoryImpl();
+    final repository = sl.isRegistered<ProfileRepository>()
+        ? sl<ProfileRepository>()
+        : ProfileRepositoryImpl();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: StreamBuilder<UserProfile>(
         stream: repository.watchUserProfile(),
         builder: (context, profileSnapshot) {
+          if (!profileSnapshot.hasData &&
+              profileSnapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            );
+          }
+
           final profile =
               profileSnapshot.data ??
               const UserProfile(
-                id: '1',
-                firstName: 'Alex',
-                lastName: 'Johnson',
-                email: 'alex@example.com',
-                phone: '+1 (555) 382-9102',
+                id: '',
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
                 gender: GenderType.male,
-                membershipTier: 'Gold Member',
-                rewardPoints: 1250,
-                walletBalance: 45.00,
-                referralCode: 'ALEX2026',
+                membershipTier: 'Member',
+                rewardPoints: 0,
+                walletBalance: 0.0,
+                referralCode: '',
                 isTwoFactorEnabled: false,
                 languageCode: 'en',
                 pushNotificationsEnabled: true,
@@ -479,7 +494,8 @@ class ProfileTab extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              Navigator.of(context).popUntil((route) => route.isFirst);
+              context.read<AuthBloc>().add(const LogoutRequested());
+              context.go(AppRoutes.welcome);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,

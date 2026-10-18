@@ -4,9 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/src/domain/entities/services/service_entity.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/services/service_state.dart';
+import 'package:customer_app/src/presentation/screens/services/widgets/book_service_modal.dart';
 
 class AllServicesScreen extends StatefulWidget {
   final String? initialCategory;
@@ -21,129 +24,16 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
   final TextEditingController _searchController = TextEditingController();
   late String _selectedCategory;
 
-  final List<String> _defaultCategories = [
-    'All',
-    'Cleaning',
-    'Plumbing',
-    'Electrical',
-    'Painting',
-    'Gardening',
-    'Appliances',
-    'HVAC',
-    'Security',
-  ];
-
-  final List<Map<String, dynamic>> _allServices = [
-    {
-      'id': 'SRV-01',
-      'title': 'Deep Home Sanitization',
-      'category': 'Cleaning',
-      'price': 'From \$89',
-      'rating': '4.9',
-      'reviews': '1,240',
-      'badge': 'Popular',
-      'image': 'assets/images/icon_cleaning.png',
-      'icon': Icons.cleaning_services_rounded,
-      'description':
-          'Full house deep cleaning with eco-friendly sanitization solutions.',
-    },
-    {
-      'id': 'SRV-02',
-      'title': 'Emergency Pipe Repair',
-      'category': 'Plumbing',
-      'price': 'From \$75',
-      'rating': '4.8',
-      'reviews': '850',
-      'badge': 'Fast 30m',
-      'image': 'assets/images/icon_plumbing.png',
-      'icon': Icons.plumbing_rounded,
-      'description':
-          'Leak detection, pipe replacement, and drain unclogging by certified pros.',
-    },
-    {
-      'id': 'SRV-03',
-      'title': 'Electrical Inspection',
-      'category': 'Electrical',
-      'price': 'From \$69',
-      'rating': '4.9',
-      'reviews': '940',
-      'badge': 'Certified',
-      'image': 'assets/images/icon_electrical.png',
-      'icon': Icons.electrical_services_rounded,
-      'description':
-          'Fuse box check, wiring repairs, and lighting fixture installations.',
-    },
-    {
-      'id': 'SRV-04',
-      'title': 'Interior & Wall Painting',
-      'category': 'Painting',
-      'price': 'From \$199',
-      'rating': '4.8',
-      'reviews': '430',
-      'badge': 'Top Rated',
-      'image': 'assets/images/icon_painting.png',
-      'icon': Icons.format_paint_rounded,
-      'description':
-          'Premium finish wall coating, drywall patching, and exterior painting.',
-    },
-    {
-      'id': 'SRV-05',
-      'title': 'Lawn Care & Landscape',
-      'category': 'Gardening',
-      'price': 'From \$55',
-      'rating': '4.7',
-      'reviews': '620',
-      'badge': 'Eco Friendly',
-      'image': 'assets/images/icon_gardening.png',
-      'icon': Icons.yard_rounded,
-      'description':
-          'Grass mowing, hedge trimming, weed removal, and soil health testing.',
-    },
-    {
-      'id': 'SRV-06',
-      'title': 'Refrigerator & Appliance Fix',
-      'category': 'Appliances',
-      'price': 'From \$85',
-      'rating': '4.9',
-      'reviews': '1,110',
-      'badge': 'Warranty',
-      'image': 'assets/images/icon_appliances.png',
-      'icon': Icons.kitchen_rounded,
-      'description':
-          'Washing machine, fridge, oven, and microwave diagnosis and repair.',
-    },
-    {
-      'id': 'SRV-07',
-      'title': 'AC & HVAC Maintenance',
-      'category': 'HVAC',
-      'price': 'From \$95',
-      'rating': '4.9',
-      'reviews': '1,050',
-      'badge': 'Best Seller',
-      'image': 'assets/images/icon_electrical.png',
-      'icon': Icons.hvac_rounded,
-      'description':
-          'Air filter replacement, coolant refill, and duct cleaning.',
-    },
-    {
-      'id': 'SRV-08',
-      'title': 'Smart Home Security Setup',
-      'category': 'Security',
-      'price': 'From \$149',
-      'rating': '4.9',
-      'reviews': '510',
-      'badge': '24/7 Shield',
-      'image': 'assets/images/icon_electrical.png',
-      'icon': Icons.shield_rounded,
-      'description':
-          'CCTV camera installation, smart lock setup, and alarm configuration.',
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory ?? 'All';
+
+    // Ensure services and categories are loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ServiceCategoryCubit>().loadCategories();
+      context.read<ServiceCubit>().loadServices();
+    });
   }
 
   @override
@@ -152,24 +42,32 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> get _filteredServices {
-    return _allServices.where((srv) {
-      final matchesCategory =
-          _selectedCategory == 'All' || srv['category'] == _selectedCategory;
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      context.read<ServiceCategoryCubit>().loadCategories(forceRefresh: true),
+      context.read<ServiceCubit>().loadServices(forceRefresh: true),
+    ]);
+  }
+
+  List<ServiceEntity> _filterServices(List<ServiceEntity> allServices) {
+    return allServices.where((srv) {
+      final matchesCategory = _selectedCategory == 'All' ||
+          (srv.category ?? '').toLowerCase().trim() ==
+              _selectedCategory.toLowerCase().trim();
+
       final query = _searchController.text.toLowerCase().trim();
-      final matchesQuery =
-          query.isEmpty ||
-          (srv['title'] as String).toLowerCase().contains(query) ||
-          (srv['category'] as String).toLowerCase().contains(query) ||
-          (srv['description'] as String).toLowerCase().contains(query);
+      final matchesQuery = query.isEmpty ||
+          srv.title.toLowerCase().contains(query) ||
+          srv.name.toLowerCase().contains(query) ||
+          (srv.category ?? '').toLowerCase().contains(query) ||
+          (srv.description ?? '').toLowerCase().contains(query);
+
       return matchesCategory && matchesQuery;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final services = _filteredServices;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -178,173 +76,246 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.textHeadline,
+            color: AppColors.primaryDark,
+            size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'All Registered Services',
+          'All Services',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 18.sp,
             fontWeight: FontWeight.w800,
-            color: AppColors.textHeadline,
+            color: AppColors.primaryDark,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.tune_rounded, color: AppColors.primary),
+            icon: const Icon(
+              Icons.tune_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
             onPressed: () {
               HapticFeedback.lightImpact();
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // 1. Search Bar Container
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
-            child: Container(
-              height: 48.h,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(14.r),
-                border: Border.all(color: AppColors.borderUnselected),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 14.w),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.search_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  SizedBox(width: 10.w),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: 'Search for any home service or repair...',
-                        hintStyle: GoogleFonts.plusJakartaSans(
-                          color: AppColors.textMuted,
-                          fontSize: 13.5.sp,
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: AppColors.primary,
+        child: Column(
+          children: [
+            // 1. Search Bar Container
+            Container(
+              color: Colors.white,
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 12.h),
+              child: Container(
+                height: 48.h,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(color: AppColors.borderUnselected),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: 'Search for any home service or repair...',
+                          hintStyle: GoogleFonts.plusJakartaSans(
+                            color: AppColors.textMuted,
+                            fontSize: 13.5.sp,
+                          ),
+                          border: InputBorder.none,
                         ),
-                        border: InputBorder.none,
                       ),
                     ),
-                  ),
-                  if (_searchController.text.isNotEmpty)
-                    GestureDetector(
-                      onTap: () {
-                        _searchController.clear();
-                        setState(() {});
-                      },
-                      child: const Icon(
-                        Icons.close_rounded,
-                        size: 18,
-                        color: AppColors.textMuted,
+                    if (_searchController.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                        child: const Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // 2. Category Filter Chips (Horizontal)
-          Container(
-            height: 48.h,
-            color: Colors.white,
-            child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
-              builder: (context, state) {
-                final categories = (state is ServiceCategoryLoaded &&
-                        state.categories.isNotEmpty)
-                    ? ['All', ...state.categories.map((c) => c.name)]
-                    : _defaultCategories;
+            // 2. Category Filter Chips (Horizontal)
+            Container(
+              height: 48.h,
+              color: Colors.white,
+              child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
+                builder: (context, state) {
+                  final List<String> categories = ['All'];
+                  if (state is ServiceCategoryLoaded) {
+                    final names = state.categories
+                        .where((c) => c.isActive)
+                        .map((c) => c.name)
+                        .toList();
+                    categories.addAll(names);
+                  }
 
-                return ListView.separated(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: categories.length,
-                  separatorBuilder: (context, index) => SizedBox(width: 8.w),
-                  itemBuilder: (context, index) {
-                    final cat = categories[index];
-                    final isSelected = _selectedCategory == cat;
+                  return ListView.separated(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: categories.length,
+                    separatorBuilder: (context, index) => SizedBox(width: 8.w),
+                    itemBuilder: (context, index) {
+                      final cat = categories[index];
+                      final isSelected = _selectedCategory == cat;
 
-                    return GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        setState(() {
-                          _selectedCategory = cat;
-                        });
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14.w,
-                          vertical: 6.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.cardSelectedBg,
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _selectedCategory = cat;
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 14.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
-                                : AppColors.borderUnselected,
+                                : AppColors.cardSelectedBg,
+                            borderRadius: BorderRadius.circular(20.r),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.borderUnselected,
+                            ),
+                          ),
+                          child: Text(
+                            cat,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5.sp,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w600,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
                           ),
                         ),
-                        child: Text(
-                          cat,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.5.sp,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w600,
-                            color: isSelected
-                                ? Colors.white
-                                : AppColors.textSecondary,
-                          ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            SizedBox(height: 12.h),
+
+            // 3. Registered Services Grid Cards
+            Expanded(
+              child: BlocBuilder<ServiceCubit, ServiceState>(
+                builder: (context, state) {
+                  if (state is ServiceLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    );
+                  }
+
+                  if (state is ServiceError) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 32.w),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              size: 48.r,
+                              color: Colors.redAccent,
+                            ),
+                            SizedBox(height: 12.h),
+                            Text(
+                              state.message,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: AppColors.textSecondary,
+                                fontSize: 13.5.sp,
+                              ),
+                            ),
+                            SizedBox(height: 16.h),
+                            ElevatedButton(
+                              onPressed: () => context
+                                  .read<ServiceCubit>()
+                                  .loadServices(forceRefresh: true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12.r),
+                                ),
+                              ),
+                              child: const Text('Try Again'),
+                            ),
+                          ],
                         ),
                       ),
                     );
-                  },
-                );
-              },
-            ),
-          ),
+                  }
 
-          SizedBox(height: 12.h),
+                  final allServices = (state is ServiceLoaded)
+                      ? state.services.where((s) => s.isActive).toList()
+                      : <ServiceEntity>[];
 
-          // 3. Registered Services Grid Cards
-          Expanded(
-            child: services.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off_rounded,
-                          size: 54.r,
-                          color: AppColors.radioUnselected,
-                        ),
-                        SizedBox(height: 12.h),
-                        Text(
-                          'No services found matching your query',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppColors.textMuted,
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
+                  final services = _filterServices(allServices);
+
+                  if (services.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 54.r,
+                            color: AppColors.radioUnselected,
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                : GridView.builder(
+                          SizedBox(height: 12.h),
+                          Text(
+                            allServices.isEmpty
+                                ? 'No services available yet'
+                                : 'No services found matching your query',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppColors.textMuted,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return GridView.builder(
                     padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 30.h),
-                    physics: const BouncingScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
                     itemCount: services.length,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -356,19 +327,27 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                       final service = services[index];
                       return _buildRegisteredServiceCard(service);
                     },
-                  ),
-          ),
-        ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRegisteredServiceCard(Map<String, dynamic> srv) {
-    final String imagePath = (srv['image'] ?? '').toString();
-    final String title = (srv['title'] ?? '').toString();
-    final String price = (srv['price'] ?? '').toString();
-    final String rating = (srv['rating'] ?? '').toString();
-    final String badge = (srv['badge'] ?? '').toString();
+  Widget _buildRegisteredServiceCard(ServiceEntity srv) {
+    final String title = srv.title.isNotEmpty ? srv.title : srv.name;
+    final String priceStr = srv.price ??
+        (srv.basePrice != null
+            ? 'From \$${srv.basePrice!.toStringAsFixed(0)}'
+            : 'Quote Based');
+    final String? networkImage = srv.imageUrl;
+    final String categoryName = srv.category ?? '';
+    final visuals = _resolveVisuals(title, categoryName);
+    final String localAsset = visuals['image'] ?? '';
+    final IconData fallbackIcon = visuals['icon'] ?? Icons.build_rounded;
 
     return Container(
       decoration: BoxDecoration(
@@ -387,28 +366,32 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Badge & Favorite Trigger Row
+          // Top Category Badge Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  badge,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    categoryName.isNotEmpty ? categoryName : 'Service',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ),
               Icon(
-                Icons.star_rounded,
-                color: const Color(0xFFE5A00D),
+                Icons.check_circle_outline_rounded,
+                color: AppColors.primary,
                 size: 16.r,
               ),
             ],
@@ -416,22 +399,51 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
 
           SizedBox(height: 10.h),
 
-          // Center Prominent Line Art Clip Art
+          // Center Service Image / Visual
           Center(
             child: SizedBox(
               width: 60.r,
               height: 60.r,
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    (srv['icon'] as IconData?) ?? Icons.build_rounded,
-                    color: AppColors.primary,
-                    size: 38.r,
-                  );
-                },
-              ),
+              child: networkImage != null && networkImage.isNotEmpty
+                  ? Image.network(
+                      networkImage,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        if (localAsset.isNotEmpty) {
+                          return Image.asset(
+                            localAsset,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                              fallbackIcon,
+                              color: AppColors.primary,
+                              size: 38.r,
+                            ),
+                          );
+                        }
+                        return Icon(
+                          fallbackIcon,
+                          color: AppColors.primary,
+                          size: 38.r,
+                        );
+                      },
+                    )
+                  : localAsset.isNotEmpty
+                      ? Image.asset(
+                          localAsset,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              fallbackIcon,
+                              color: AppColors.primary,
+                              size: 38.r,
+                            );
+                          },
+                        )
+                      : Icon(
+                          fallbackIcon,
+                          color: AppColors.primary,
+                          size: 38.r,
+                        ),
             ),
           ),
 
@@ -452,26 +464,17 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
 
           SizedBox(height: 4.h),
 
-          // Rating & Reviews Subtitle
-          Row(
-            children: [
-              Text(
-                '$rating ★',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.5.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textHeadline,
-                ),
-              ),
-              SizedBox(width: 4.w),
-              Text(
-                '(${srv['reviews']})',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11.sp,
-                  color: AppColors.textMuted,
-                ),
-              ),
-            ],
+          // Description or Category Subtitle
+          Text(
+            srv.description?.isNotEmpty == true
+                ? srv.description!
+                : categoryName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11.sp,
+              color: AppColors.textMuted,
+            ),
           ),
 
           SizedBox(height: 10.h),
@@ -480,14 +483,19 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                price,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.5.sp,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.primary,
+              Flexible(
+                child: Text(
+                  priceStr,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              SizedBox(width: 6.w),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -519,104 +527,57 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
     );
   }
 
-  void _showBookingConfirmationModal(Map<String, dynamic> srv) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-          ),
-          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 36.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderUnselected,
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                ),
-              ),
-              SizedBox(height: 18.h),
-              Text(
-                'Book ${srv['title']}',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textHeadline,
-                ),
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                srv['description'] as String,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13.sp,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Service Price',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                  Text(
-                    srv['price'] as String,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 24.h),
-              SizedBox(
-                width: double.infinity,
-                height: 48.h,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.buttonBackground,
-                    foregroundColor: AppColors.buttonText,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    DynamicIslandToast.showSuccess(
-                      context,
-                      'Booking request sent for ${srv['title']}!',
-                    );
-                  },
-                  child: Text(
-                    'Confirm & Schedule Service',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  void _showBookingConfirmationModal(ServiceEntity srv) {
+    BookServiceModal.show(context, {
+      'id': srv.id,
+      'title': srv.title.isNotEmpty ? srv.title : srv.name,
+      'name': srv.name,
+      'category': srv.category,
+      'category_id': srv.categoryId,
+      'price': srv.price ??
+          (srv.basePrice != null ? '\$${srv.basePrice!.toStringAsFixed(2)}' : null),
+      'description': srv.description,
+      'image_url': srv.imageUrl,
+    });
+  }
+
+  Map<String, dynamic> _resolveVisuals(String title, String category) {
+    final key = '$title $category'.toLowerCase();
+    if (key.contains('clean')) {
+      return {
+        'image': 'assets/images/icon_cleaning.png',
+        'icon': Icons.cleaning_services_rounded,
+      };
+    } else if (key.contains('plumb') || key.contains('pipe') || key.contains('leak')) {
+      return {
+        'image': 'assets/images/icon_plumbing.png',
+        'icon': Icons.plumbing_rounded,
+      };
+    } else if (key.contains('paint')) {
+      return {
+        'image': 'assets/images/icon_painting.png',
+        'icon': Icons.format_paint_rounded,
+      };
+    } else if (key.contains('garden') || key.contains('lawn')) {
+      return {
+        'image': 'assets/images/icon_gardening.png',
+        'icon': Icons.yard_rounded,
+      };
+    } else if (key.contains('appliance') || key.contains('fridge') || key.contains('oven')) {
+      return {
+        'image': 'assets/images/icon_appliances.png',
+        'icon': Icons.kitchen_rounded,
+      };
+    } else if (key.contains('electr') || key.contains('wire') || key.contains('power')) {
+      return {
+        'image': 'assets/images/icon_electrical.png',
+        'icon': Icons.electrical_services_rounded,
+      };
+    }
+
+    return {
+      'image': '',
+      'icon': Icons.build_rounded,
+    };
   }
 }
