@@ -34,4 +34,9 @@ abstract class ProfileRepository {
   Future<Either<Failure, void>> toggleNotifications(bool enabled);
   Future<Either<Failure, void>> toggleBiometrics(bool enabled);
   Future<Either<Failure, void>> toggleDarkMode(bool enabled);
+
+  // Rewards & Referral
+  Future<Either<Failure, Map<String, dynamic>>> getRewardsSummary();
+  Future<Either<Failure, Map<String, dynamic>>> redeemPoints(int points);
+  Future<Either<Failure, Map<String, dynamic>>> applyReferralCode(String code);
 }
