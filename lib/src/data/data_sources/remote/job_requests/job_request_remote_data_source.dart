@@ -9,6 +9,8 @@ abstract class JobRequestRemoteDataSource {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   });
   Future<void> cancelJobRequest(int id);
   Future<List<QuotationModel>> getJobRequestQuotations(int id);

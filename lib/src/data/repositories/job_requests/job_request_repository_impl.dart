@@ -59,6 +59,8 @@ class JobRequestRepositoryImpl implements JobRequestRepository {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   }) async {
     try {
       if (!await _networkService.isConnected()) {
@@ -70,6 +72,8 @@ class JobRequestRepositoryImpl implements JobRequestRepository {
         serviceCategoryId: serviceCategoryId,
         description: description,
         preferredDate: preferredDate,
+        paymentMethod: paymentMethod,
+        cardId: cardId,
       );
       return Right(jobRequest);
     } on AuthException catch (e) {

@@ -1787,7 +1787,7 @@ class _HomeTabState extends State<HomeTab> {
                                         return Image.asset(
                                           localAsset,
                                           fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) => Icon(
+                                          errorBuilder: (_, _, _) => Icon(
                                             fallbackIcon,
                                             color: AppColors.primary,
                                             size: 36.r,

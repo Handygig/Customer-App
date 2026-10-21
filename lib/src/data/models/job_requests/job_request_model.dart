@@ -2,6 +2,7 @@ import 'package:customer_app/src/data/models/properties/property_model.dart';
 import 'package:customer_app/src/data/models/services/service_category_model.dart';
 import 'package:customer_app/src/data/models/job_requests/quotation_model.dart';
 import 'package:customer_app/src/data/models/job_requests/job_assignment_model.dart';
+import 'package:customer_app/src/data/models/payments/card_model.dart';
 import 'package:customer_app/src/domain/entities/job_requests/job_request_entity.dart';
 
 class JobRequestModel extends JobRequestEntity {
@@ -10,6 +11,9 @@ class JobRequestModel extends JobRequestEntity {
     required super.description,
     super.preferredDate,
     required super.status,
+    super.paymentMethod = 'card',
+    super.cardId,
+    super.card,
     super.property,
     super.serviceCategory,
     super.quotations = const [],
@@ -27,6 +31,9 @@ class JobRequestModel extends JobRequestEntity {
     final assignmentJson = json['assignment'] is Map<String, dynamic>
         ? Map<String, dynamic>.from(json['assignment'] as Map)
         : null;
+    final cardJson = json['card'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(json['card'] as Map)
+        : null;
 
     final List<QuotationModel> quotes;
     if (json['quotations'] is List) {
@@ -43,6 +50,9 @@ class JobRequestModel extends JobRequestEntity {
       description: (json['description'] ?? '').toString().trim(),
       preferredDate: _asDateTime(json['preferred_date']),
       status: (json['status'] ?? 'pending').toString(),
+      paymentMethod: (json['payment_method'] ?? 'card').toString(),
+      cardId: json['card_id'] != null ? _asInt(json['card_id']) : null,
+      card: cardJson != null ? CardModel.fromJson(cardJson) : null,
       property:
           propertyJson != null ? PropertyModel.fromJson(propertyJson) : null,
       serviceCategory: categoryJson != null
@@ -62,6 +72,9 @@ class JobRequestModel extends JobRequestEntity {
       'description': description,
       'preferred_date': preferredDate?.toIso8601String(),
       'status': status,
+      'payment_method': paymentMethod,
+      'card_id': cardId,
+      'card': card is CardModel ? (card as CardModel).toJson() : null,
       'property': property is PropertyModel
           ? (property as PropertyModel).toJson()
           : null,
@@ -84,6 +97,8 @@ class JobRequestModel extends JobRequestEntity {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   }) {
     // Format preferred_date as YYYY-MM-DD HH:mm:ss or ISO
     final year = preferredDate.year.toString().padLeft(4, '0');
@@ -94,12 +109,17 @@ class JobRequestModel extends JobRequestEntity {
     final second = preferredDate.second.toString().padLeft(2, '0');
     final formattedDate = '$year-$month-$day $hour:$minute:$second';
 
-    return {
+    final data = <String, dynamic>{
       'property_id': propertyId,
       'service_category_id': serviceCategoryId,
       'description': description.trim(),
       'preferred_date': formattedDate,
+      'payment_method': paymentMethod,
     };
+    if (cardId != null) {
+      data['card_id'] = cardId;
+    }
+    return data;
   }
 
   static int _asInt(dynamic value) {

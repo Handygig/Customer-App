@@ -7,8 +7,6 @@ class ServiceEntity extends Equatable {
   final int? categoryId;
   final String? category;
   final String? description;
-  final double? basePrice;
-  final String? price;
   final String? imageUrl;
   final bool isActive;
 
@@ -19,8 +17,6 @@ class ServiceEntity extends Equatable {
     this.categoryId,
     this.category,
     this.description,
-    this.basePrice,
-    this.price,
     this.imageUrl,
     required this.isActive,
   });
@@ -33,8 +29,6 @@ class ServiceEntity extends Equatable {
         categoryId,
         category,
         description,
-        basePrice,
-        price,
         imageUrl,
         isActive,
       ];
