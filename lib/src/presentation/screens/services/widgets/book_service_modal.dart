@@ -79,22 +79,12 @@ class _BookServiceModalState extends State<BookServiceModal> {
   Future<void> _pickDateTime() async {
     HapticFeedback.lightImpact();
     DateTime tempDate = _selectedDate;
-    int selectedTab = 0; // 0: Quick Slots, 1: Wheel Picker
-
-    final timeSlots = [
-      const TimeOfDay(hour: 8, minute: 30),
-      const TimeOfDay(hour: 9, minute: 0),
-      const TimeOfDay(hour: 10, minute: 30),
-      const TimeOfDay(hour: 12, minute: 0),
-      const TimeOfDay(hour: 14, minute: 0),
-      const TimeOfDay(hour: 15, minute: 30),
-      const TimeOfDay(hour: 17, minute: 0),
-      const TimeOfDay(hour: 18, minute: 30),
-    ];
+    int pickerKeyVersion = 0;
 
     final now = DateTime.now();
-    final nextDays = List.generate(21, (index) {
-      return DateTime(now.year, now.month, now.day + 1 + index);
+    // Next 12 months for quick month selection
+    final monthsList = List.generate(12, (index) {
+      return DateTime(now.year, now.month + index, 1);
     });
 
     await showModalBottomSheet(
@@ -107,7 +97,25 @@ class _BookServiceModalState extends State<BookServiceModal> {
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            final isWheel = selectedTab == 1;
+            void jumpToMonth(DateTime m) {
+              HapticFeedback.lightImpact();
+              final daysInMonth = DateTime(m.year, m.month + 1, 0).day;
+              final clampedDay = tempDate.day.clamp(1, daysInMonth);
+              var newDate = DateTime(
+                m.year,
+                m.month,
+                clampedDay,
+                tempDate.hour,
+                tempDate.minute,
+              );
+              if (newDate.isBefore(now.add(const Duration(minutes: 30)))) {
+                newDate = now.add(const Duration(hours: 1));
+              }
+              setSheetState(() {
+                tempDate = newDate;
+                pickerKeyVersion++;
+              });
+            }
 
             return SafeArea(
               child: Padding(
@@ -205,232 +213,87 @@ class _BookServiceModalState extends State<BookServiceModal> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 14.h),
+                    SizedBox(height: 16.h),
 
-                    // Mode switch tabs
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(10.r),
-                      ),
-                      padding: EdgeInsets.all(3.r),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
+                    // Month Selector Header & Quick Month Navigation
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Select Month',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textHeadline,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            GestureDetector(
                               onTap: () {
-                                HapticFeedback.selectionClick();
-                                setSheetState(() => selectedTab = 0);
+                                final prevMonth = DateTime(tempDate.year, tempDate.month - 1, 1);
+                                if (!prevMonth.isBefore(DateTime(now.year, now.month, 1))) {
+                                  jumpToMonth(prevMonth);
+                                }
                               },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 160),
-                                padding: EdgeInsets.symmetric(vertical: 8.h),
+                              child: Container(
+                                padding: EdgeInsets.all(5.r),
                                 decoration: BoxDecoration(
-                                  color: selectedTab == 0 ? Colors.white : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                  boxShadow: selectedTab == 0
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.04),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ]
-                                      : null,
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(6.r),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    'Quick Slots',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: selectedTab == 0
-                                          ? AppColors.textHeadline
-                                          : AppColors.textMuted,
-                                    ),
-                                  ),
+                                child: Icon(
+                                  Icons.chevron_left_rounded,
+                                  size: 18.r,
+                                  color: (tempDate.year == now.year && tempDate.month == now.month)
+                                      ? AppColors.textMuted.withValues(alpha: 0.35)
+                                      : AppColors.textHeadline,
                                 ),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
+                            SizedBox(width: 8.w),
+                            GestureDetector(
                               onTap: () {
-                                HapticFeedback.selectionClick();
-                                setSheetState(() => selectedTab = 1);
+                                final nextMonth = DateTime(tempDate.year, tempDate.month + 1, 1);
+                                if (nextMonth.isBefore(DateTime(now.year, now.month + 12, 1))) {
+                                  jumpToMonth(nextMonth);
+                                }
                               },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 160),
-                                padding: EdgeInsets.symmetric(vertical: 8.h),
+                              child: Container(
+                                padding: EdgeInsets.all(5.r),
                                 decoration: BoxDecoration(
-                                  color: selectedTab == 1 ? Colors.white : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                  boxShadow: selectedTab == 1
-                                      ? [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.04),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ]
-                                      : null,
+                                  color: const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(6.r),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    'Clock Wheel',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.w700,
-                                      color: selectedTab == 1
-                                          ? AppColors.textHeadline
-                                          : AppColors.textMuted,
-                                    ),
-                                  ),
+                                child: Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 18.r,
+                                  color: AppColors.textHeadline,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 14.h),
+                    SizedBox(height: 8.h),
 
-                    // Content based on tab
-                    if (!isWheel) ...[
-                      // 1. Day Selector Strip
-                      Text(
-                        'Select Day',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textHeadline,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      SizedBox(
-                        height: 72.h,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: nextDays.length,
-                          separatorBuilder: (context, index) => SizedBox(width: 8.w),
-                          itemBuilder: (context, index) {
-                            final day = nextDays[index];
-                            final isSelected = day.year == tempDate.year &&
-                                day.month == tempDate.month &&
-                                day.day == tempDate.day;
-                            final isTomorrow = index == 0;
-
-                            return GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                setSheetState(() {
-                                  tempDate = DateTime(
-                                    day.year,
-                                    day.month,
-                                    day.day,
-                                    tempDate.hour,
-                                    tempDate.minute,
-                                  );
-                                });
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                width: 56.w,
-                                padding: EdgeInsets.symmetric(vertical: 8.h),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.buttonBackground
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? AppColors.buttonBackground
-                                        : const Color(0xFFE5E7EB),
-                                    width: isSelected ? 1.6 : 1.0,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      isTomorrow ? 'TOM' : DateFormat('EEE').format(day).toUpperCase(),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 9.5.sp,
-                                        fontWeight: FontWeight.w800,
-                                        color: isSelected
-                                            ? AppColors.buttonText
-                                            : AppColors.textMuted,
-                                      ),
-                                    ),
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      day.day.toString(),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.w800,
-                                        color: isSelected
-                                            ? AppColors.buttonText
-                                            : AppColors.textHeadline,
-                                      ),
-                                    ),
-                                    Text(
-                                      DateFormat('MMM').format(day),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 9.5.sp,
-                                        fontWeight: FontWeight.w600,
-                                        color: isSelected
-                                            ? AppColors.buttonText.withValues(alpha: 0.8)
-                                            : AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 14.h),
-
-                      // 2. Time Slots Wrap
-                      Text(
-                        'Select Time',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.5.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textHeadline,
-                        ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Wrap(
-                        spacing: 8.w,
-                        runSpacing: 8.h,
-                        children: timeSlots.map((slot) {
-                          final isSelected = tempDate.hour == slot.hour &&
-                              tempDate.minute == slot.minute;
-                          final formattedTime = DateFormat('hh:mm a').format(
-                            DateTime(2026, 1, 1, slot.hour, slot.minute),
-                          );
+                    // Horizontal Month Selector Pills
+                    SizedBox(
+                      height: 36.h,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: monthsList.length,
+                        separatorBuilder: (context, index) => SizedBox(width: 8.w),
+                        itemBuilder: (context, index) {
+                          final m = monthsList[index];
+                          final isSelected = m.year == tempDate.year && m.month == tempDate.month;
 
                           return GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setSheetState(() {
-                                tempDate = DateTime(
-                                  tempDate.year,
-                                  tempDate.month,
-                                  tempDate.day,
-                                  slot.hour,
-                                  slot.minute,
-                                );
-                              });
-                            },
+                            onTap: () => jumpToMonth(m),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 160),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 8.h,
-                              ),
+                              padding: EdgeInsets.symmetric(horizontal: 14.w),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppColors.buttonBackground
@@ -443,38 +306,51 @@ class _BookServiceModalState extends State<BookServiceModal> {
                                   width: isSelected ? 1.5 : 1.0,
                                 ),
                               ),
-                              child: Text(
-                                formattedTime,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.5.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected
-                                      ? AppColors.buttonText
-                                      : AppColors.textHeadline,
+                              child: Center(
+                                child: Text(
+                                  DateFormat('MMM yyyy').format(m),
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12.sp,
+                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSelected
+                                        ? AppColors.buttonText
+                                        : AppColors.textHeadline,
+                                  ),
                                 ),
                               ),
                             ),
                           );
-                        }).toList(),
+                        },
                       ),
-                    ] else ...[
-                      // Wheel Picker View
-                      SizedBox(
-                        height: 180.h,
-                        child: CupertinoDatePicker(
-                          mode: CupertinoDatePickerMode.dateAndTime,
-                          initialDateTime: tempDate.isBefore(now.add(const Duration(hours: 1)))
-                              ? now.add(const Duration(hours: 1))
-                              : tempDate,
-                          minimumDate: now.add(const Duration(minutes: 30)),
-                          maximumDate: now.add(const Duration(days: 90)),
-                          use24hFormat: false,
-                          onDateTimeChanged: (val) {
-                            setSheetState(() => tempDate = val);
-                          },
-                        ),
+                    ),
+                    SizedBox(height: 14.h),
+
+                    // Cupertino Wheel Picker for Day & Time
+                    Text(
+                      'Scroll to Pick Day & Time',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textHeadline,
                       ),
-                    ],
+                    ),
+                    SizedBox(height: 8.h),
+                    SizedBox(
+                      height: 185.h,
+                      child: CupertinoDatePicker(
+                        key: ValueKey(pickerKeyVersion),
+                        mode: CupertinoDatePickerMode.dateAndTime,
+                        initialDateTime: tempDate.isBefore(now.add(const Duration(minutes: 30)))
+                            ? now.add(const Duration(hours: 1))
+                            : tempDate,
+                        minimumDate: now.add(const Duration(minutes: 15)),
+                        maximumDate: now.add(const Duration(days: 365)),
+                        use24hFormat: false,
+                        onDateTimeChanged: (val) {
+                          setSheetState(() => tempDate = val);
+                        },
+                      ),
+                    ),
 
                     SizedBox(height: 18.h),
 
