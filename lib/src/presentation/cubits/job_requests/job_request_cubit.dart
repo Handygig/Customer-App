@@ -122,6 +122,8 @@ class JobRequestCubit extends Cubit<JobRequestState> {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   }) async {
     emit(JobRequestActionInProgress(
       _cachedRequests,
@@ -133,6 +135,8 @@ class JobRequestCubit extends Cubit<JobRequestState> {
       serviceCategoryId: serviceCategoryId,
       description: description,
       preferredDate: preferredDate,
+      paymentMethod: paymentMethod,
+      cardId: cardId,
     );
 
     return result.fold(

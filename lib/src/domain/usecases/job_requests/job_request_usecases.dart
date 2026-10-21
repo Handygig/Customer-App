@@ -34,12 +34,16 @@ class CreateJobRequestUseCase {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   }) {
     return _repository.createJobRequest(
       propertyId: propertyId,
       serviceCategoryId: serviceCategoryId,
       description: description,
       preferredDate: preferredDate,
+      paymentMethod: paymentMethod,
+      cardId: cardId,
     );
   }
 }

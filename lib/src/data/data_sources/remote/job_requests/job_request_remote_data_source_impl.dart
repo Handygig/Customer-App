@@ -67,6 +67,8 @@ class JobRequestRemoteDataSourceImpl implements JobRequestRemoteDataSource {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   }) async {
     try {
       final body = JobRequestModel.toStoreJson(
@@ -74,6 +76,8 @@ class JobRequestRemoteDataSourceImpl implements JobRequestRemoteDataSource {
         serviceCategoryId: serviceCategoryId,
         description: description,
         preferredDate: preferredDate,
+        paymentMethod: paymentMethod,
+        cardId: cardId,
       );
 
       final response = await _dio.post(

@@ -11,6 +11,8 @@ abstract class JobRequestRepository {
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
+    String paymentMethod = 'card',
+    int? cardId,
   });
   Future<Either<Failure, void>> cancelJobRequest(int id);
   Future<Either<Failure, List<QuotationEntity>>> getJobRequestQuotations(int id);

@@ -3,12 +3,16 @@ import 'package:customer_app/src/domain/entities/properties/property_entity.dart
 import 'package:customer_app/src/domain/entities/services/service_category_entity.dart';
 import 'package:customer_app/src/domain/entities/job_requests/quotation_entity.dart';
 import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
+import 'package:customer_app/src/domain/entities/payments/card_entity.dart';
 
 class JobRequestEntity extends Equatable {
   final int id;
   final String description;
   final DateTime? preferredDate;
   final String status;
+  final String paymentMethod;
+  final int? cardId;
+  final CardEntity? card;
   final PropertyEntity? property;
   final ServiceCategoryEntity? serviceCategory;
   final List<QuotationEntity> quotations;
@@ -20,6 +24,9 @@ class JobRequestEntity extends Equatable {
     required this.description,
     this.preferredDate,
     required this.status,
+    this.paymentMethod = 'card',
+    this.cardId,
+    this.card,
     this.property,
     this.serviceCategory,
     this.quotations = const [],
@@ -34,12 +41,17 @@ class JobRequestEntity extends Equatable {
   bool get isPending => status.toLowerCase() == 'pending';
   bool get canCancel => !isCancelled && !isAssigned && !isCompleted;
   bool get hasQuotations => quotations.isNotEmpty;
+  bool get isCash => paymentMethod.toLowerCase() == 'cash';
+  bool get isCard => paymentMethod.toLowerCase() == 'card';
 
   JobRequestEntity copyWith({
     int? id,
     String? description,
     DateTime? preferredDate,
     String? status,
+    String? paymentMethod,
+    int? cardId,
+    CardEntity? card,
     PropertyEntity? property,
     ServiceCategoryEntity? serviceCategory,
     List<QuotationEntity>? quotations,
@@ -51,6 +63,9 @@ class JobRequestEntity extends Equatable {
       description: description ?? this.description,
       preferredDate: preferredDate ?? this.preferredDate,
       status: status ?? this.status,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      cardId: cardId ?? this.cardId,
+      card: card ?? this.card,
       property: property ?? this.property,
       serviceCategory: serviceCategory ?? this.serviceCategory,
       quotations: quotations ?? this.quotations,
@@ -65,6 +80,9 @@ class JobRequestEntity extends Equatable {
         description,
         preferredDate,
         status,
+        paymentMethod,
+        cardId,
+        card,
         property,
         serviceCategory,
         quotations,

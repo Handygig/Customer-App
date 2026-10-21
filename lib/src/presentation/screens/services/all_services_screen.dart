@@ -339,10 +339,6 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
 
   Widget _buildRegisteredServiceCard(ServiceEntity srv) {
     final String title = srv.title.isNotEmpty ? srv.title : srv.name;
-    final String priceStr = srv.price ??
-        (srv.basePrice != null
-            ? 'From \$${srv.basePrice!.toStringAsFixed(0)}'
-            : 'Quote Based');
     final String? networkImage = srv.imageUrl;
     final String categoryName = srv.category ?? '';
     final visuals = _resolveVisuals(title, categoryName);
@@ -368,31 +364,23 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
         children: [
           // Top Category Badge Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Text(
-                    categoryName.isNotEmpty ? categoryName : 'Service',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                    ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  categoryName.isNotEmpty ? categoryName : 'Service',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
                 ),
-              ),
-              Icon(
-                Icons.check_circle_outline_rounded,
-                color: AppColors.primary,
-                size: 16.r,
               ),
             ],
           ),
@@ -413,7 +401,7 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
                           return Image.asset(
                             localAsset,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Icon(
+                            errorBuilder: (_, _, _) => Icon(
                               fallbackIcon,
                               color: AppColors.primary,
                               size: 38.r,
@@ -477,50 +465,48 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
             ),
           ),
 
-          SizedBox(height: 10.h),
+          SizedBox(height: 12.h),
 
-          // Bottom Price & Book Now Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Text(
-                  priceStr,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
+          // Bottom Book Button
+          SizedBox(
+            width: double.infinity,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _showBookingConfirmationModal(srv);
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10.w,
+                  vertical: 8.h,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.buttonBackground,
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 14.r,
+                        color: AppColors.buttonText,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'Book Now',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.buttonText,
+                        ),
+                      ),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(width: 6.w),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _showBookingConfirmationModal(srv);
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 6.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.buttonBackground,
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
-                  child: Text(
-                    'Book',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11.5.sp,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.buttonText,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -534,8 +520,6 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
       'name': srv.name,
       'category': srv.category,
       'category_id': srv.categoryId,
-      'price': srv.price ??
-          (srv.basePrice != null ? '\$${srv.basePrice!.toStringAsFixed(2)}' : null),
       'description': srv.description,
       'image_url': srv.imageUrl,
     });
