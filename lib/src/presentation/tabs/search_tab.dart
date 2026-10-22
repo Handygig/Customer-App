@@ -9,6 +9,7 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 class ServiceProvider {
   final String id;
@@ -274,7 +275,7 @@ class _SearchTabState extends State<SearchTab> {
               SizedBox(width: 14.w),
               Expanded(
                 child: Text(
-                  'Service Locator',
+                  context.loc.serviceLocator,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w900,
@@ -337,7 +338,7 @@ class _SearchTabState extends State<SearchTab> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'SERVICE TYPE',
+                                    context.loc.serviceType,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 9.5.sp,
                                       fontWeight: FontWeight.w800,
@@ -357,7 +358,7 @@ class _SearchTabState extends State<SearchTab> {
                                       ),
                                       decoration: InputDecoration(
                                         hintText:
-                                            'Search service type (e.g. Plumbing, Cleaning)',
+                                            context.loc.serviceTypePlaceholder,
                                         hintStyle: GoogleFonts.plusJakartaSans(
                                           fontSize: 12.5.sp,
                                           fontWeight: FontWeight.w500,
@@ -417,7 +418,7 @@ class _SearchTabState extends State<SearchTab> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'LOCATION',
+                                    context.loc.locationLabel,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 9.5.sp,
                                       fontWeight: FontWeight.w800,
@@ -437,7 +438,7 @@ class _SearchTabState extends State<SearchTab> {
                                       ),
                                       decoration: InputDecoration(
                                         hintText:
-                                            'Search location or area (e.g. Downtown)',
+                                            context.loc.locationPlaceholder,
                                         hintStyle: GoogleFonts.plusJakartaSans(
                                           fontSize: 12.5.sp,
                                           fontWeight: FontWeight.w500,
@@ -494,7 +495,7 @@ class _SearchTabState extends State<SearchTab> {
                                       ),
                                       SizedBox(width: 4.w),
                                       Text(
-                                        'Near me',
+                                        context.loc.nearMe,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 11.sp,
                                           fontWeight: FontWeight.w700,
@@ -650,7 +651,7 @@ class _SearchTabState extends State<SearchTab> {
                             ),
                           if (category != 'All') SizedBox(width: 6.w),
                           Text(
-                            category,
+                            category == 'All' ? context.loc.categoryAll : category,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.sp,
                               fontWeight: isSelected
@@ -1091,7 +1092,7 @@ class _SearchTabState extends State<SearchTab> {
                                 ),
                               ),
                               Text(
-                                '(${provider.reviewsCount} reviews)',
+                                '(${context.loc.reviews(provider.reviewsCount)})',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13.sp,
                                   fontWeight: FontWeight.w600,
@@ -1149,7 +1150,7 @@ class _SearchTabState extends State<SearchTab> {
                             Navigator.pop(context);
                             DynamicIslandToast.showSuccess(
                               context,
-                              'Contacting ${provider.name}...',
+                              context.loc.contactingProvider(provider.name),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -1161,7 +1162,7 @@ class _SearchTabState extends State<SearchTab> {
                             elevation: 0,
                           ),
                           child: Text(
-                            'Book Provider',
+                            context.loc.bookProvider,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w800,

@@ -14,6 +14,7 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 class JobsTab extends StatefulWidget {
   const JobsTab({super.key});
@@ -298,7 +299,7 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'My Bookings & Jobs',
+                          context.loc.myBookingsAndJobs,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 22.sp,
                             fontWeight: FontWeight.w800,
@@ -308,7 +309,7 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                         ),
                         SizedBox(height: 6.h),
                         Text(
-                          'Track requests, approve quotes & review active work',
+                          context.loc.myBookingsSubtitle,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13.sp,
                             color: Colors.white.withValues(alpha: 0.8),
@@ -356,10 +357,10 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                             ),
                             dividerColor: Colors.transparent,
                             tabs: [
-                              Tab(text: 'Waiting ($waitingCount)'),
-                              Tab(text: 'To Approve ($toApproveCount)'),
-                              Tab(text: 'Ongoing ($ongoingCount)'),
-                              Tab(text: 'Completed ($completedCount)'),
+                              Tab(text: '${context.loc.tabWaiting} ($waitingCount)'),
+                              Tab(text: '${context.loc.tabToApprove} ($toApproveCount)'),
+                              Tab(text: '${context.loc.tabOngoing} ($ongoingCount)'),
+                              Tab(text: '${context.loc.tabCompleted} ($completedCount)'),
                             ],
                           ),
                         ),
@@ -399,10 +400,10 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
 
     if (jobs.isEmpty) {
       final tabLabels = [
-        'waiting requests',
-        'quotes to approve',
-        'ongoing jobs',
-        'completed jobs'
+        context.loc.waitingRequests,
+        context.loc.quotesToApprove,
+        context.loc.ongoingJobs.toLowerCase(),
+        context.loc.completedJobs,
       ];
       final currentCategory = tabLabels[tabIndex];
 
@@ -419,7 +420,7 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
               ),
               SizedBox(height: 12.h),
               Text(
-                'No $currentCategory',
+                context.loc.noJobsInCategory(currentCategory),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -447,7 +448,7 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                   );
                 },
                 child: Text(
-                  'Explore Services',
+                  context.loc.exploreServices,
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     fontSize: 13.5.sp,

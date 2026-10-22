@@ -567,6 +567,942 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No notifications yet'**
   String get noNotifications;
+
+  /// Title on complete profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Profile'**
+  String get completeProfileTitle;
+
+  /// Subtitle on complete profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your customer profile to continue.'**
+  String get completeProfileSubtitle;
+
+  /// Title on edit profile screen
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfileTitle;
+
+  /// First name field label
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get firstName;
+
+  /// Last name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get lastName;
+
+  /// Email address field label
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get emailAddress;
+
+  /// Gender field label
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get gender;
+
+  /// Male gender option
+  ///
+  /// In en, this message translates to:
+  /// **'Male'**
+  String get male;
+
+  /// Female gender option
+  ///
+  /// In en, this message translates to:
+  /// **'Female'**
+  String get female;
+
+  /// Take photo action label
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get takePhoto;
+
+  /// Choose photo from gallery action label
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Gallery'**
+  String get chooseFromGallery;
+
+  /// Success message when profile is completed
+  ///
+  /// In en, this message translates to:
+  /// **'Profile completed!'**
+  String get profileCompleted;
+
+  /// Success message when profile is updated
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully!'**
+  String get profileUpdated;
+
+  /// Personal information header
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get personalInformation;
+
+  /// Phone number field label
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumber;
+
+  /// Title on properties setup screen
+  ///
+  /// In en, this message translates to:
+  /// **'Add your Properties'**
+  String get addPropertiesTitle;
+
+  /// Subtitle on properties setup screen
+  ///
+  /// In en, this message translates to:
+  /// **'Add your homes, offices, or other locations to order cleaning or repairs faster.'**
+  String get addPropertiesSubtitle;
+
+  /// New property screen title
+  ///
+  /// In en, this message translates to:
+  /// **'New Property'**
+  String get newProperty;
+
+  /// New property subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Set up your home or workspace coordinates'**
+  String get newPropertySubtitle;
+
+  /// Add new property button label
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Property'**
+  String get addNewProperty;
+
+  /// Manage properties title
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Properties'**
+  String get manageProperties;
+
+  /// Count of registered properties
+  ///
+  /// In en, this message translates to:
+  /// **'{count} properties registered'**
+  String propertiesRegistered(int count);
+
+  /// Empty state for properties
+  ///
+  /// In en, this message translates to:
+  /// **'No properties added yet'**
+  String get noPropertiesAdded;
+
+  /// Prompt to add first property
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to register your first property'**
+  String get tapToRegisterFirstProperty;
+
+  /// Location type field label
+  ///
+  /// In en, this message translates to:
+  /// **'Location Type'**
+  String get locationType;
+
+  /// Property name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Property Name'**
+  String get propertyName;
+
+  /// Location on map section title
+  ///
+  /// In en, this message translates to:
+  /// **'Location on Map'**
+  String get locationOnMap;
+
+  /// Coordinates selected status
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates Selected'**
+  String get coordinatesSelected;
+
+  /// Map picker prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to pinpoint on map ➔'**
+  String get tapToPinpointOnMap;
+
+  /// Address line 1 label
+  ///
+  /// In en, this message translates to:
+  /// **'Address Line 1'**
+  String get addressLine1;
+
+  /// Address line 2 label
+  ///
+  /// In en, this message translates to:
+  /// **'Address Line 2 (Optional)'**
+  String get addressLine2Optional;
+
+  /// City label
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get city;
+
+  /// Province or state label
+  ///
+  /// In en, this message translates to:
+  /// **'Province / State'**
+  String get provinceState;
+
+  /// Postal code label
+  ///
+  /// In en, this message translates to:
+  /// **'Postal / ZIP Code'**
+  String get postalZipCode;
+
+  /// Property photo label
+  ///
+  /// In en, this message translates to:
+  /// **'Property Photo'**
+  String get propertyPhoto;
+
+  /// Upload property photo button
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Property Photo'**
+  String get uploadPropertyPhoto;
+
+  /// Upload property photo instructions
+  ///
+  /// In en, this message translates to:
+  /// **'Select or take a high-resolution photo of your property.'**
+  String get uploadPropertyPhotoSubtitle;
+
+  /// Success banner for attached property photo
+  ///
+  /// In en, this message translates to:
+  /// **'Property photo attached'**
+  String get propertyPhotoAttached;
+
+  /// Upload property image placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Property Image'**
+  String get uploadPropertyImage;
+
+  /// Upload image placeholder hint
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select or capture front photo (JPG, PNG)'**
+  String get tapToSelectPropertyPhoto;
+
+  /// Save location button
+  ///
+  /// In en, this message translates to:
+  /// **'Save Location'**
+  String get saveLocation;
+
+  /// Confirm location button
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Location'**
+  String get confirmLocation;
+
+  /// Skip button
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// Skip and finish button
+  ///
+  /// In en, this message translates to:
+  /// **'Skip & Finish'**
+  String get skipAndFinish;
+
+  /// Finish registration button
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Registration'**
+  String get finishRegistration;
+
+  /// Home property type
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get typeHome;
+
+  /// Office property type
+  ///
+  /// In en, this message translates to:
+  /// **'Office'**
+  String get typeOffice;
+
+  /// Apartment property type
+  ///
+  /// In en, this message translates to:
+  /// **'Apartment'**
+  String get typeApartment;
+
+  /// Other property type
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get typeOther;
+
+  /// Default property badge
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get defaultProperty;
+
+  /// Set as default property action
+  ///
+  /// In en, this message translates to:
+  /// **'Set as Default'**
+  String get setDefaultProperty;
+
+  /// Confirmation message for deleting a property
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this property?'**
+  String get deletePropertyConfirm;
+
+  /// Generic morning greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Good Morning'**
+  String get goodMorning;
+
+  /// Personalized morning greeting
+  ///
+  /// In en, this message translates to:
+  /// **'Good Morning, {name}'**
+  String goodMorningUser(String name);
+
+  /// Search input placeholder on home tab
+  ///
+  /// In en, this message translates to:
+  /// **'Search for cleaning, repairs, plumbing...'**
+  String get homeSearchPlaceholder;
+
+  /// Added properties carousel title
+  ///
+  /// In en, this message translates to:
+  /// **'Added Properties'**
+  String get addedProperties;
+
+  /// Manage button label
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get manage;
+
+  /// Explore services section title
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Services'**
+  String get exploreServices;
+
+  /// Explore all services button label
+  ///
+  /// In en, this message translates to:
+  /// **'Explore All'**
+  String get exploreAll;
+
+  /// View all button label
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get viewAll;
+
+  /// Ongoing jobs section title
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing Jobs'**
+  String get ongoingJobs;
+
+  /// Active count badge
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Active'**
+  String activeCount(int count);
+
+  /// Empty state title for ongoing jobs
+  ///
+  /// In en, this message translates to:
+  /// **'No Ongoing Jobs'**
+  String get noOngoingJobs;
+
+  /// Empty state subtitle for ongoing jobs
+  ///
+  /// In en, this message translates to:
+  /// **'Active assignments in progress will show up here.'**
+  String get noOngoingJobsSubtitle;
+
+  /// Exclusive offers section title
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive Offers & Discounts'**
+  String get exclusiveOffers;
+
+  /// Track service action label
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get trackService;
+
+  /// Service progress section title
+  ///
+  /// In en, this message translates to:
+  /// **'Service Progress'**
+  String get serviceProgress;
+
+  /// Toast when coupon is copied
+  ///
+  /// In en, this message translates to:
+  /// **'Coupon \"{code}\" copied to clipboard!'**
+  String couponCopied(String code);
+
+  /// Toast when offer is applied
+  ///
+  /// In en, this message translates to:
+  /// **'Offer code \"{code}\" applied! Navigating to services...'**
+  String offerApplied(String code);
+
+  /// Title on jobs tab
+  ///
+  /// In en, this message translates to:
+  /// **'My Bookings & Jobs'**
+  String get myBookingsAndJobs;
+
+  /// Subtitle on jobs tab
+  ///
+  /// In en, this message translates to:
+  /// **'Track requests, approve quotes & review active work'**
+  String get myBookingsSubtitle;
+
+  /// Waiting tab name
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get tabWaiting;
+
+  /// To Approve tab name
+  ///
+  /// In en, this message translates to:
+  /// **'To Approve'**
+  String get tabToApprove;
+
+  /// Ongoing tab name
+  ///
+  /// In en, this message translates to:
+  /// **'Ongoing'**
+  String get tabOngoing;
+
+  /// Completed tab name
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get tabCompleted;
+
+  /// Empty state waiting requests category name
+  ///
+  /// In en, this message translates to:
+  /// **'waiting requests'**
+  String get waitingRequests;
+
+  /// Empty state quotes to approve category name
+  ///
+  /// In en, this message translates to:
+  /// **'quotes to approve'**
+  String get quotesToApprove;
+
+  /// Empty state completed jobs category name
+  ///
+  /// In en, this message translates to:
+  /// **'completed jobs'**
+  String get completedJobs;
+
+  /// Empty state for jobs in specific category
+  ///
+  /// In en, this message translates to:
+  /// **'No {category}'**
+  String noJobsInCategory(String category);
+
+  /// Job details title
+  ///
+  /// In en, this message translates to:
+  /// **'Job Details'**
+  String get jobDetails;
+
+  /// Job status title
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get jobStatus;
+
+  /// Job timeline title
+  ///
+  /// In en, this message translates to:
+  /// **'Timeline'**
+  String get jobTimeline;
+
+  /// Cancelled job status
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get jobCancelled;
+
+  /// Completed job status
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get jobCompletedStatus;
+
+  /// Awaiting quotes status
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting Quotes'**
+  String get awaitingQuotes;
+
+  /// Quotes available status
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes Available'**
+  String get quotesAvailable;
+
+  /// Pending quote status
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Quote'**
+  String get pendingQuote;
+
+  /// Lowest quote price prefix
+  ///
+  /// In en, this message translates to:
+  /// **'From \${price}'**
+  String fromPrice(String price);
+
+  /// Quotes count badge
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Quote(s)'**
+  String quotesCount(int count);
+
+  /// Cancel request button label
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Request'**
+  String get cancelRequest;
+
+  /// Confirmation message for cancelling request
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this request?'**
+  String get cancelRequestConfirm;
+
+  /// Accept quote button
+  ///
+  /// In en, this message translates to:
+  /// **'Accept Quote'**
+  String get acceptQuote;
+
+  /// Decline quote button
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get declineQuote;
+
+  /// Contact provider button
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Provider'**
+  String get contactProvider;
+
+  /// Search tab title
+  ///
+  /// In en, this message translates to:
+  /// **'Service Locator'**
+  String get serviceLocator;
+
+  /// Search service type header
+  ///
+  /// In en, this message translates to:
+  /// **'SERVICE TYPE'**
+  String get serviceType;
+
+  /// Service type search placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Search service type (e.g. Plumbing, Cleaning)'**
+  String get serviceTypePlaceholder;
+
+  /// Search location header
+  ///
+  /// In en, this message translates to:
+  /// **'LOCATION'**
+  String get locationLabel;
+
+  /// Location search placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Search location or area (e.g. Downtown)'**
+  String get locationPlaceholder;
+
+  /// Near me button
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get nearMe;
+
+  /// All category filter
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get categoryAll;
+
+  /// Book provider button
+  ///
+  /// In en, this message translates to:
+  /// **'Book Provider'**
+  String get bookProvider;
+
+  /// Toast when contacting provider
+  ///
+  /// In en, this message translates to:
+  /// **'Contacting {name}...'**
+  String contactingProvider(String name);
+
+  /// Provider available status
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get available;
+
+  /// Provider busy status
+  ///
+  /// In en, this message translates to:
+  /// **'Busy'**
+  String get busy;
+
+  /// Reviews count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reviews'**
+  String reviews(int count);
+
+  /// Filter all chip
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// Filter unread chip
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get filterUnread;
+
+  /// Filter jobs chip
+  ///
+  /// In en, this message translates to:
+  /// **'Jobs'**
+  String get filterJobs;
+
+  /// Filter offers chip
+  ///
+  /// In en, this message translates to:
+  /// **'Offers'**
+  String get filterOffers;
+
+  /// Filter rewards chip
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards'**
+  String get filterRewards;
+
+  /// Filter updates chip
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get filterUpdates;
+
+  /// Mark all as read action
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get markAllAsRead;
+
+  /// Toast when notification is dismissed
+  ///
+  /// In en, this message translates to:
+  /// **'Notification removed'**
+  String get notificationRemoved;
+
+  /// Try again button
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get tryAgain;
+
+  /// Empty state for notifications in selected category
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications in this category'**
+  String get noNotificationsCategory;
+
+  /// Sign out button label
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Out'**
+  String get signOut;
+
+  /// Sign out dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Out'**
+  String get signOutConfirmTitle;
+
+  /// Sign out dialog message
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out of your account?'**
+  String get signOutConfirmMessage;
+
+  /// Manage profile tile title
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Profile'**
+  String get manageProfile;
+
+  /// Manage profile tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Name, Email, Phone, Gender'**
+  String get manageProfileSubtitle;
+
+  /// Payment methods tile title
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Methods'**
+  String get paymentMethods;
+
+  /// Empty cards state label
+  ///
+  /// In en, this message translates to:
+  /// **'No cards saved'**
+  String get noCardsSaved;
+
+  /// Card summary description
+  ///
+  /// In en, this message translates to:
+  /// **'{brand} ending {digits}'**
+  String cardEnding(String brand, String digits);
+
+  /// Rewards and wallet tile title
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards & Wallet'**
+  String get rewardsAndWallet;
+
+  /// Rewards and wallet tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts • \${balance} balance'**
+  String rewardsSubtitle(int points, String balance);
+
+  /// Help and support tile title
+  ///
+  /// In en, this message translates to:
+  /// **'Help & 24/7 Support'**
+  String get helpAndSupport;
+
+  /// Help and support tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency hotline, FAQ, Live Chat'**
+  String get helpAndSupportSubtitle;
+
+  /// Settings and security tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Language, Password, 2FA & Security'**
+  String get settingsSecuritySubtitle;
+
+  /// Add new payment card title
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Card'**
+  String get addNewCard;
+
+  /// Card number field label
+  ///
+  /// In en, this message translates to:
+  /// **'Card Number'**
+  String get cardNumber;
+
+  /// Expiry date field label
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry Date'**
+  String get expiryDate;
+
+  /// CVV security code field label
+  ///
+  /// In en, this message translates to:
+  /// **'CVV'**
+  String get cvv;
+
+  /// Cardholder name field label
+  ///
+  /// In en, this message translates to:
+  /// **'Cardholder Name'**
+  String get cardholderName;
+
+  /// Emergency hotline title
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Hotline'**
+  String get emergencyHotline;
+
+  /// FAQ title
+  ///
+  /// In en, this message translates to:
+  /// **'Frequently Asked Questions'**
+  String get faq;
+
+  /// Live chat title
+  ///
+  /// In en, this message translates to:
+  /// **'Live Chat Support'**
+  String get liveChat;
+
+  /// Referral code title
+  ///
+  /// In en, this message translates to:
+  /// **'Referral Code'**
+  String get referralCode;
+
+  /// Share referral action
+  ///
+  /// In en, this message translates to:
+  /// **'Share with Friends'**
+  String get shareReferral;
+
+  /// Book service modal title
+  ///
+  /// In en, this message translates to:
+  /// **'Book Service'**
+  String get bookServiceTitle;
+
+  /// Select date and time label
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date & Time'**
+  String get selectDateTime;
+
+  /// Service address label
+  ///
+  /// In en, this message translates to:
+  /// **'Service Address'**
+  String get serviceAddress;
+
+  /// Payment method label
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get paymentMethod;
+
+  /// Cash payment option
+  ///
+  /// In en, this message translates to:
+  /// **'Cash on Service'**
+  String get cashOnService;
+
+  /// Card payment option
+  ///
+  /// In en, this message translates to:
+  /// **'Credit / Debit Card'**
+  String get creditDebitCard;
+
+  /// Job description label
+  ///
+  /// In en, this message translates to:
+  /// **'Job Description & Notes'**
+  String get notesDescription;
+
+  /// Job description placeholder
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the problem or any special requirements...'**
+  String get notesPlaceholder;
+
+  /// Confirm booking button
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Booking'**
+  String get confirmBooking;
+
+  /// Toast message after booking request is sent
+  ///
+  /// In en, this message translates to:
+  /// **'Booking request sent successfully!'**
+  String get bookingSuccess;
+
+  /// Alerts tab header title
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts & Notifications'**
+  String get alertsAndNotifications;
+
+  /// Alerts tab header subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Stay updated on your ongoing bookings and offers'**
+  String get alertsSubtitle;
+
+  /// Empty state subtitle in alerts tab
+  ///
+  /// In en, this message translates to:
+  /// **'You are all caught up! When updates or offers arrive, you will see them here.'**
+  String get allCaughtUp;
+
+  /// Refresh feed button
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Feed'**
+  String get refreshFeed;
+
+  /// Failed to load notifications error message
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load notifications'**
+  String get failedToLoadNotifications;
+
+  /// Profile member since label
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {year}'**
+  String memberSince(String year);
+
+  /// Sign out tile subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Log out of customer app account'**
+  String get signOutSubtitle;
 }
 
 class _AppLocalizationsDelegate

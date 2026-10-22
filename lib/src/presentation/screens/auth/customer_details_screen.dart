@@ -16,6 +16,7 @@ import 'package:customer_app/src/presentation/screens/auth/widgets/auth_back_but
 import 'package:customer_app/src/presentation/screens/auth/widgets/auth_header_banner.dart';
 import 'package:customer_app/src/presentation/screens/auth/widgets/auth_primary_button.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 enum Gender { male, female }
 
@@ -172,7 +173,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 SizedBox(height: 16.h),
                 ListTile(
                   leading: const Icon(Icons.camera_alt_rounded),
-                  title: const Text('Take Photo'),
+                  title: Text(context.loc.takePhoto),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     _pickProfileImage(ImageSource.camera);
@@ -180,7 +181,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_rounded),
-                  title: const Text('Choose from Gallery'),
+                  title: Text(context.loc.chooseFromGallery),
                   onTap: () {
                     Navigator.of(sheetContext).pop();
                     _pickProfileImage(ImageSource.gallery);
@@ -228,7 +229,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
               state.operation == AuthOperation.completeProfile),
       listener: (context, state) {
         if (state is AuthProfileCompleted) {
-          DynamicIslandToast.showSuccess(context, 'Profile completed!');
+          DynamicIslandToast.showSuccess(context, context.loc.profileCompleted);
           Navigator.of(context).pushReplacement(
             CupertinoPageRoute(builder: (_) => const AddPropertiesScreen()),
           );
@@ -317,7 +318,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
                                     child: FadeTransition(
                                       opacity: _contentFadeAnimation,
                                       child: AuthPrimaryButton(
-                                        label: 'Complete Profile',
+                                        label: context.loc.completeProfileTitle,
                                         onPressed: _handleSubmit,
                                         enabled: _formValid,
                                         loading: submitting,
@@ -387,7 +388,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
       children: [
         SizedBox(height: 4.h),
         Text(
-          'Complete Profile',
+          context.loc.completeProfileTitle,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 30.sp,
             fontWeight: FontWeight.w800,
@@ -398,7 +399,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         ),
         SizedBox(height: 8.h),
         Text(
-          'Set up your customer profile to continue.',
+          context.loc.completeProfileSubtitle,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14.5.sp,
             fontWeight: FontWeight.w500,
@@ -413,7 +414,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
           children: [
             Expanded(
               child: _buildTextField(
-                label: 'First Name',
+                label: context.loc.firstName,
                 controller: _firstNameController,
                 focusNode: _firstNameFocus,
                 nextFocus: _lastNameFocus,
@@ -424,7 +425,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
             SizedBox(width: 14.w),
             Expanded(
               child: _buildTextField(
-                label: 'Last Name',
+                label: context.loc.lastName,
                 controller: _lastNameController,
                 focusNode: _lastNameFocus,
                 nextFocus: _emailFocus,
@@ -436,7 +437,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         ),
         SizedBox(height: 16.h),
         _buildTextField(
-          label: 'Email Address',
+          label: context.loc.emailAddress,
           controller: _emailController,
           focusNode: _emailFocus,
           keyboardType: TextInputType.emailAddress,
@@ -444,7 +445,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         ),
         SizedBox(height: 20.h),
         Text(
-          'Gender',
+          context.loc.gender,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.5.sp,
             fontWeight: FontWeight.w700,
@@ -579,7 +580,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         Expanded(
           child: _buildGenderCard(
             gender: Gender.male,
-            title: 'Male',
+            title: context.loc.male,
             icon: Icons.male_rounded,
           ),
         ),
@@ -587,7 +588,7 @@ class _CustomerDetailsScreenState extends State<CustomerDetailsScreen>
         Expanded(
           child: _buildGenderCard(
             gender: Gender.female,
-            title: 'Female',
+            title: context.loc.female,
             icon: Icons.female_rounded,
           ),
         ),

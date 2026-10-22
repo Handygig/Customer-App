@@ -25,6 +25,7 @@ import 'package:customer_app/src/domain/entities/properties/property_entity.dart
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onAddPropertyTap;
@@ -258,8 +259,8 @@ class _HomeTabState extends State<HomeTab> {
                             ? snapshot.data!.fullName.trim()
                             : '');
                     final greeting = displayName.isNotEmpty
-                        ? 'Good Morning, $displayName'
-                        : 'Good Morning';
+                        ? context.loc.goodMorningUser(displayName)
+                        : context.loc.goodMorning;
                     final initial = displayName.isNotEmpty
                         ? displayName[0].toUpperCase()
                         : 'U';
@@ -393,7 +394,7 @@ class _HomeTabState extends State<HomeTab> {
                   SizedBox(width: 10.w),
                   Expanded(
                     child: Text(
-                      'Search for cleaning, repairs, plumbing...',
+                      context.loc.homeSearchPlaceholder,
                       style: GoogleFonts.plusJakartaSans(
                         color: AppColors.mutedTextColor(context),
                         fontSize: 13.sp,
@@ -450,7 +451,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    'Added Properties',
+                    context.loc.addedProperties,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
@@ -478,7 +479,7 @@ class _HomeTabState extends State<HomeTab> {
                   );
                 },
                 child: Text(
-                  'Manage',
+                  context.loc.manage,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -535,7 +536,7 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                     SizedBox(height: 10.h),
                     Text(
-                      'No properties added yet',
+                      context.loc.noPropertiesAdded,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
@@ -544,7 +545,7 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      'Tap to register your first property',
+                      context.loc.tapToRegisterFirstProperty,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.sp,
                         color: AppColors.mutedTextColor(context),
@@ -934,7 +935,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    'Ongoing Jobs',
+                    context.loc.ongoingJobs,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
@@ -952,7 +953,7 @@ class _HomeTabState extends State<HomeTab> {
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                     child: Text(
-                      '${ongoingJobs.length} Active',
+                      context.loc.activeCount(ongoingJobs.length),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w700,
@@ -968,7 +969,7 @@ class _HomeTabState extends State<HomeTab> {
                   widget.onNavigateTab?.call(1); // Jobs tab
                 },
                 child: Text(
-                  'View All',
+                  context.loc.viewAll,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -998,7 +999,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(height: 10.h),
                   Text(
-                    'No Ongoing Jobs',
+                    context.loc.noOngoingJobs,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w700,
@@ -1007,7 +1008,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'Active assignments in progress will show up here.',
+                    context.loc.noOngoingJobsSubtitle,
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.sp,
@@ -1258,7 +1259,7 @@ class _HomeTabState extends State<HomeTab> {
                     ],
                   ),
                   child: Text(
-                    'Track',
+                    context.loc.trackService,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12.5.sp,
                       fontWeight: FontWeight.w800,
@@ -1276,7 +1277,7 @@ class _HomeTabState extends State<HomeTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Service Progress',
+                context.loc.serviceProgress,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -1396,7 +1397,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    'Exclusive Offers & Discounts',
+                    context.loc.exclusiveOffers,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
@@ -1650,7 +1651,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   SizedBox(width: 8.w),
                   Text(
-                    'Explore Services',
+                    context.loc.exploreServices,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
@@ -1669,7 +1670,7 @@ class _HomeTabState extends State<HomeTab> {
                   );
                 },
                 child: Text(
-                  'Explore All',
+                  context.loc.exploreAll,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
