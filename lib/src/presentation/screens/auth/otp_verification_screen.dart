@@ -7,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_event.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_state.dart';
@@ -178,7 +179,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           _startResendTimer();
           DynamicIslandToast.showSuccess(
             context,
-            'A new verification code was sent.',
+            context.loc.codeSentSuccess,
           );
           return;
         }
@@ -245,7 +246,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                               children: [
                                 SizedBox(height: 16.h),
                                 Text(
-                                  'Verification Code',
+                                  context.loc.verificationTitle,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 30.sp,
                                     fontWeight: FontWeight.w800,
@@ -260,8 +261,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     Expanded(
                                       child: Text.rich(
                                         TextSpan(
-                                          text:
-                                              'Enter the 6-digit code sent to ',
+                                          text: context.loc.verificationSubtitle,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 14.sp,
                                             fontWeight: FontWeight.w500,
@@ -298,7 +298,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                           ),
                                         ),
                                         child: Text(
-                                          'Edit',
+                                          context.loc.edit,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 12.5.sp,
                                             fontWeight: FontWeight.w700,
@@ -333,8 +333,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                             ),
                                             child: Text(
                                               resending
-                                                  ? 'Sending new code...'
-                                                  : 'Didn\'t receive code? Resend Code',
+                                                  ? context.loc.loading
+                                                  : '${context.loc.didNotReceiveCode}${context.loc.resendCode}',
                                               style:
                                                   GoogleFonts.plusJakartaSans(
                                                     fontSize: 13.5.sp,
@@ -345,7 +345,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                           ),
                                         )
                                       : Text(
-                                          'Resend code in 00:${_resendCountdown.toString().padLeft(2, '0')}',
+                                          context.loc.resendCodeIn(
+                                            _resendCountdown,
+                                          ),
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 13.5.sp,
                                             fontWeight: FontWeight.w600,
@@ -360,7 +362,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     top: 16.h,
                                   ),
                                   child: AuthPrimaryButton(
-                                    label: 'Verify & Continue',
+                                    label: context.loc.verifyAndContinue,
                                     onPressed: _verifyOtp,
                                     enabled: _isComplete,
                                     loading: verifying,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/presentation/screens/auth/add_properties_screen.dart';
 import 'package:customer_app/src/presentation/tabs/home_tab.dart';
 import 'package:customer_app/src/presentation/tabs/jobs_tab.dart';
@@ -120,12 +121,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           children: [
                             _buildNavItem(
                               index: 0,
-                              label: 'Home',
+                              label: context.loc.tabHome,
                               icon: Icons.home_rounded,
                             ),
                             _buildNavItem(
                               index: 1,
-                              label: 'Jobs',
+                              label: context.loc.tabJobs,
                               icon: Icons.grid_view_rounded,
                             ),
                           ],
@@ -142,12 +143,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                           children: [
                             _buildNavItem(
                               index: 3,
-                              label: 'Alerts',
+                              label: context.loc.tabAlerts,
                               icon: Icons.notifications_rounded,
                             ),
                             _buildNavItem(
                               index: 4,
-                              label: 'Profile',
+                              label: context.loc.tabProfile,
                               icon: Icons.person_rounded,
                             ),
                           ],

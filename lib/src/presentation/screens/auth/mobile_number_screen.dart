@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/data/models/auth/country_code_model.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_event.dart';
@@ -166,7 +167,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                               children: [
                                 SizedBox(height: 16.h),
                                 Text(
-                                  'Enter your\nMobile Number',
+                                  context.loc.enterMobileNumberTitle,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 30.sp,
                                     fontWeight: FontWeight.w800,
@@ -177,7 +178,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                 ),
                                 SizedBox(height: 10.h),
                                 Text(
-                                  'We will send you a 6-digit verification code to confirm your number.',
+                                  context.loc.enterMobileNumberSubtitle,
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14.5.sp,
                                     fontWeight: FontWeight.w500,
@@ -198,7 +199,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                     ),
                                     SizedBox(width: 6.w),
                                     Text(
-                                      'Your info is safe and secured with us',
+                                      context.loc.securityNotice,
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 12.5.sp,
                                         fontWeight: FontWeight.w500,
@@ -212,8 +213,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                   padding: EdgeInsets.symmetric(vertical: 12.h),
                                   child: Text.rich(
                                     TextSpan(
-                                      text:
-                                          'By continuing, you agree to JobHive\'s ',
+                                      text: context.loc.termsNoticePrefix,
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 12.sp,
                                         fontWeight: FontWeight.w500,
@@ -221,7 +221,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                       ),
                                       children: [
                                         TextSpan(
-                                          text: 'Terms of Service',
+                                          text: context.loc.termsOfService,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.primary,
@@ -229,9 +229,9 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                                 TextDecoration.underline,
                                           ),
                                         ),
-                                        const TextSpan(text: ' & '),
+                                        TextSpan(text: context.loc.andText),
                                         TextSpan(
-                                          text: 'Privacy Policy',
+                                          text: context.loc.privacyPolicy,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontWeight: FontWeight.w700,
                                             color: AppColors.primary,
@@ -250,7 +250,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                                     top: 4.h,
                                   ),
                                   child: AuthPrimaryButton(
-                                    label: 'Send Code',
+                                    label: context.loc.sendCode,
                                     onPressed: _handleSendCode,
                                     enabled: _isValidNumber,
                                     loading: sending,
