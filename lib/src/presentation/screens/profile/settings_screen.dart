@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
@@ -29,7 +30,7 @@ class SettingsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Settings & Security',
+          context.loc.settingsAndSecurity,
           style: GoogleFonts.plusJakartaSans(
             color: Colors.white,
             fontSize: 18.sp,
@@ -52,14 +53,14 @@ class SettingsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Section Header - Account Security
-                _buildSectionHeader('ACCOUNT SECURITY'),
+                _buildSectionHeader(context.loc.accountSecurity),
                 SizedBox(height: 12.h),
 
                 // Password Change Tile
                 _buildSettingTile(
                   icon: Icons.lock_outline_rounded,
-                  title: 'Change Password',
-                  subtitle: 'Update account password',
+                  title: context.loc.changePassword,
+                  subtitle: context.loc.changePasswordSubtitle,
                   onTap: () => _showChangePasswordModal(context, repository),
                 ),
 
@@ -88,7 +89,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'Two-Factor Authentication (2FA)',
+                        context.loc.twoFactorAuth,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w700,
@@ -97,8 +98,8 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       subtitle: Text(
                         profile.isTwoFactorEnabled
-                            ? 'SMS OTP Protection Enabled'
-                            : 'Extra layer of security for logins',
+                            ? context.loc.twoFactorEnabledSubtitle
+                            : context.loc.twoFactorDisabledSubtitle,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: profile.isTwoFactorEnabled
@@ -147,7 +148,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'Biometric Login (Face ID / Touch ID)',
+                        context.loc.biometricLogin,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w700,
@@ -155,7 +156,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        'Sign in quickly using biometrics',
+                        context.loc.biometricLoginSubtitle,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: AppColors.mutedTextColor(context),
@@ -176,7 +177,7 @@ class SettingsScreen extends StatelessWidget {
                 SizedBox(height: 24.h),
 
                 // Section Header - Preferences
-                _buildSectionHeader('PREFERENCES & APP'),
+                _buildSectionHeader(context.loc.preferencesAndApp),
                 SizedBox(height: 12.h),
 
                 // Language Selection Tile (3-way switch)
@@ -204,7 +205,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'App Language',
+                        context.loc.appLanguage,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w700,
@@ -286,7 +287,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'Dark Mode',
+                        context.loc.darkMode,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w700,
@@ -295,8 +296,8 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       subtitle: Text(
                         profile.isDarkMode
-                            ? 'Dark theme enabled'
-                            : 'Light theme enabled',
+                            ? context.loc.darkModeEnabled
+                            : context.loc.darkModeDisabled,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: AppColors.textMuted,
@@ -338,7 +339,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'Push Notifications',
+                        context.loc.pushNotifications,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.5.sp,
                           fontWeight: FontWeight.w700,
@@ -346,7 +347,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        'Service updates, job alerts, and receipts',
+                        context.loc.pushNotificationsSubtitle,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: AppColors.textMuted,

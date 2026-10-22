@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-
-class FallbackLocalizations {
-  // ignore: non_constant_identifier_names
-  String get no_internet_message => 'No Internet Connection';
-  String get unAuthorizedError => 'Unauthorized access. Please log in again.';
-}
+import 'package:customer_app/l10n/app_localizations.dart';
 
 extension LocalizedBuildContext on BuildContext {
-  FallbackLocalizations get loc => FallbackLocalizations();
+  AppLocalizations get loc =>
+      AppLocalizations.of(this) ?? lookupAppLocalizations(const Locale('en'));
 }

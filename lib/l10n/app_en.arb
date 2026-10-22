@@ -1,0 +1,328 @@
+{
+  "@@locale": "en",
+  "appTitle": "JobHive",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "noInternetMessage": "No Internet Connection",
+  "@noInternetMessage": {
+    "description": "Error message when device has no internet connection"
+  },
+  "no_internet_message": "No Internet Connection",
+  "@no_internet_message": {
+    "description": "Snake case fallback for internet message"
+  },
+  "unAuthorizedError": "Unauthorized access. Please log in again.",
+  "@unAuthorizedError": {
+    "description": "Error message when token is expired or unauthorized"
+  },
+  "continueText": "Continue",
+  "@continueText": {
+    "description": "Generic continue button label"
+  },
+  "getStarted": "Get Started",
+  "@getStarted": {
+    "description": "Get started button label on welcome screen"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Generic cancel button label"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save button label"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Generic delete button label"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Generic edit button label"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Generic confirm button label"
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Generic back button label"
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Generic done button label"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Generic retry button label"
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Generic loading state text"
+  },
+  "search": "Search",
+  "@search": {
+    "description": "Generic search text"
+  },
+  "seeAll": "See All",
+  "@seeAll": {
+    "description": "See all button label"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "OK dialog confirmation"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Generic error title"
+  },
+  "success": "Success",
+  "@success": {
+    "description": "Generic success title"
+  },
+
+  "onDemandHomeServices": "ON-DEMAND HOME SERVICES",
+  "@onDemandHomeServices": {
+    "description": "Pill tag on welcome screen"
+  },
+  "welcomeHeroTitle": "Expert Services,\nRight at Your Door",
+  "@welcomeHeroTitle": {
+    "description": "Hero title on welcome screen"
+  },
+  "welcomeHeroSubtitle": "Connect with certified plumbers, electricians, carpenters, and home repair experts in minutes.",
+  "@welcomeHeroSubtitle": {
+    "description": "Hero subtitle on welcome screen"
+  },
+  "fastArrival": "Fast Arrival",
+  "@fastArrival": {
+    "description": "Fast arrival feature badge"
+  },
+  "guaranteed": "Guaranteed",
+  "@guaranteed": {
+    "description": "Guaranteed feature badge"
+  },
+  "ratingBadge": "4.9/5 Rating",
+  "@ratingBadge": {
+    "description": "Rating feature badge"
+  },
+  "verifiedPros": "Verified Pros",
+  "@verifiedPros": {
+    "description": "Verified professionals badge"
+  },
+
+  "chooseLanguageTitle": "Choose your\nLanguage",
+  "@chooseLanguageTitle": {
+    "description": "Title on language selection screen"
+  },
+  "chooseLanguageSubtitle": "Select your preferred language to continue.",
+  "@chooseLanguageSubtitle": {
+    "description": "Subtitle on language selection screen"
+  },
+  "languageEnglish": "English",
+  "@languageEnglish": {
+    "description": "English language name"
+  },
+  "languageSinhala": "සිංහල",
+  "@languageSinhala": {
+    "description": "Sinhala language name"
+  },
+  "languageTamil": "தமிழ்",
+  "@languageTamil": {
+    "description": "Tamil language name"
+  },
+
+  "enterMobileNumberTitle": "Enter your\nMobile Number",
+  "@enterMobileNumberTitle": {
+    "description": "Title on mobile number input screen"
+  },
+  "enterMobileNumberSubtitle": "We will send you a 6-digit verification code to confirm your number.",
+  "@enterMobileNumberSubtitle": {
+    "description": "Subtitle on mobile number input screen"
+  },
+  "phoneInputPlaceholder": "Phone number",
+  "@phoneInputPlaceholder": {
+    "description": "Placeholder for phone number input"
+  },
+  "securityNotice": "Your info is safe and secured with us",
+  "@securityNotice": {
+    "description": "Security assurance notice"
+  },
+  "termsNoticePrefix": "By continuing, you agree to JobHive's ",
+  "@termsNoticePrefix": {
+    "description": "Terms notice prefix"
+  },
+  "termsOfService": "Terms of Service",
+  "@termsOfService": {
+    "description": "Terms of service link text"
+  },
+  "andText": " & ",
+  "@andText": {
+    "description": "Ampersand and text"
+  },
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Privacy policy link text"
+  },
+  "sendCode": "Send Code",
+  "@sendCode": {
+    "description": "Send code button label"
+  },
+
+  "verificationTitle": "Enter 6-digit\nVerification Code",
+  "@verificationTitle": {
+    "description": "Title on OTP verification screen"
+  },
+  "verificationSubtitle": "Enter the 6-digit code sent to ",
+  "@verificationSubtitle": {
+    "description": "Subtitle on OTP verification screen before phone number"
+  },
+  "didNotReceiveCode": "Didn't receive the code? ",
+  "@didNotReceiveCode": {
+    "description": "Text asking if code was received"
+  },
+  "resendCode": "Resend Code",
+  "@resendCode": {
+    "description": "Resend OTP button label"
+  },
+  "resendCodeIn": "Resend code in {seconds}s",
+  "@resendCodeIn": {
+    "description": "Countdown timer to resend code",
+    "placeholders": {
+      "seconds": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "verifyAndContinue": "Verify & Continue",
+  "@verifyAndContinue": {
+    "description": "Verify OTP and continue button"
+  },
+  "codeSentSuccess": "A new verification code was sent.",
+  "@codeSentSuccess": {
+    "description": "Notification when OTP resend succeeds"
+  },
+
+  "tabHome": "Home",
+  "@tabHome": {
+    "description": "Home tab label"
+  },
+  "tabJobs": "Jobs",
+  "@tabJobs": {
+    "description": "Jobs tab label"
+  },
+  "tabSearch": "Search",
+  "@tabSearch": {
+    "description": "Search tab label"
+  },
+  "tabAlerts": "Alerts",
+  "@tabAlerts": {
+    "description": "Alerts tab label"
+  },
+  "tabProfile": "Profile",
+  "@tabProfile": {
+    "description": "Profile tab label"
+  },
+
+  "settingsAndSecurity": "Settings & Security",
+  "@settingsAndSecurity": {
+    "description": "Settings screen title"
+  },
+  "accountSecurity": "ACCOUNT SECURITY",
+  "@accountSecurity": {
+    "description": "Account security section title"
+  },
+  "changePassword": "Change Password",
+  "@changePassword": {
+    "description": "Change password setting title"
+  },
+  "changePasswordSubtitle": "Update account password",
+  "@changePasswordSubtitle": {
+    "description": "Change password subtitle"
+  },
+  "twoFactorAuth": "Two-Factor Authentication (2FA)",
+  "@twoFactorAuth": {
+    "description": "2FA setting title"
+  },
+  "twoFactorEnabledSubtitle": "SMS OTP Protection Enabled",
+  "@twoFactorEnabledSubtitle": {
+    "description": "2FA enabled subtitle"
+  },
+  "twoFactorDisabledSubtitle": "Extra layer of security for logins",
+  "@twoFactorDisabledSubtitle": {
+    "description": "2FA disabled subtitle"
+  },
+  "biometricLogin": "Biometric Login (Face ID / Touch ID)",
+  "@biometricLogin": {
+    "description": "Biometric login setting title"
+  },
+  "biometricLoginSubtitle": "Sign in quickly using biometrics",
+  "@biometricLoginSubtitle": {
+    "description": "Biometric login subtitle"
+  },
+  "preferencesAndApp": "PREFERENCES & APP",
+  "@preferencesAndApp": {
+    "description": "Preferences section title"
+  },
+  "appLanguage": "App Language",
+  "@appLanguage": {
+    "description": "App language setting title"
+  },
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Dark mode setting title"
+  },
+  "darkModeEnabled": "Dark theme enabled",
+  "@darkModeEnabled": {
+    "description": "Dark mode enabled subtitle"
+  },
+  "darkModeDisabled": "Light theme enabled",
+  "@darkModeDisabled": {
+    "description": "Dark mode disabled subtitle"
+  },
+  "pushNotifications": "Push Notifications",
+  "@pushNotifications": {
+    "description": "Push notifications setting title"
+  },
+  "pushNotificationsSubtitle": "Service updates, job alerts, and receipts",
+  "@pushNotificationsSubtitle": {
+    "description": "Push notifications subtitle"
+  },
+  "logout": "Log Out",
+  "@logout": {
+    "description": "Log out button"
+  },
+
+  "bookService": "Book Service",
+  "@bookService": {
+    "description": "Book service button label"
+  },
+  "popularServices": "Popular Services",
+  "@popularServices": {
+    "description": "Popular services section title"
+  },
+  "allServices": "All Services",
+  "@allServices": {
+    "description": "All services header"
+  },
+  "myBookings": "My Bookings",
+  "@myBookings": {
+    "description": "My bookings header"
+  },
+  "activeJobs": "Active Jobs",
+  "@activeJobs": {
+    "description": "Active jobs section title"
+  },
+  "noJobsFound": "No jobs found",
+  "@noJobsFound": {
+    "description": "Empty state for jobs"
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications title"
+  },
+  "noNotifications": "No notifications yet",
+  "@noNotifications": {
+    "description": "Empty notifications state text"
+  }
+}

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/core/services/language_manager.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/data/models/language/language_model.dart';
 import 'package:customer_app/src/presentation/screens/auth/mobile_number_screen.dart';
 import 'package:customer_app/src/presentation/screens/language/widgets/language_option_card.dart';
@@ -253,7 +254,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
 
                                         // Title
                                         Text(
-                                          'Choose your\nLanguage',
+                                          context.loc.chooseLanguageTitle,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 32.sp,
                                             fontWeight: FontWeight.w800,
@@ -266,7 +267,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
 
                                         // Subtitle
                                         Text(
-                                          'Select your preferred language to continue.',
+                                          context.loc.chooseLanguageSubtitle,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 15.sp,
                                             fontWeight: FontWeight.w500,
@@ -360,7 +361,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Continue',
+              context.loc.continueText,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,

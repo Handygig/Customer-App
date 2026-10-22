@@ -9,6 +9,7 @@ import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/core/services/auth_manager.dart';
 import 'package:customer_app/core/services/language_manager.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/presentation/screens/language/language_selection_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -241,7 +242,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             ),
                             SizedBox(width: 5.w),
                             Text(
-                              'Verified Pros',
+                              context.loc.verifiedPros,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w700,
@@ -336,7 +337,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                             ),
                                           ),
                                           child: Text(
-                                            'ON-DEMAND HOME SERVICES',
+                                            context.loc.onDemandHomeServices,
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11.5.sp,
                                               fontWeight: FontWeight.w800,
@@ -349,7 +350,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                                         // Title
                                         Text(
-                                          'Expert Services,\nRight at Your Door',
+                                          context.loc.welcomeHeroTitle,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 29.sp,
                                             fontWeight: FontWeight.w800,
@@ -362,7 +363,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                                         // Subtitle
                                         Text(
-                                          'Connect with certified plumbers, electricians, carpenters, and home repair experts in minutes.',
+                                          context.loc.welcomeHeroSubtitle,
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 14.5.sp,
                                             fontWeight: FontWeight.w500,
@@ -377,17 +378,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                           children: [
                                             _buildFeatureBadge(
                                               icon: Icons.flash_on_rounded,
-                                              label: 'Fast Arrival',
+                                              label: context.loc.fastArrival,
                                             ),
                                             SizedBox(width: 8.w),
                                             _buildFeatureBadge(
                                               icon: Icons.shield_outlined,
-                                              label: 'Guaranteed',
+                                              label: context.loc.guaranteed,
                                             ),
                                             SizedBox(width: 8.w),
                                             _buildFeatureBadge(
                                               icon: Icons.star_rounded,
-                                              label: '4.9/5 Rating',
+                                              label: context.loc.ratingBadge,
                                             ),
                                           ],
                                         ),
@@ -469,7 +470,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Get Started',
+              context.loc.getStarted,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,

@@ -17,7 +17,7 @@ import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cu
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
 
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:customer_app/l10n/app_localizations.dart';
 import 'package:customer_app/core/services/auth_manager.dart';
 import 'package:customer_app/core/services/language_manager.dart';
 
@@ -85,16 +85,9 @@ class CustomerApp extends StatelessWidget {
                     darkTheme: AppTheme.darkTheme,
                     themeMode: mode,
                     locale: locale,
-                    supportedLocales: const [
-                      Locale('en'),
-                      Locale('si'),
-                      Locale('ta'),
-                    ],
-                    localizationsDelegates: const [
-                      GlobalMaterialLocalizations.delegate,
-                      GlobalWidgetsLocalizations.delegate,
-                      GlobalCupertinoLocalizations.delegate,
-                    ],
+                    supportedLocales: AppLocalizations.supportedLocales,
+                    localizationsDelegates:
+                        AppLocalizations.localizationsDelegates,
                     routerConfig: AppRouter.router,
                   );
                 },
