@@ -7,6 +7,8 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/domain/entities/profile/payment_card.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_card_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
@@ -260,9 +262,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   void _navigateToAddCard(BuildContext context) {
     HapticFeedback.lightImpact();
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => const AddCardScreen()));
+    context.push(AppRoutes.addCard);
   }
 
   Widget _buildEmptyCardsState(BuildContext context) {

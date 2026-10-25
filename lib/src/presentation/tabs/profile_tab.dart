@@ -152,12 +152,7 @@ class ProfileTab extends StatelessWidget {
                           ),
                           onPressed: () {
                             HapticFeedback.lightImpact();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    EditProfileScreen(profile: profile),
-                              ),
-                            );
+                            context.push(AppRoutes.editProfile, extra: profile);
                           },
                         ),
                       ),
@@ -271,12 +266,7 @@ class ProfileTab extends StatelessWidget {
                         subtitle: context.loc.manageProfileSubtitle,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  EditProfileScreen(profile: profile),
-                            ),
-                          );
+                          context.push(AppRoutes.editProfile, extra: profile);
                         },
                       ),
 
@@ -291,12 +281,7 @@ class ProfileTab extends StatelessWidget {
                             subtitle: context.loc.propertiesRegistered(propCount),
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PropertiesManagementScreen(),
-                                ),
-                              );
+                              context.push(AppRoutes.properties);
                             },
                           );
                         },
@@ -324,12 +309,7 @@ class ProfileTab extends StatelessWidget {
                             subtitle: subText,
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PaymentMethodsScreen(),
-                                ),
-                              );
+                              context.push(AppRoutes.paymentMethods);
                             },
                           );
                         },
@@ -345,12 +325,7 @@ class ProfileTab extends StatelessWidget {
                         ),
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const RewardsReferralScreen(),
-                            ),
-                          );
+                          context.push(AppRoutes.rewards);
                         },
                       ),
 
@@ -361,11 +336,7 @@ class ProfileTab extends StatelessWidget {
                         subtitle: context.loc.helpAndSupportSubtitle,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const HelpSupportScreen(),
-                            ),
-                          );
+                          context.push(AppRoutes.helpSupport);
                         },
                       ),
 
@@ -376,11 +347,7 @@ class ProfileTab extends StatelessWidget {
                         subtitle: context.loc.settingsSecuritySubtitle,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsScreen(),
-                            ),
-                          );
+                          context.push(AppRoutes.settings);
                         },
                       ),
 

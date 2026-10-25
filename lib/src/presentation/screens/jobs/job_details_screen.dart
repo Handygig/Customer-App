@@ -14,6 +14,8 @@ import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/domain/entities/job_requests/job_assignment_entity.dart';
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
@@ -1602,14 +1604,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () {
                       HapticFeedback.lightImpact();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            providerName: providerName,
-                            serviceTitle: service,
-                            jobId: jobId,
-                          ),
-                        ),
+                      context.push(
+                        AppRoutes.chat,
+                        extra: {
+                          'providerName': providerName,
+                          'serviceTitle': service,
+                          'jobId': jobId,
+                        },
                       );
                     },
                     icon: Icon(Icons.chat_bubble_outline_rounded, size: 16.r),
@@ -2318,14 +2319,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               child: OutlinedButton.icon(
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(
-                        providerName: providerName,
-                        serviceTitle: service,
-                        jobId: jobId,
-                      ),
-                    ),
+                  context.push(
+                    AppRoutes.chat,
+                    extra: {
+                      'providerName': providerName,
+                      'serviceTitle': service,
+                      'jobId': jobId,
+                    },
                   );
                 },
                 icon: Icon(Icons.chat_bubble_outline_rounded, size: 18.r),
@@ -3813,13 +3813,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                               ElevatedButton(
                                 onPressed: () {
                                   Navigator.pop(bottomSheetContext);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const PaymentMethodsScreen(),
-                                    ),
-                                  );
+                                  context.push(AppRoutes.paymentMethods);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryDark,

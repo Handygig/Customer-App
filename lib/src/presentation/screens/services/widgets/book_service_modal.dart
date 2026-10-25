@@ -15,8 +15,8 @@ import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
-import 'package:customer_app/src/presentation/screens/profile/add_card_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class BookServiceModal extends StatefulWidget {
@@ -410,10 +410,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
 
   Future<void> _navigateToAddCard() async {
     HapticFeedback.lightImpact();
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddCardScreen()),
-    );
+    await context.push(AppRoutes.addCard);
     if (!mounted) return;
     final cardCubit = context.read<CardCubit>();
     await cardCubit.loadCards(silent: true);
@@ -430,10 +427,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
 
   Future<void> _navigateToAddProperty() async {
     HapticFeedback.lightImpact();
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddNewPropertyScreen()),
-    );
+    await context.push(AppRoutes.addNewProperty);
     if (!mounted) return;
     final propCubit = context.read<PropertyCubit>();
     await propCubit.loadProperties(forceRefresh: true);

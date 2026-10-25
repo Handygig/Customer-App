@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/domain/entities/notifications/notification_entity.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
@@ -74,14 +76,10 @@ class _AlertsTabState extends State<AlertsTab> {
         widget.onNavigateTab?.call(1); // Go to Jobs tab
         break;
       case 'reward':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const RewardsReferralScreen()),
-        );
+        context.push(AppRoutes.rewards);
         break;
       case 'account':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PropertiesManagementScreen()),
-        );
+        context.push(AppRoutes.properties);
         break;
       default:
         break;

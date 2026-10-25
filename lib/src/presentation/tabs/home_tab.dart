@@ -22,6 +22,8 @@ import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.da
 import 'package:customer_app/src/domain/repositories/offers/offer_repository.dart';
 import 'package:customer_app/src/data/repositories/offers/offer_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
@@ -472,11 +474,7 @@ class _HomeTabState extends State<HomeTab> {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const PropertiesManagementScreen(),
-                    ),
-                  );
+                  context.push(AppRoutes.properties);
                 },
                 child: Text(
                   context.loc.manage,
@@ -501,11 +499,7 @@ class _HomeTabState extends State<HomeTab> {
                 if (widget.onAddPropertyTap != null) {
                   widget.onAddPropertyTap!();
                 } else {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AddNewPropertyScreen(),
-                    ),
-                  );
+                  context.push(AppRoutes.addNewProperty);
                 }
               },
               child: Container(
@@ -1230,15 +1224,7 @@ class _HomeTabState extends State<HomeTab> {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => JobDetailsScreen(
-                        jobAssignment: job,
-                        assignmentId: job.id,
-                      ),
-                    ),
-                  );
+                  context.push(AppRoutes.jobDetails, extra: job);
                 },
                 child: Container(
                   padding: EdgeInsets.symmetric(
@@ -1663,11 +1649,7 @@ class _HomeTabState extends State<HomeTab> {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const AllServicesScreen(),
-                    ),
-                  );
+                  context.push(AppRoutes.allServices);
                 },
                 child: Text(
                   context.loc.exploreAll,
@@ -1748,12 +1730,7 @@ class _HomeTabState extends State<HomeTab> {
                   return GestureDetector(
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              AllServicesScreen(initialCategory: titleStr),
-                        ),
-                      );
+                      context.push(AppRoutes.allServices, extra: titleStr);
                     },
                     child: Container(
                       width: 110.w,
