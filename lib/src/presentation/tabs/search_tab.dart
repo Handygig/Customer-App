@@ -1,47 +1,25 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
-import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/core/utils/extensions.dart';
+import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
+import 'package:customer_app/src/domain/entities/providers/service_provider_entity.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
+import 'package:customer_app/src/presentation/cubits/providers/provider_search_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/providers/provider_search_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
-import 'package:customer_app/core/utils/extensions.dart';
-
-class ServiceProvider {
-  final String id;
-  final String name;
-  final String serviceType;
-  final String rating;
-  final int reviewsCount;
-  final String price;
-  final String distance;
-  final String address;
-  final String locationArea;
-  final double lat; // offset relative to map center (-1.0 to 1.0)
-  final double lng; // offset relative to map center (-1.0 to 1.0)
-  final bool isAvailable;
-  final IconData icon;
-
-  const ServiceProvider({
-    required this.id,
-    required this.name,
-    required this.serviceType,
-    required this.rating,
-    required this.reviewsCount,
-    required this.price,
-    required this.distance,
-    required this.address,
-    required this.locationArea,
-    required this.lat,
-    required this.lng,
-    required this.isAvailable,
-    required this.icon,
-  });
-}
+import 'package:customer_app/src/presentation/screens/services/widgets/book_service_modal.dart';
+import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class SearchTab extends StatefulWidget {
   final VoidCallback? onBackTap;
@@ -55,137 +33,322 @@ class SearchTab extends StatefulWidget {
 class _SearchTabState extends State<SearchTab> {
   final TextEditingController _serviceController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  final Geocoding _geocoding = Geocoding();
 
-  String _selectedCategory = 'All';
-  ServiceProvider? _selectedProvider;
+  GoogleMapController? _mapController;
+  Timer? _debounceTimer;
 
+  bool _myLocationEnabled = false;
+  bool _isLocating = false;
+  bool _initialLoadDone = false;
 
+  LatLng _centerLocation = ProviderSearchCubit.defaultLocation;
+  String _locationName = ProviderSearchCubit.defaultLocationName;
 
-  final List<ServiceProvider> _allProviders = const [
-    ServiceProvider(
-      id: 'p1',
-      name: 'Alex Rivera',
-      serviceType: 'Plumbing',
-      rating: '4.9',
-      reviewsCount: 142,
-      price: '\$45/hr',
-      distance: '0.8 km away',
-      address: '742 Evergreen Terrace, Downtown',
-      locationArea: 'Downtown',
-      lat: -0.10,
-      lng: -0.28,
-      isAvailable: true,
-      icon: Icons.plumbing_rounded,
-    ),
-    ServiceProvider(
-      id: 'p2',
-      name: 'CleanSpace Pro',
-      serviceType: 'Cleaning',
-      rating: '4.95',
-      reviewsCount: 310,
-      price: '\$55/hr',
-      distance: '1.2 km away',
-      address: '128 Pine Street, Midtown',
-      locationArea: 'Midtown',
-      lat: 0.20,
-      lng: -0.12,
-      isAvailable: true,
-      icon: Icons.cleaning_services_rounded,
-    ),
-    ServiceProvider(
-      id: 'p3',
-      name: 'VoltExpert Electrical',
-      serviceType: 'Electrical',
-      rating: '4.8',
-      reviewsCount: 98,
-      price: '\$60/hr',
-      distance: '2.4 km away',
-      address: '55 Oak Avenue, Westside',
-      locationArea: 'Westside',
-      lat: 0.08,
-      lng: 0.28,
-      isAvailable: false,
-      icon: Icons.electrical_services_rounded,
-    ),
-    ServiceProvider(
-      id: 'p4',
-      name: 'GreenThumb Landscaping',
-      serviceType: 'Gardening',
-      rating: '4.7',
-      reviewsCount: 84,
-      price: '\$40/hr',
-      distance: '3.1 km away',
-      address: '101 Birch Road, Eastside',
-      locationArea: 'Eastside',
-      lat: 0.35,
-      lng: 0.42,
-      isAvailable: true,
-      icon: Icons.yard_rounded,
-    ),
-    ServiceProvider(
-      id: 'p5',
-      name: 'ProCoat Painters',
-      serviceType: 'Painting',
-      rating: '4.85',
-      reviewsCount: 215,
-      price: '\$50/hr',
-      distance: '1.7 km away',
-      address: '304 Maple Drive, Downtown',
-      locationArea: 'Downtown',
-      lat: -0.05,
-      lng: 0.12,
-      isAvailable: true,
-      icon: Icons.format_paint_rounded,
-    ),
-    ServiceProvider(
-      id: 'p6',
-      name: 'CoolAir HVAC Solutions',
-      serviceType: 'HVAC',
-      rating: '4.9',
-      reviewsCount: 176,
-      price: '\$65/hr',
-      distance: '2.0 km away',
-      address: '88 Cedar Lane, Midtown',
-      locationArea: 'Midtown',
-      lat: -0.22,
-      lng: -0.45,
-      isAvailable: true,
-      icon: Icons.hvac_rounded,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _locationController.text = _locationName;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initUserLocationAndSearch();
+    });
+  }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _serviceController.dispose();
     _locationController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
-  List<ServiceProvider> get _filteredProviders {
-    final serviceQuery = _serviceController.text.trim().toLowerCase();
-    final locationQuery = _locationController.text.trim().toLowerCase();
+  /// Initial resolution of user location:
+  /// 1. Check default customer property from PropertyCubit.
+  /// 2. If none, check GPS position via Geolocator.
+  /// 3. Fallback to Colombo, Sri Lanka default.
+  Future<void> _initUserLocationAndSearch() async {
+    if (!mounted || _initialLoadDone) return;
+    _initialLoadDone = true;
 
-    return _allProviders.where((provider) {
-      final matchesCategory =
-          _selectedCategory == 'All' ||
-          provider.serviceType.toLowerCase() == _selectedCategory.toLowerCase();
+    final propCubit = context.read<PropertyCubit>();
+    final properties = propCubit.currentProperties;
+    PropertyEntity? defaultProperty;
+    if (properties.isNotEmpty) {
+      defaultProperty = properties.where((p) => p.isDefault).firstOrNull ??
+          properties.firstOrNull;
+    }
 
-      final matchesServiceQuery =
-          serviceQuery.isEmpty ||
-          provider.serviceType.toLowerCase().contains(serviceQuery) ||
-          provider.name.toLowerCase().contains(serviceQuery);
+    if (defaultProperty != null &&
+        defaultProperty.latitude != null &&
+        defaultProperty.longitude != null) {
+      final target = LatLng(
+        defaultProperty.latitude!,
+        defaultProperty.longitude!,
+      );
+      final label = defaultProperty.label.isNotEmpty
+          ? '${defaultProperty.label} (${defaultProperty.city})'
+          : defaultProperty.city;
+      _centerLocation = target;
+      _locationName = label;
+      _locationController.text = label;
+      _animateCameraTo(target);
 
-      final matchesLocationQuery =
-          locationQuery.isEmpty ||
-          provider.address.toLowerCase().contains(locationQuery) ||
-          provider.locationArea.toLowerCase().contains(locationQuery);
+      context.read<ProviderSearchCubit>().searchProviders(
+            location: target,
+            locationName: label,
+          );
+      return;
+    }
 
-      return matchesCategory && matchesServiceQuery && matchesLocationQuery;
-    }).toList();
+    // Try GPS
+    await _detectGpsLocation(initial: true);
   }
 
-  void _showProviderDetails(ServiceProvider provider) {
+  Future<void> _detectGpsLocation({bool initial = false}) async {
+    if (!mounted) return;
+    setState(() => _isLocating = true);
+
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      final allowed = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+
+      if (!mounted) return;
+      setState(() => _myLocationEnabled = allowed);
+
+      if (allowed) {
+        final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 8),
+        );
+
+        final target = LatLng(position.latitude, position.longitude);
+        _centerLocation = target;
+
+        // Reverse geocode to human-readable address
+        String address = 'Current Location';
+        try {
+          final placemarks = await _geocoding.placemarkFromCoordinates(
+            position.latitude,
+            position.longitude,
+          );
+          if (placemarks.isNotEmpty) {
+            final p = placemarks.first;
+            final parts = <String?>[
+              p.subLocality ?? p.locality,
+              p.administrativeArea,
+              p.country,
+            ].where((e) => e != null && e.trim().isNotEmpty).toList();
+            if (parts.isNotEmpty) {
+              address = parts.join(', ');
+            }
+          }
+        } catch (_) {}
+
+        if (!mounted) return;
+        _locationName = address;
+        _locationController.text = address;
+        _animateCameraTo(target);
+
+        context.read<ProviderSearchCubit>().searchProviders(
+              location: target,
+              locationName: address,
+              service: _serviceController.text,
+            );
+        return;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error retrieving current location: $e');
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+
+    // Fallback if initial and GPS not available
+    if (initial) {
+      context.read<ProviderSearchCubit>().searchProviders(
+            location: _centerLocation,
+            locationName: _locationName,
+          );
+    }
+  }
+
+  void _animateCameraTo(LatLng target, {double zoom = 14.5}) {
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: target, zoom: zoom),
+      ),
+    );
+  }
+
+  void _onServiceQueryChanged(String query) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      context.read<ProviderSearchCubit>().updateServiceQuery(query);
+    });
+  }
+
+  Future<void> _onLocationSubmitted(String query) async {
+    final text = query.trim();
+    if (text.isEmpty) return;
+
+    FocusScope.of(context).unfocus();
+    HapticFeedback.lightImpact();
+    setState(() => _isLocating = true);
+
+    try {
+      final locations = await _geocoding.locationFromAddress(text);
+      if (locations.isNotEmpty) {
+        final loc = locations.first;
+        final target = LatLng(loc.latitude, loc.longitude);
+        _centerLocation = target;
+        _locationName = text;
+        _animateCameraTo(target);
+
+        if (!mounted) return;
+        context.read<ProviderSearchCubit>().updateLocation(target, text);
+        return;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Geocoding failed for "$text": $e');
+      if (mounted) {
+        DynamicIslandToast.showError(
+          context,
+          'Could not find "$text". Using previous location.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLocating = false);
+    }
+
+    // Search by text anyway
+    if (mounted) {
+      context.read<ProviderSearchCubit>().searchProviders(locationName: text);
+    }
+  }
+
+  void _showSavedPropertiesModal() {
+    HapticFeedback.lightImpact();
+    final propCubit = context.read<PropertyCubit>();
+    final properties = propCubit.currentProperties;
+
+    if (properties.isEmpty) {
+      DynamicIslandToast.showWarning(
+        context,
+        'No saved properties found. Add a property in profile settings.',
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          margin: EdgeInsets.all(16.r),
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24.r),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 18,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Saved Property',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textHeadline,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              SizedBox(height: 10.h),
+              ...properties.map((prop) {
+                return ListTile(
+                  contentPadding: EdgeInsets.symmetric(vertical: 4.h),
+                  leading: Container(
+                    width: 40.r,
+                    height: 40.r,
+                    decoration: BoxDecoration(
+                      color: AppColors.cardSelectedBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.home_work_rounded,
+                      color: AppColors.primary,
+                      size: 20.r,
+                    ),
+                  ),
+                  title: Text(
+                    prop.label.isNotEmpty ? prop.label : prop.city,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textHeadline,
+                    ),
+                  ),
+                  subtitle: Text(
+                    prop.addressLine.isNotEmpty
+                        ? '${prop.addressLine}, ${prop.city}'
+                        : prop.city,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    if (prop.latitude != null && prop.longitude != null) {
+                      final target = LatLng(prop.latitude!, prop.longitude!);
+                      final label = prop.label.isNotEmpty
+                          ? '${prop.label} (${prop.city})'
+                          : prop.city;
+                      _centerLocation = target;
+                      _locationName = label;
+                      _locationController.text = label;
+                      _animateCameraTo(target);
+                      this.context.read<ProviderSearchCubit>().updateLocation(
+                            target,
+                            label,
+                          );
+                    } else {
+                      _onLocationSubmitted(prop.city);
+                    }
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showProviderDetails(ServiceProviderEntity provider) {
     HapticFeedback.mediumImpact();
+    context.read<ProviderSearchCubit>().selectProvider(provider);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -194,45 +357,228 @@ class _SearchTabState extends State<SearchTab> {
     );
   }
 
+  IconData _getIconForService(String serviceType) {
+    final lower = serviceType.toLowerCase();
+    if (lower.contains('plumb')) return Icons.plumbing_rounded;
+    if (lower.contains('clean')) return Icons.cleaning_services_rounded;
+    if (lower.contains('electr')) return Icons.electrical_services_rounded;
+    if (lower.contains('paint')) return Icons.format_paint_rounded;
+    if (lower.contains('garden') || lower.contains('land')) {
+      return Icons.yard_rounded;
+    }
+    if (lower.contains('hvac') || lower.contains('ac')) {
+      return Icons.hvac_rounded;
+    }
+    if (lower.contains('appliance')) return Icons.kitchen_rounded;
+    return Icons.handyman_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final providers = _filteredProviders;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // 1. Full-Screen Map Area (Base Layer)
-          Positioned.fill(child: _buildMapView(providers)),
+      body: BlocConsumer<ProviderSearchCubit, ProviderSearchState>(
+        listener: (context, state) {
+          if (state is ProviderSearchLoaded) {
+            _centerLocation = state.centerLocation;
+            if (_locationController.text.isEmpty) {
+              _locationController.text = state.locationName;
+            }
+          }
+        },
+        builder: (context, state) {
+          final providers = (state is ProviderSearchLoaded)
+              ? state.providers
+              : (state is ProviderSearchLoading
+                  ? state.previousProviders
+                  : const <ServiceProviderEntity>[]);
 
-          // 2. Floating Top Elements (Search Bar & Categories)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTopSearchHeaderBlock(),
-                _buildCategoryChipsBar(),
-              ],
-            ),
-          ),
-        ],
+          final selectedProvider = (state is ProviderSearchLoaded)
+              ? state.selectedProvider
+              : null;
+
+          final isLoading = state is ProviderSearchLoading;
+
+          return Stack(
+            children: [
+              // 1. Live Interactive Google Map with Provider Markers & Search Area Circle
+              Positioned.fill(
+                child: _buildGoogleMapView(state, providers, selectedProvider),
+              ),
+
+              // 2. Floating Top Elements: Search Header & Category Chips Bar
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildTopSearchHeaderBlock(isLoading),
+                    _buildCategoryChipsBar(state),
+                  ],
+                ),
+              ),
+
+              // 3. Floating Providers Count Badge
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 168.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _buildCountBadge(providers.length, isLoading),
+                ),
+              ),
+
+              // 4. Floating Action Buttons (GPS Re-center & Saved Properties)
+              Positioned(
+                right: 16.w,
+                bottom: 24.h,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildFloatingRoundButton(
+                      icon: Icons.bookmark_border_rounded,
+                      tooltip: 'Saved Properties',
+                      onTap: _showSavedPropertiesModal,
+                    ),
+                    SizedBox(height: 12.h),
+                    _buildFloatingRoundButton(
+                      icon: Icons.my_location_rounded,
+                      tooltip: 'Current Location',
+                      isLoading: _isLocating,
+                      onTap: () => _detectGpsLocation(),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 5. Selected Provider Floating Bottom Card
+              if (selectedProvider != null)
+                Positioned(
+                  left: 16.w,
+                  right: 80.w,
+                  bottom: 24.h,
+                  child: _buildSelectedProviderCard(selectedProvider),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
 
   // ---------------------------------------------------------------------------
-  // TOP SEARCH HEADER BLOCK (DESIGN INTEGRATED AT TOP WITH BRAND COLOURS)
+  // GOOGLE MAP VIEW WITH REAL PINS AND SEARCH AREA CIRCLE
   // ---------------------------------------------------------------------------
-  Widget _buildTopSearchHeaderBlock() {
+  Widget _buildGoogleMapView(
+    ProviderSearchState state,
+    List<ServiceProviderEntity> providers,
+    ServiceProviderEntity? selectedProvider,
+  ) {
+    final center = (state is ProviderSearchLoaded)
+        ? state.centerLocation
+        : _centerLocation;
+
+    final radius = (state is ProviderSearchLoaded)
+        ? state.searchRadius
+        : 30.0;
+
+    // Build Markers Set
+    final markers = <Marker>{};
+
+    // 1. Center Search Pin Marker
+    markers.add(
+      Marker(
+        markerId: const MarkerId('center_location_pin'),
+        position: center,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(
+          title: 'Search Center',
+          snippet: (state is ProviderSearchLoaded)
+              ? state.locationName
+              : _locationName,
+        ),
+      ),
+    );
+
+    // 2. Provider Markers
+    for (final provider in providers) {
+      if (provider.latitude == 0.0 && provider.longitude == 0.0) continue;
+
+      final isSelected = selectedProvider?.id == provider.id;
+      final markerHue = isSelected
+          ? BitmapDescriptor.hueOrange
+          : BitmapDescriptor.hueAzure;
+
+      markers.add(
+        Marker(
+          markerId: MarkerId('provider_${provider.id}'),
+          position: LatLng(provider.latitude, provider.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(markerHue),
+          infoWindow: InfoWindow(
+            title: provider.name,
+            snippet: '${provider.serviceType} • ${provider.price}',
+            onTap: () => _showProviderDetails(provider),
+          ),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            context.read<ProviderSearchCubit>().selectProvider(provider);
+            _animateCameraTo(
+              LatLng(provider.latitude, provider.longitude),
+              zoom: 15.5,
+            );
+          },
+        ),
+      );
+    }
+
+    // Search Area Circle (Visualized boundary of nearby search radius)
+    final circles = <Circle>{
+      Circle(
+        circleId: const CircleId('search_area_boundary'),
+        center: center,
+        radius: radius * 1000, // km to meters
+        fillColor: AppColors.primary.withValues(alpha: 0.08),
+        strokeColor: AppColors.primary.withValues(alpha: 0.4),
+        strokeWidth: 2,
+      ),
+    };
+
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: center,
+        zoom: 13.8,
+      ),
+      myLocationEnabled: _myLocationEnabled,
+      myLocationButtonEnabled: false,
+      zoomControlsEnabled: false,
+      compassEnabled: false,
+      mapToolbarEnabled: false,
+      markers: markers,
+      circles: circles,
+      onMapCreated: (controller) {
+        _mapController = controller;
+      },
+      onTap: (_) {
+        // Tapping map clears selected provider card
+        if (selectedProvider != null) {
+          context.read<ProviderSearchCubit>().selectProvider(null);
+        }
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // TOP DUAL-INPUT SEARCH BAR (SERVICE & LOCATION)
+  // ---------------------------------------------------------------------------
+  Widget _buildTopSearchHeaderBlock(bool isLoading) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16.w,
-        MediaQuery.of(context).padding.top + 10.h,
+        MediaQuery.of(context).padding.top + 8.h,
         16.w,
-        10.h,
+        8.h,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -253,11 +599,11 @@ class _SearchTabState extends State<SearchTab> {
                   width: 40.r,
                   height: 40.r,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withValues(alpha: 0.92),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -282,253 +628,230 @@ class _SearchTabState extends State<SearchTab> {
                     color: AppColors.textHeadline,
                     shadows: [
                       Shadow(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        blurRadius: 4,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        blurRadius: 6,
                       ),
                     ],
                   ),
                 ),
               ),
+              if (isLoading)
+                SizedBox(
+                  width: 18.r,
+                  height: 18.r,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
             ],
           ),
 
-          SizedBox(height: 16.h),
+          SizedBox(height: 12.h),
 
-          // Dual-Input Glassmorphic Card
+          // Dual-Input Glassmorphic Card (Service + Location)
           ClipRRect(
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(22.r),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(24.r),
+                  color: Colors.white.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(22.r),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: Colors.white.withValues(alpha: 0.9),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-                child: Stack(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+                    // Service Type Input Row
+                    Row(
                       children: [
-                        // Service Type Row (Pickup style)
-                        Row(
-                          children: [
-                            Transform.rotate(
-                              angle: -0.6,
-                              child: Icon(
-                                Icons.navigation_rounded,
-                                color: AppColors.primary,
-                                size: 20.r,
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    context.loc.serviceType,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 9.5.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textMuted,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 24.h,
-                                    child: TextField(
-                                      controller: _serviceController,
-                                      onChanged: (_) => setState(() {}),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13.5.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textHeadline,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            context.loc.serviceTypePlaceholder,
-                                        hintStyle: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12.5.sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textMuted.withValues(
-                                            alpha: 0.7,
-                                          ),
-                                        ),
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (_serviceController.text.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  _serviceController.clear();
-                                  setState(() {});
-                                },
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 18.r,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        // Divider Line
-                        Padding(
-                          padding: EdgeInsets.only(
-                            left: 32.w,
-                            top: 6.h,
-                            bottom: 6.h,
-                          ),
-                          child: Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: AppColors.borderUnselected,
+                        Transform.rotate(
+                          angle: -0.6,
+                          child: Icon(
+                            Icons.navigation_rounded,
+                            color: AppColors.primary,
+                            size: 20.r,
                           ),
                         ),
-
-                        // Location Row (Drop off style)
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_rounded,
-                              color: Colors.redAccent,
-                              size: 20.r,
-                            ),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    context.loc.locationLabel,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 9.5.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textMuted,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 24.h,
-                                    child: TextField(
-                                      controller: _locationController,
-                                      onChanged: (_) => setState(() {}),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13.5.sp,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.textHeadline,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            context.loc.locationPlaceholder,
-                                        hintStyle: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12.5.sp,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textMuted.withValues(
-                                            alpha: 0.7,
-                                          ),
-                                        ),
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (_locationController.text.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  _locationController.clear();
-                                  setState(() {});
-                                },
-                                child: Icon(
-                                  Icons.close_rounded,
-                                  size: 18.r,
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.loc.serviceType,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 9.5.sp,
+                                  fontWeight: FontWeight.w800,
                                   color: AppColors.textMuted,
+                                  letterSpacing: 0.5,
                                 ),
-                              )
-                            else
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  _locationController.text = 'Downtown';
-                                  setState(() {});
-                                },
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 4.h,
+                              ),
+                              SizedBox(
+                                height: 24.h,
+                                child: TextField(
+                                  controller: _serviceController,
+                                  onChanged: _onServiceQueryChanged,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textHeadline,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.cardSelectedBg,
-                                    borderRadius: BorderRadius.circular(8.r),
-                                    border: Border.all(
-                                      color: AppColors.borderUnselected,
+                                  decoration: InputDecoration(
+                                    hintText: context.loc.serviceTypePlaceholder,
+                                    hintStyle: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.5.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textMuted.withValues(alpha: 0.7),
                                     ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.my_location_rounded,
-                                        size: 12.r,
-                                        color: AppColors.primary,
-                                      ),
-                                      SizedBox(width: 4.w),
-                                      Text(
-                                        context.loc.nearMe,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 11.sp,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ],
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
                                   ),
                                 ),
                               ),
-                          ],
+                            ],
+                          ),
                         ),
+                        if (_serviceController.text.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              _serviceController.clear();
+                              _onServiceQueryChanged('');
+                              setState(() {});
+                            },
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 18.r,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
                       ],
                     ),
 
-                    // Dotted connecting line between icons
-                    Positioned(
-                      left: 9.w,
-                      top: 22.h,
-                      child: Column(
-                        children: List.generate(
-                          3,
-                          (index) => Container(
-                            width: 2.w,
-                            height: 3.h,
-                            margin: EdgeInsets.symmetric(vertical: 1.5.h),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade400,
-                              borderRadius: BorderRadius.circular(1.r),
-                            ),
+                    // Divider
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: 32.w,
+                        top: 6.h,
+                        bottom: 6.h,
+                      ),
+                      child: Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: AppColors.borderUnselected,
+                      ),
+                    ),
+
+                    // Location Input Row
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_rounded,
+                          color: Colors.redAccent,
+                          size: 20.r,
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.loc.locationLabel,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 9.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textMuted,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              SizedBox(
+                                height: 24.h,
+                                child: TextField(
+                                  controller: _locationController,
+                                  textInputAction: TextInputAction.search,
+                                  onSubmitted: _onLocationSubmitted,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textHeadline,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: context.loc.locationPlaceholder,
+                                    hintStyle: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.5.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textMuted.withValues(alpha: 0.7),
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
+                        if (_locationController.text.isNotEmpty)
+                          GestureDetector(
+                            onTap: () {
+                              _locationController.clear();
+                              setState(() {});
+                            },
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 18.r,
+                              color: AppColors.textMuted,
+                            ),
+                          )
+                        else
+                          GestureDetector(
+                            onTap: () => _detectGpsLocation(),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.cardSelectedBg,
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(
+                                  color: AppColors.borderUnselected,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.my_location_rounded,
+                                    size: 12.r,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    context.loc.nearMe,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
@@ -541,17 +864,21 @@ class _SearchTabState extends State<SearchTab> {
   }
 
   // ---------------------------------------------------------------------------
-  // CATEGORY CHIPS BAR WITH BRAND COLOR CONSISTENCY
+  // CATEGORY CHIPS BAR
   // ---------------------------------------------------------------------------
-  Widget _buildCategoryChipsBar() {
+  Widget _buildCategoryChipsBar(ProviderSearchState searchState) {
+    final selectedCategory = (searchState is ProviderSearchLoaded)
+        ? searchState.selectedCategory
+        : 'All';
+
     return Container(
       height: 48.h,
-      color: Colors.transparent, // Floating over map
+      color: Colors.transparent,
       child: BlocBuilder<ServiceCategoryCubit, ServiceCategoryState>(
-        builder: (context, state) {
-          final categories = (state is ServiceCategoryLoaded)
-              ? ['All', ...state.categories.where((c) => c.isActive).map((c) => c.name)]
-              : const ['All'];
+        builder: (context, catState) {
+          final categories = (catState is ServiceCategoryLoaded)
+              ? ['All', ...catState.categories.where((c) => c.isActive).map((c) => c.name)]
+              : const ['All', 'Cleaning', 'Plumbing', 'Electrical', 'Painting', 'Gardening'];
 
           return ListView.separated(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
@@ -560,13 +887,22 @@ class _SearchTabState extends State<SearchTab> {
             separatorBuilder: (_, _) => SizedBox(width: 8.w),
             itemBuilder: (context, index) {
               final category = categories[index];
-              final isSelected = _selectedCategory == category;
+              final isSelected = selectedCategory.toLowerCase() == category.toLowerCase();
+
               return GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  setState(() {
-                    _selectedCategory = category;
-                  });
+                  int? categoryId;
+                  if (category != 'All' && catState is ServiceCategoryLoaded) {
+                    final matched = catState.categories
+                        .where((c) => c.name.toLowerCase() == category.toLowerCase())
+                        .firstOrNull;
+                    categoryId = matched?.id;
+                  }
+                  context.read<ProviderSearchCubit>().updateCategory(
+                        category,
+                        categoryId: categoryId,
+                      );
                 },
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20.r),
@@ -581,18 +917,17 @@ class _SearchTabState extends State<SearchTab> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primary
-                            : Colors.white.withValues(alpha: 0.8),
+                            : Colors.white.withValues(alpha: 0.88),
                         borderRadius: BorderRadius.circular(20.r),
                         border: Border.all(
                           color: isSelected
                               ? AppColors.primary
-                              : Colors.white.withValues(alpha: 0.5),
+                              : Colors.white.withValues(alpha: 0.6),
                         ),
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color:
-                                      AppColors.primary.withValues(alpha: 0.4),
+                                  color: AppColors.primary.withValues(alpha: 0.35),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -600,66 +935,26 @@ class _SearchTabState extends State<SearchTab> {
                             : [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 8,
+                                  blurRadius: 6,
                                 ),
                               ],
                       ),
                       child: Row(
                         children: [
-                          if (category.toLowerCase().contains('plumb'))
+                          if (category != 'All') ...[
                             Icon(
-                              Icons.plumbing_rounded,
+                              _getIconForService(category),
                               size: 14.r,
-                              color:
-                                  isSelected ? Colors.white : AppColors.primary,
+                              color: isSelected ? Colors.white : AppColors.primary,
                             ),
-                          if (category.toLowerCase().contains('clean'))
-                            Icon(
-                              Icons.cleaning_services_rounded,
-                              size: 14.r,
-                              color:
-                                  isSelected ? Colors.white : AppColors.primary,
-                            ),
-                          if (category.toLowerCase().contains('electr'))
-                            Icon(
-                              Icons.electrical_services_rounded,
-                              size: 14.r,
-                              color:
-                                  isSelected ? Colors.white : AppColors.primary,
-                            ),
-                          if (category.toLowerCase().contains('paint'))
-                            Icon(
-                              Icons.format_paint_rounded,
-                              size: 14.r,
-                              color:
-                                  isSelected ? Colors.white : AppColors.primary,
-                            ),
-                          if (category.toLowerCase().contains('garden'))
-                            Icon(
-                              Icons.yard_rounded,
-                              size: 14.r,
-                              color:
-                                  isSelected ? Colors.white : AppColors.primary,
-                            ),
-                          if (category.toLowerCase().contains('hvac') ||
-                              category.toLowerCase().contains('ac'))
-                            Icon(
-                              Icons.hvac_rounded,
-                              size: 14.r,
-                              color:
-                                  isSelected ? Colors.white : AppColors.primary,
-                            ),
-                          if (category != 'All') SizedBox(width: 6.w),
+                            SizedBox(width: 6.w),
+                          ],
                           Text(
                             category == 'All' ? context.loc.categoryAll : category,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 12.sp,
-                              fontWeight: isSelected
-                                  ? FontWeight.w800
-                                  : FontWeight.w700,
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.textHeadline,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                              color: isSelected ? Colors.white : AppColors.textHeadline,
                             ),
                           ),
                         ],
@@ -676,314 +971,209 @@ class _SearchTabState extends State<SearchTab> {
   }
 
   // ---------------------------------------------------------------------------
-  // MAP VIEW WITH FULL CANVAS & INTERACTIVE PINS
+  // FLOATING COUNT BADGE
   // ---------------------------------------------------------------------------
-  Widget _buildMapView(List<ServiceProvider> providers) {
-    return Stack(
-      children: [
-        // 1. Live Google Map View
-        Positioned.fill(
-          child: GoogleMap(
-            initialCameraPosition: const CameraPosition(
-              target: LatLng(37.7749, -122.4194),
-              zoom: 14.2,
-            ),
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            compassEnabled: false,
-            mapToolbarEnabled: false,
+  Widget _buildCountBadge(int count, bool isLoading) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 7.h),
+      decoration: BoxDecoration(
+        color: AppColors.darkHeaderBg.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
-        ),
-
-        // 2. Interactive Provider Price Pins & Center Pin Marker
-        Positioned.fill(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final center = Offset(
-                constraints.maxWidth / 2,
-                constraints.maxHeight / 2 - 20.h,
-              );
-
-              return Stack(
-                children: [
-                  // Center Location Marker Pin
-                  Positioned(
-                    left: center.dx - 12.w,
-                    top: center.dy - 12.h,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 24.r,
-                          height: 24.r,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3.5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Container(
-                              width: 6.r,
-                              height: 6.r,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 2.w,
-                          height: 10.h,
-                          color: AppColors.primaryDark,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Provider Price Badges ($45/hr, $60/hr...)
-                  ...providers.map((provider) {
-                    final pinX =
-                        center.dx +
-                        (provider.lng * (constraints.maxWidth * 0.42));
-                    final pinY =
-                        center.dy +
-                        (provider.lat * (constraints.maxHeight * 0.38));
-                    final isSelected = _selectedProvider?.id == provider.id;
-
-                    return Positioned(
-                      left: pinX - 38.w,
-                      top: pinY - 18.h,
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedProvider = provider;
-                          });
-                          _showProviderDetails(provider);
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 10.w,
-                                vertical: 5.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(16.r),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppColors.primaryDark.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    provider.icon,
-                                    size: 14.r,
-                                    color: isSelected
-                                        ? Colors.white
-                                        : AppColors.primary,
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  Text(
-                                    provider.price,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11.5.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : AppColors.textHeadline,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_drop_down_rounded,
-                              size: 18.r,
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : Colors.white,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ],
-              );
-            },
-          ),
-        ),
-
-        // 3. Floating Count Badge: "6 service providers nearby"
-        Positioned(
-          top: 14.h,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: AppColors.darkHeaderBg,
-                borderRadius: BorderRadius.circular(20.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: Text(
-                '${providers.length} service provider${providers.length == 1 ? '' : 's'} nearby',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontSize: 12.5.sp,
-                  fontWeight: FontWeight.w700,
-                ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isLoading) ...[
+            SizedBox(
+              width: 12.r,
+              height: 12.r,
+              child: const CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(Colors.white),
               ),
             ),
-          ),
-        ),
-
-        // 4. Floating GPS Location Re-center Button (Bottom Right)
-        Positioned(
-          right: 16.w,
-          bottom: 24.h,
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _locationController.text = 'Current Location';
-              setState(() {});
-            },
-            child: Container(
-              width: 46.r,
-              height: 46.r,
-              decoration: BoxDecoration(
+            SizedBox(width: 8.w),
+            Text(
+              'Searching providers nearby...',
+              style: GoogleFonts.plusJakartaSans(
                 color: Colors.white,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ] else ...[
+            Container(
+              width: 8.r,
+              height: 8.r,
+              decoration: const BoxDecoration(
+                color: Color(0xFF4CAF50),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderUnselected),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.my_location_rounded,
-                  color: AppColors.primary,
-                  size: 22.r,
-                ),
               ),
             ),
-          ),
-        ),
-
-        // 5. Quick Selected Provider Floating Card at bottom left if a provider is selected
-        if (_selectedProvider != null)
-          Positioned(
-            left: 16.w,
-            right: 74.w,
-            bottom: 24.h,
-            child: GestureDetector(
-              onTap: () => _showProviderDetails(_selectedProvider!),
-              child: Container(
-                padding: EdgeInsets.all(12.r),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(18.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                  border: Border.all(color: AppColors.primary, width: 1.5),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42.r,
-                      height: 42.r,
-                      decoration: BoxDecoration(
-                        color: AppColors.cardSelectedBg,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Icon(
-                        _selectedProvider!.icon,
-                        color: AppColors.primary,
-                        size: 22.r,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _selectedProvider!.name,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textHeadline,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '${_selectedProvider!.price} • ${_selectedProvider!.distance}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+            SizedBox(width: 8.w),
+            Text(
+              '$count service provider${count == 1 ? '' : 's'} nearby',
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 
   // ---------------------------------------------------------------------------
-  // PROVIDER DETAILS MODAL BOTTOM SHEET
+  // FLOATING ROUND BUTTONS (GPS & PROPERTIES)
   // ---------------------------------------------------------------------------
-  Widget _buildProviderDetailSheet(ServiceProvider provider) {
+  Widget _buildFloatingRoundButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    bool isLoading = false,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 46.r,
+          height: 46.r,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.borderUnselected),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: isLoading
+                ? SizedBox(
+                    width: 18.r,
+                    height: 18.r,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                    ),
+                  )
+                : Icon(
+                    icon,
+                    color: AppColors.primary,
+                    size: 22.r,
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // SELECTED PROVIDER FLOATING QUICK CARD
+  // ---------------------------------------------------------------------------
+  Widget _buildSelectedProviderCard(ServiceProviderEntity provider) {
+    return GestureDetector(
+      onTap: () => _showProviderDetails(provider),
+      child: Container(
+        padding: EdgeInsets.all(12.r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: AppColors.primary, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44.r,
+              height: 44.r,
+              decoration: BoxDecoration(
+                color: AppColors.cardSelectedBg,
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                _getIconForService(provider.serviceType),
+                color: AppColors.primary,
+                size: 24.r,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    provider.name,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textHeadline,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 2.h),
+                  Row(
+                    children: [
+                      Text(
+                        provider.price,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      Text(
+                        ' • ${provider.distance}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.primary,
+              size: 22.r,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // FULL PROVIDER DETAILS MODAL BOTTOM SHEET
+  // ---------------------------------------------------------------------------
+  Widget _buildProviderDetailSheet(ServiceProviderEntity provider) {
     return Container(
       margin: EdgeInsets.only(left: 16.w, right: 16.w, bottom: 32.h),
       child: ClipRRect(
@@ -992,7 +1182,7 @@ class _SearchTabState extends State<SearchTab> {
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
+              color: Colors.white.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(32.r),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.8),
@@ -1000,7 +1190,7 @@ class _SearchTabState extends State<SearchTab> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withValues(alpha: 0.12),
                   blurRadius: 30,
                   offset: const Offset(0, 10),
                 ),
@@ -1017,12 +1207,12 @@ class _SearchTabState extends State<SearchTab> {
                     width: 48.w,
                     height: 5.h,
                     decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
+                      color: Colors.grey.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
                 ),
-                SizedBox(height: 24.h),
+                SizedBox(height: 20.h),
 
                 // Profile Section
                 Row(
@@ -1038,18 +1228,13 @@ class _SearchTabState extends State<SearchTab> {
                           color: AppColors.primary.withValues(alpha: 0.2),
                           width: 2,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
-                      child: Icon(
-                        provider.icon,
-                        color: AppColors.primary,
-                        size: 32.r,
+                      child: Center(
+                        child: Icon(
+                          _getIconForService(provider.serviceType),
+                          color: AppColors.primary,
+                          size: 30.r,
+                        ),
                       ),
                     ),
                     SizedBox(width: 16.w),
@@ -1057,13 +1242,41 @@ class _SearchTabState extends State<SearchTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            provider.name,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textHeadline,
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  provider.name,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textHeadline,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8.w,
+                                  vertical: 3.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: provider.isAvailable
+                                      ? const Color(0xFFE8F5E9)
+                                      : const Color(0xFFFFEBEE),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  provider.isAvailable ? 'Available' : 'Busy',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: provider.isAvailable
+                                        ? const Color(0xFF2E7D32)
+                                        : const Color(0xFFC62828),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           SizedBox(height: 4.h),
                           Text(
@@ -1107,7 +1320,21 @@ class _SearchTabState extends State<SearchTab> {
                   ],
                 ),
 
-                SizedBox(height: 24.h),
+                if (provider.bio != null && provider.bio!.isNotEmpty) ...[
+                  SizedBox(height: 14.h),
+                  Text(
+                    provider.bio!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+
+                SizedBox(height: 22.h),
 
                 // Rate and Action Row
                 Row(
@@ -1116,9 +1343,9 @@ class _SearchTabState extends State<SearchTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Rate',
+                          'Estimated Rate',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12.sp,
+                            fontSize: 11.5.sp,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textMuted,
                           ),
@@ -1148,10 +1375,14 @@ class _SearchTabState extends State<SearchTab> {
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            DynamicIslandToast.showSuccess(
-                              context,
-                              context.loc.contactingProvider(provider.name),
-                            );
+                            // Launch BookServiceModal with provider prefilled
+                            BookServiceModal.show(context, {
+                              'id': provider.id,
+                              'name': provider.serviceType,
+                              'provider_id': provider.id,
+                              'provider_name': provider.name,
+                              'price': provider.price,
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,

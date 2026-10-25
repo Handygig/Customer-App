@@ -29,6 +29,10 @@ class AppEndpoints {
       '/customer/service-categories/$categoryId/services';
   static String customerService(int id) => '/customer/services/$id';
 
+  // Provider Search & Locator endpoints
+  static const String customerProviderSearch = '/customer/providers/search';
+  static const String publicProviderSearch = '/providers/search';
+
   // Properties endpoints
   static const String customerProperties = '/customer/properties';
   static String customerProperty(int id) => '/customer/properties/$id';

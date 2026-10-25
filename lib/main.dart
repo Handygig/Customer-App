@@ -16,6 +16,7 @@ import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
+import 'package:customer_app/src/presentation/cubits/providers/provider_search_cubit.dart';
 
 import 'package:customer_app/l10n/app_localizations.dart';
 import 'package:customer_app/core/services/auth_manager.dart';
@@ -70,6 +71,9 @@ class CustomerApp extends StatelessWidget {
             ),
             BlocProvider<NotificationCubit>(
               create: (context) => sl<NotificationCubit>()..loadNotifications(),
+            ),
+            BlocProvider<ProviderSearchCubit>(
+              create: (context) => sl<ProviderSearchCubit>(),
             ),
           ],
           child: ValueListenableBuilder<Locale>(

@@ -61,6 +61,12 @@ import 'package:customer_app/src/data/repositories/notifications/notification_re
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
 import 'package:customer_app/src/domain/repositories/faq/faq_repository.dart';
 import 'package:customer_app/src/data/repositories/faq/faq_repository_impl.dart';
+import 'package:customer_app/src/data/data_sources/remote/providers/provider_remote_data_source.dart';
+import 'package:customer_app/src/data/data_sources/remote/providers/provider_remote_data_source_impl.dart';
+import 'package:customer_app/src/domain/repositories/providers/provider_repository.dart';
+import 'package:customer_app/src/data/repositories/providers/provider_repository_impl.dart';
+import 'package:customer_app/src/domain/usecases/providers/search_providers_usecase.dart';
+import 'package:customer_app/src/presentation/cubits/providers/provider_search_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -105,10 +111,19 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<JobAssignmentRemoteDataSource>(
     () => JobAssignmentRemoteDataSourceImpl(sl<Dio>()),
   );
+  sl.registerLazySingleton<ProviderRemoteDataSource>(
+    () => ProviderRemoteDataSourceImpl(sl<Dio>()),
+  );
 
   // Repositories
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(sl<AuthRemoteDataSource>(), sl<NetworkService>()),
+  );
+  sl.registerLazySingleton<ProviderRepository>(
+    () => ProviderRepositoryImpl(
+      sl<ProviderRemoteDataSource>(),
+      sl<NetworkService>(),
+    ),
   );
   sl.registerLazySingleton<ServiceCategoryRepository>(
     () => ServiceCategoryRepositoryImpl(
@@ -183,6 +198,9 @@ Future<void> initServiceLocator() async {
   );
   sl.registerLazySingleton<GetServicesUseCase>(
     () => GetServicesUseCase(sl<ServiceRepository>()),
+  );
+  sl.registerLazySingleton<SearchProvidersUseCase>(
+    () => SearchProvidersUseCase(sl<ProviderRepository>()),
   );
 
   // Properties Usecases
@@ -328,5 +346,8 @@ Future<void> initServiceLocator() async {
   );
   sl.registerFactory<NotificationCubit>(
     () => NotificationCubit(sl<NotificationRepository>()),
+  );
+  sl.registerFactory<ProviderSearchCubit>(
+    () => ProviderSearchCubit(sl<SearchProvidersUseCase>()),
   );
 }
