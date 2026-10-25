@@ -5,8 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
@@ -15,6 +19,7 @@ import 'package:customer_app/core/utils/extensions.dart';
 class PropertyItem {
   final String name;
   final String address;
+  final String city;
   final String type; // Home, Office, Apartment, Other
   final double? latitude;
   final double? longitude;
@@ -23,6 +28,7 @@ class PropertyItem {
   const PropertyItem({
     required this.name,
     required this.address,
+    required this.city,
     required this.type,
     this.latitude,
     this.longitude,
@@ -54,6 +60,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
   double? _selectedLongitude;
   String? _selectedImagePath;
   bool _isAddingNew = false;
+  bool _isSaving = false;
 
   late AnimationController _animController;
   late Animation<Offset> _sheetSlideAnimation;
@@ -147,6 +154,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
         PropertyItem(
           name: name,
           address: combinedAddress,
+          city: city,
           type: _selectedType,
           latitude: _selectedLatitude,
           longitude: _selectedLongitude,
@@ -179,20 +187,60 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     _finishRegistration('Registration skipped properties setup');
   }
 
-  void _handleFinish() {
+  Future<void> _handleFinish() async {
+    if (_isSaving) return;
     HapticFeedback.mediumImpact();
+
+    if (_properties.isEmpty) {
+      _finishRegistration('Registration skipped properties setup');
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final propertyCubit = context.read<PropertyCubit>();
+    int successCount = 0;
+
+    for (int i = 0; i < _properties.length; i++) {
+      final item = _properties[i];
+      final success = await propertyCubit.addProperty(
+        label: item.name,
+        addressLine: item.address,
+        city: item.city,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        isDefault: i == 0,
+      );
+      if (success) {
+        successCount++;
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (successCount == 0 && _properties.isNotEmpty) {
+      DynamicIslandToast.showError(
+        context,
+        'Failed to save properties to your account. Please try again or skip.',
+      );
+      return;
+    }
+
     _finishRegistration(
-      'Registration finished. Added ${_properties.length} properties.',
+      'Registration finished. Added $successCount properties.',
     );
   }
 
   void _finishRegistration(String message) {
     DynamicIslandToast.showSuccess(context, 'Account setup completed!');
 
-    Navigator.of(context).pushAndRemoveUntil(
-      CupertinoPageRoute(builder: (context) => const MainNavigationScreen()),
-      (route) => false,
-    );
+    context.go(AppRoutes.mainNavigation);
   }
 
   void _openMapSelector() async {
@@ -1441,7 +1489,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       width: double.infinity,
       height: 56.h,
       child: ElevatedButton(
-        onPressed: _handleFinish,
+        onPressed: _isSaving ? null : _handleFinish,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.buttonBackground,
           foregroundColor: AppColors.buttonText,
@@ -1451,28 +1499,37 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
           ),
           padding: EdgeInsets.symmetric(horizontal: 24.w),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _properties.isEmpty
-                  ? context.loc.skipAndFinish
-                  : context.loc.finishRegistration,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 0.1,
+        child: _isSaving
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _properties.isEmpty
+                        ? context.loc.skipAndFinish
+                        : context.loc.finishRegistration,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ],
               ),
-            ),
-            SizedBox(width: 8.w),
-            const Icon(
-              Icons.arrow_forward_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-          ],
-        ),
       ),
     );
   }
