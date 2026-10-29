@@ -13,7 +13,6 @@ import 'package:customer_app/core/utils/extensions.dart';
 import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
 import 'package:customer_app/src/domain/entities/providers/service_provider_entity.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
-import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
 import 'package:customer_app/src/presentation/cubits/providers/provider_search_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/providers/provider_search_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';

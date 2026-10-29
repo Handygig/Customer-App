@@ -17,6 +17,7 @@ import 'package:customer_app/src/presentation/screens/auth/widgets/auth_back_but
 import 'package:customer_app/src/presentation/screens/auth/widgets/auth_header_banner.dart';
 import 'package:customer_app/src/presentation/screens/auth/widgets/auth_primary_button.dart';
 import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
+import 'package:customer_app/core/services/auth_manager.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -149,6 +150,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         phoneNumber: widget.phoneNumber,
         forceResendingToken: _forceResendingToken,
       ),
+    );
+  }
+
+  Future<void> _handleBypassLogin() async {
+    HapticFeedback.mediumImpact();
+    await AuthManager.saveSession(accessToken: 'dev_bypass_access_token');
+    if (!mounted) return;
+    DynamicIslandToast.showSuccess(context, 'Bypassing login (Dev Mode)');
+    Navigator.of(context).pushAndRemoveUntil(
+      CupertinoPageRoute(builder: (_) => const MainNavigationScreen()),
+      (_) => false,
     );
   }
 
@@ -358,7 +370,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                 const Spacer(),
                                 Padding(
                                   padding: EdgeInsets.only(
-                                    bottom: 20.h,
+                                    bottom: 12.h,
                                     top: 16.h,
                                   ),
                                   child: AuthPrimaryButton(
@@ -366,6 +378,42 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                                     onPressed: _verifyOtp,
                                     enabled: _isComplete,
                                     loading: verifying,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 16.h),
+                                  child: Center(
+                                    child: TextButton.icon(
+                                      onPressed: _handleBypassLogin,
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16.w,
+                                          vertical: 8.h,
+                                        ),
+                                        backgroundColor: AppColors.accentLime.withValues(alpha: 0.25),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12.r),
+                                          side: BorderSide(
+                                            color: AppColors.primary.withValues(alpha: 0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                      ),
+                                      icon: const Icon(
+                                        Icons.flash_on_rounded,
+                                        size: 16,
+                                        color: AppColors.primary,
+                                      ),
+                                      label: Text(
+                                        'Bypass Login (Dev Mode)',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 13.sp,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
