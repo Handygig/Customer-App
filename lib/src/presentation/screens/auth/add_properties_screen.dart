@@ -5,15 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
 import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 class PropertyItem {
   final String name;
   final String address;
+  final String city;
   final String type; // Home, Office, Apartment, Other
   final double? latitude;
   final double? longitude;
@@ -22,6 +28,7 @@ class PropertyItem {
   const PropertyItem({
     required this.name,
     required this.address,
+    required this.city,
     required this.type,
     this.latitude,
     this.longitude,
@@ -53,6 +60,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
   double? _selectedLongitude;
   String? _selectedImagePath;
   bool _isAddingNew = false;
+  bool _isSaving = false;
 
   late AnimationController _animController;
   late Animation<Offset> _sheetSlideAnimation;
@@ -146,6 +154,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
         PropertyItem(
           name: name,
           address: combinedAddress,
+          city: city,
           type: _selectedType,
           latitude: _selectedLatitude,
           longitude: _selectedLongitude,
@@ -178,20 +187,60 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
     _finishRegistration('Registration skipped properties setup');
   }
 
-  void _handleFinish() {
+  Future<void> _handleFinish() async {
+    if (_isSaving) return;
     HapticFeedback.mediumImpact();
+
+    if (_properties.isEmpty) {
+      _finishRegistration('Registration skipped properties setup');
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final propertyCubit = context.read<PropertyCubit>();
+    int successCount = 0;
+
+    for (int i = 0; i < _properties.length; i++) {
+      final item = _properties[i];
+      final success = await propertyCubit.addProperty(
+        label: item.name,
+        addressLine: item.address,
+        city: item.city,
+        latitude: item.latitude,
+        longitude: item.longitude,
+        isDefault: i == 0,
+      );
+      if (success) {
+        successCount++;
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (successCount == 0 && _properties.isNotEmpty) {
+      DynamicIslandToast.showError(
+        context,
+        'Failed to save properties to your account. Please try again or skip.',
+      );
+      return;
+    }
+
     _finishRegistration(
-      'Registration finished. Added ${_properties.length} properties.',
+      'Registration finished. Added $successCount properties.',
     );
   }
 
   void _finishRegistration(String message) {
     DynamicIslandToast.showSuccess(context, 'Account setup completed!');
 
-    Navigator.of(context).pushAndRemoveUntil(
-      CupertinoPageRoute(builder: (context) => const MainNavigationScreen()),
-      (route) => false,
-    );
+    context.go(AppRoutes.mainNavigation);
   }
 
   void _openMapSelector() async {
@@ -374,7 +423,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                           padding: EdgeInsets.symmetric(horizontal: 18.w),
                           child: Center(
                             child: Text(
-                              'Skip',
+                              context.loc.skip,
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
@@ -455,8 +504,8 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                                         children: [
                                           Text(
                                             _isAddingNew
-                                                ? 'New Property'
-                                                : 'Add your Properties',
+                                                ? context.loc.newProperty
+                                                : context.loc.addPropertiesTitle,
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 28.sp,
                                               fontWeight: FontWeight.w800,
@@ -485,8 +534,8 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                                       // Subtitle
                                       Text(
                                         _isAddingNew
-                                            ? 'Set up your home or workspace coordinates'
-                                            : 'Add your homes, offices, or other locations to order cleaning or repairs faster.',
+                                            ? context.loc.newPropertySubtitle
+                                            : context.loc.addPropertiesSubtitle,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 14.sp,
                                           fontWeight: FontWeight.w500,
@@ -561,7 +610,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                                                   ),
                                                 ),
                                                 child: Text(
-                                                  'Cancel',
+                                                  context.loc.cancel,
                                                   style:
                                                       GoogleFonts.plusJakartaSans(
                                                         fontSize: 16.sp,
@@ -592,7 +641,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                                                   ),
                                                 ),
                                                 child: Text(
-                                                  'Save Location',
+                                                  context.loc.saveLocation,
                                                   style:
                                                       GoogleFonts.plusJakartaSans(
                                                         fontSize: 16.sp,
@@ -692,7 +741,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                 ),
                 SizedBox(height: 16.h),
                 Text(
-                  'Upload Property Photo',
+                  context.loc.uploadPropertyPhoto,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w800,
@@ -701,7 +750,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Select or take a high-resolution photo of your property.',
+                  context.loc.uploadPropertyPhotoSubtitle,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp,
                     color: AppColors.textSecondary,
@@ -723,7 +772,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                     ),
                   ),
                   title: Text(
-                    'Take Photo (Camera)',
+                    context.loc.takePhoto,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w700,
@@ -750,7 +799,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                     ),
                   ),
                   title: Text(
-                    'Choose from Gallery',
+                    context.loc.chooseFromGallery,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 15.sp,
                       fontWeight: FontWeight.w700,
@@ -1016,7 +1065,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
             ),
             SizedBox(width: 10.w),
             Text(
-              'Add New Property',
+              context.loc.addNewProperty,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w700,
@@ -1035,7 +1084,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       children: [
         // 1. Location Type selector row (Moved to Top)
         Text(
-          'Location Type',
+          context.loc.locationType,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.sp,
             fontWeight: FontWeight.w700,
@@ -1056,7 +1105,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
         // 2. Property Name Input
         _buildFormTextField(
-          label: 'Property Name (e.g. Home, Office)',
+          label: context.loc.propertyName,
           controller: _nameController,
           hintText: 'Home',
           prefixIcon: Icons.label_important_outline_rounded,
@@ -1065,7 +1114,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
         // 3. Map Visual Selector Card
         Text(
-          'Location on Map',
+          context.loc.locationOnMap,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.sp,
             fontWeight: FontWeight.w700,
@@ -1117,8 +1166,8 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                         ),
                         child: Text(
                           _selectedLatitude != null
-                              ? 'Coordinates Selected'
-                              : 'Tap to pinpoint on map ➔',
+                              ? context.loc.coordinatesSelected
+                              : context.loc.tapToPinpointOnMap,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.sp,
                             fontWeight: FontWeight.w800,
@@ -1137,7 +1186,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
         // 4. Address Line 1
         _buildFormTextField(
-          label: 'Address Line 1',
+          label: context.loc.addressLine1,
           controller: _addressLine1Controller,
           hintText: '123 Main Street',
           prefixIcon: Icons.home_outlined,
@@ -1146,7 +1195,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
         // 5. Address Line 2 (Optional)
         _buildFormTextField(
-          label: 'Address Line 2 (Optional)',
+          label: context.loc.addressLine2Optional,
           controller: _addressLine2Controller,
           hintText: 'Apartment, suite, unit, etc.',
           prefixIcon: Icons.apartment_outlined,
@@ -1159,7 +1208,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
             Expanded(
               flex: 3,
               child: _buildFormTextField(
-                label: 'City',
+                label: context.loc.city,
                 controller: _cityController,
                 hintText: 'San Francisco',
                 prefixIcon: Icons.location_city_rounded,
@@ -1169,7 +1218,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
             Expanded(
               flex: 2,
               child: _buildFormTextField(
-                label: 'Province / State',
+                label: context.loc.provinceState,
                 controller: _provinceController,
                 hintText: 'CA',
                 prefixIcon: Icons.map_rounded,
@@ -1181,7 +1230,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
 
         // 7. Postal Code
         _buildFormTextField(
-          label: 'Postal / ZIP Code',
+          label: context.loc.postalZipCode,
           controller: _postalCodeController,
           hintText: '94103',
           prefixIcon: Icons.local_post_office_rounded,
@@ -1191,7 +1240,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
         // 8. Property Photo Upload Card (Moved to Bottom, Mandatory)
         Text.rich(
           TextSpan(
-            text: 'Property Photo ',
+            text: '${context.loc.propertyPhoto} ',
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,
@@ -1280,7 +1329,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                               ),
                               SizedBox(width: 8.w),
                               Text(
-                                'Property photo attached',
+                                context.loc.propertyPhotoAttached,
                                 style: GoogleFonts.plusJakartaSans(
                                   color: Colors.white,
                                   fontSize: 12.5.sp,
@@ -1310,7 +1359,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        'Upload Property Image',
+                        context.loc.uploadPropertyImage,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w800,
@@ -1319,7 +1368,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
                       ),
                       SizedBox(height: 2.h),
                       Text(
-                        'Tap to select or capture front photo (JPG, PNG)',
+                        context.loc.tapToSelectPropertyPhoto,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12.sp,
                           color: AppColors.textSecondary,
@@ -1440,7 +1489,7 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
       width: double.infinity,
       height: 56.h,
       child: ElevatedButton(
-        onPressed: _handleFinish,
+        onPressed: _isSaving ? null : _handleFinish,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.buttonBackground,
           foregroundColor: AppColors.buttonText,
@@ -1450,26 +1499,37 @@ class _AddPropertiesScreenState extends State<AddPropertiesScreen>
           ),
           padding: EdgeInsets.symmetric(horizontal: 24.w),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _properties.isEmpty ? 'Skip & Finish' : 'Finish Registration',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: 0.1,
+        child: _isSaving
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _properties.isEmpty
+                        ? context.loc.skipAndFinish
+                        : context.loc.finishRegistration,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                  SizedBox(width: 8.w),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ],
               ),
-            ),
-            SizedBox(width: 8.w),
-            const Icon(
-              Icons.arrow_forward_rounded,
-              color: Colors.white,
-              size: 22,
-            ),
-          ],
-        ),
       ),
     );
   }

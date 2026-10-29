@@ -27,6 +27,9 @@ void main() {
       expect(l10n.tabAlerts, 'Alerts');
       expect(l10n.tabProfile, 'Profile');
       expect(l10n.resendCodeIn(30), 'Resend code in 30s');
+      expect(l10n.alertsAndNotifications, 'Alerts & Notifications');
+      expect(l10n.signOut, 'Sign Out');
+      expect(l10n.memberSince('2026'), 'Member since 2026');
     });
 
     test('Sinhala localizations return correct strings', () {
@@ -43,6 +46,9 @@ void main() {
       expect(l10n.tabAlerts, 'දැනුම්දීම්');
       expect(l10n.tabProfile, 'පැතිකඩ');
       expect(l10n.resendCodeIn(30), 'තත්පර 30කින් නැවත එවන්න');
+      expect(l10n.alertsAndNotifications, 'දැනුම්දීම් සහ නිවේදන');
+      expect(l10n.signOut, 'ඉවත් වන්න');
+      expect(l10n.memberSince('2026'), '2026 සිට සාමාජිකයෙකි');
     });
 
     test('Tamil localizations return correct strings', () {
@@ -59,6 +65,9 @@ void main() {
       expect(l10n.tabAlerts, 'அறிவிப்புகள்');
       expect(l10n.tabProfile, 'சுயவிவரம்');
       expect(l10n.resendCodeIn(30), '30 வினாடிகளில் மீண்டும் அனுப்புங்கள்');
+      expect(l10n.alertsAndNotifications, 'எச்சரிக்கைகள் & அறிவிப்புகள்');
+      expect(l10n.signOut, 'வெளியேறு');
+      expect(l10n.memberSince('2026'), '2026 முதல் உறுப்பினர்');
     });
 
     testWidgets('LocalizedBuildContext extension provides localized strings in widget tree', (

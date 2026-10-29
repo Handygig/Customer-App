@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/domain/entities/notifications/notification_entity.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_state.dart';
 import 'package:customer_app/src/presentation/screens/profile/rewards_referral_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 class AlertsTab extends StatefulWidget {
   final ValueChanged<int>? onNavigateTab;
@@ -28,6 +31,25 @@ class _AlertsTabState extends State<AlertsTab> {
     {'key': 'reward', 'label': 'Rewards'},
     {'key': 'system', 'label': 'Updates'},
   ];
+
+  String _getFilterLabel(BuildContext context, String key) {
+    switch (key) {
+      case 'all':
+        return context.loc.filterAll;
+      case 'unread':
+        return context.loc.filterUnread;
+      case 'job':
+        return context.loc.filterJobs;
+      case 'offer':
+        return context.loc.filterOffers;
+      case 'reward':
+        return context.loc.filterRewards;
+      case 'system':
+        return context.loc.filterUpdates;
+      default:
+        return key;
+    }
+  }
 
   @override
   void initState() {
@@ -54,14 +76,10 @@ class _AlertsTabState extends State<AlertsTab> {
         widget.onNavigateTab?.call(1); // Go to Jobs tab
         break;
       case 'reward':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const RewardsReferralScreen()),
-        );
+        context.push(AppRoutes.rewards);
         break;
       case 'account':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PropertiesManagementScreen()),
-        );
+        context.push(AppRoutes.properties);
         break;
       default:
         break;
@@ -176,7 +194,7 @@ class _AlertsTabState extends State<AlertsTab> {
                   ),
                   SizedBox(width: 10.w),
                   Text(
-                    'Alerts & Notifications',
+                    context.loc.alertsAndNotifications,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 20.sp,
                       fontWeight: FontWeight.w800,
@@ -216,7 +234,7 @@ class _AlertsTabState extends State<AlertsTab> {
                           ),
                           SizedBox(width: 4.w),
                           Text(
-                            'Mark all read',
+                            context.loc.markAllAsRead,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11.sp,
                               fontWeight: FontWeight.w700,
@@ -235,7 +253,7 @@ class _AlertsTabState extends State<AlertsTab> {
           Padding(
             padding: EdgeInsets.only(left: 14.w),
             child: Text(
-              'Stay updated on your ongoing bookings and offers',
+              context.loc.alertsSubtitle,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.sp,
                 fontWeight: FontWeight.w500,
@@ -310,7 +328,7 @@ class _AlertsTabState extends State<AlertsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          filter['label']!,
+                          _getFilterLabel(context, filter['key']!),
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12.sp,
                             fontWeight:
@@ -385,7 +403,7 @@ class _AlertsTabState extends State<AlertsTab> {
         context.read<NotificationCubit>().deleteNotification(notif.id);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Notification removed'),
+            content: Text(context.loc.notificationRemoved),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -524,8 +542,8 @@ class _AlertsTabState extends State<AlertsTab> {
   // ---------------------------------------------------------------------------
   Widget _buildEmptyState(BuildContext context, String activeFilter) {
     final String label = activeFilter == 'unread'
-        ? 'No unread notifications'
-        : 'No notifications found';
+        ? context.loc.noNotificationsCategory
+        : context.loc.noNotifications;
 
     return Center(
       child: Padding(
@@ -557,7 +575,7 @@ class _AlertsTabState extends State<AlertsTab> {
             ),
             SizedBox(height: 6.h),
             Text(
-              'You are all caught up! When updates or offers arrive, you will see them here.',
+              context.loc.allCaughtUp,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12.5.sp,
@@ -584,7 +602,7 @@ class _AlertsTabState extends State<AlertsTab> {
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
-                  'Refresh Feed',
+                  context.loc.refreshFeed,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w700,
@@ -616,7 +634,7 @@ class _AlertsTabState extends State<AlertsTab> {
             ),
             SizedBox(height: 12.h),
             Text(
-              'Failed to load notifications',
+              context.loc.failedToLoadNotifications,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15.sp,
                 fontWeight: FontWeight.w700,
@@ -643,7 +661,7 @@ class _AlertsTabState extends State<AlertsTab> {
                   borderRadius: BorderRadius.circular(10.r),
                 ),
               ),
-              child: const Text('Try Again', style: TextStyle(color: Colors.white)),
+              child: Text(context.loc.tryAgain, style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),

@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/core/di/service_locator.dart';
 import 'package:customer_app/src/data/repositories/profile/profile_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/profile/user_profile.dart';
+import 'package:customer_app/src/domain/repositories/profile/profile_repository.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class RewardsReferralScreen extends StatefulWidget {
@@ -15,7 +17,7 @@ class RewardsReferralScreen extends StatefulWidget {
 }
 
 class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
-  final _repository = ProfileRepositoryImpl();
+  late final ProfileRepository _repository;
   List<Map<String, dynamic>> _transactions = [];
   bool _isLoadingTransactions = false;
   int _redemptionRate = 100; // 100 points = $1.00
@@ -25,6 +27,10 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
   @override
   void initState() {
     super.initState();
+    _repository = sl.isRegistered<ProfileRepository>()
+        ? sl<ProfileRepository>()
+        : ProfileRepositoryImpl();
+    _repository.getUserProfile();
     _loadRewardsData();
   }
 
@@ -308,6 +314,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                       context,
                                       'Redeemed $selectedPoints points for \$${creditValue.toStringAsFixed(2)} credit!',
                                     );
+                                    _repository.getUserProfile();
                                     _loadRewardsData();
                                   },
                                 );
@@ -336,6 +343,180 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                   ],
                 ),
               ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showApplyReferralDialog(BuildContext context) {
+    final TextEditingController codeController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8.r),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.card_giftcard_rounded,
+                      color: AppColors.primary,
+                      size: 20.r,
+                    ),
+                  ),
+                  SizedBox(width: 10.w),
+                  Text(
+                    'Apply Referral Code',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textHeadline,
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Enter a friend\'s referral code to instantly claim \$${_refereeDiscount.toInt()} wallet credit toward your services!',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.sp,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  TextField(
+                    controller: codeController,
+                    textCapitalization: TextCapitalization.characters,
+                    style: GoogleFonts.shareTechMono(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'e.g. HG-A8F2',
+                      hintStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        letterSpacing: 0,
+                        color: AppColors.textSecondary.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF6F8F3),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 12.h,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(
+                          color: AppColors.borderUnselected,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 0,
+                  ),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final code = codeController.text.trim();
+                          if (code.isEmpty) {
+                            DynamicIslandToast.showError(
+                              context,
+                              'Please enter a referral code.',
+                            );
+                            return;
+                          }
+
+                          setDialogState(() => isSubmitting = true);
+                          HapticFeedback.mediumImpact();
+
+                          final res = await _repository.applyReferralCode(code);
+
+                          res.fold(
+                            (failure) {
+                              setDialogState(() => isSubmitting = false);
+                              DynamicIslandToast.showError(
+                                context,
+                                failure.errorMessage,
+                              );
+                            },
+                            (data) async {
+                              Navigator.of(dialogContext).pop();
+                              HapticFeedback.heavyImpact();
+                              DynamicIslandToast.showSuccess(
+                                context,
+                                'Referral code applied! \$${_refereeDiscount.toInt()} credit added to your wallet.',
+                              );
+                              await _repository.getUserProfile();
+                              await _loadRewardsData();
+                            },
+                          );
+                        },
+                  child: isSubmitting
+                      ? SizedBox(
+                          height: 16.r,
+                          width: 16.r,
+                          child: const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Apply Code',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                ),
+              ],
             );
           },
         );
@@ -604,6 +785,42 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                        SizedBox(height: 12.h),
+                        InkWell(
+                          onTap: () => _showApplyReferralDialog(context),
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.symmetric(vertical: 11.h),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.redeem_rounded,
+                                  size: 16.r,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Have a friend\'s referral code? Apply here',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],

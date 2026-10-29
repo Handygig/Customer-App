@@ -8,7 +8,8 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
-import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class PropertiesManagementScreen extends StatelessWidget {
@@ -143,11 +144,7 @@ class PropertiesManagementScreen extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () {
                 HapticFeedback.lightImpact();
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const AddNewPropertyScreen(),
-                  ),
-                );
+                context.push(AppRoutes.addNewProperty);
               },
               icon: const Icon(Icons.add_home_rounded, color: Colors.white),
               label: Text(
@@ -331,12 +328,9 @@ class PropertiesManagementScreen extends StatelessWidget {
                         InkWell(
                           onTap: () {
                             HapticFeedback.lightImpact();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => AddNewPropertyScreen(
-                                  propertyToEdit: property,
-                                ),
-                              ),
+                            context.push(
+                              AppRoutes.addNewProperty,
+                              extra: property,
                             );
                           },
                           borderRadius: BorderRadius.circular(20.r),

@@ -23,6 +23,7 @@ import 'package:customer_app/src/presentation/screens/profile/properties_managem
 import 'package:customer_app/src/presentation/screens/profile/help_support_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/settings_screen.dart';
 import 'package:customer_app/src/presentation/screens/profile/rewards_referral_screen.dart';
+import 'package:customer_app/core/utils/extensions.dart';
 
 class ProfileTab extends StatelessWidget {
   final VoidCallback? onAddPropertyTap;
@@ -151,12 +152,7 @@ class ProfileTab extends StatelessWidget {
                           ),
                           onPressed: () {
                             HapticFeedback.lightImpact();
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    EditProfileScreen(profile: profile),
-                              ),
-                            );
+                            context.push(AppRoutes.editProfile, extra: profile);
                           },
                         ),
                       ),
@@ -244,7 +240,7 @@ class ProfileTab extends StatelessWidget {
 
                           // Subtitle Info
                           Text(
-                            '${profile.phone} • Member since ${profile.memberSinceYear}',
+                            '${profile.phone} • ${context.loc.memberSince(profile.memberSinceYear)}',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.plusJakartaSans(
                               color: AppColors.textMuted,
@@ -266,16 +262,11 @@ class ProfileTab extends StatelessWidget {
                       // Edit Personal Profile Tile
                       _buildOptionTile(
                         icon: Icons.person_outline_rounded,
-                        title: 'Personal Details',
-                        subtitle: 'Name, Email, Phone, Gender',
+                        title: context.loc.manageProfile,
+                        subtitle: context.loc.manageProfileSubtitle,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  EditProfileScreen(profile: profile),
-                            ),
-                          );
+                          context.push(AppRoutes.editProfile, extra: profile);
                         },
                       ),
 
@@ -286,16 +277,11 @@ class ProfileTab extends StatelessWidget {
                           final propCount = snapshot.data?.length ?? 3;
                           return _buildOptionTile(
                             icon: Icons.location_city_rounded,
-                            title: 'Manage Properties',
-                            subtitle: '$propCount properties registered',
+                            title: context.loc.manageProperties,
+                            subtitle: context.loc.propertiesRegistered(propCount),
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PropertiesManagementScreen(),
-                                ),
-                              );
+                              context.push(AppRoutes.properties);
                             },
                           );
                         },
@@ -311,21 +297,19 @@ class ProfileTab extends StatelessWidget {
                               ? cards.firstWhere((c) => c.isDefault, orElse: () => cards.first)
                               : null;
                           final subText = cards.isEmpty
-                              ? 'No cards saved'
-                              : '${defaultCard!.brand.name.toUpperCase()} ending ${defaultCard.lastFourDigits}';
+                              ? context.loc.noCardsSaved
+                              : context.loc.cardEnding(
+                                  defaultCard!.brand.name.toUpperCase(),
+                                  defaultCard.lastFourDigits,
+                                );
 
                           return _buildOptionTile(
                             icon: Icons.credit_card_rounded,
-                            title: 'Payment Methods',
+                            title: context.loc.paymentMethods,
                             subtitle: subText,
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const PaymentMethodsScreen(),
-                                ),
-                              );
+                              context.push(AppRoutes.paymentMethods);
                             },
                           );
                         },
@@ -334,55 +318,44 @@ class ProfileTab extends StatelessWidget {
                       // Rewards & Wallet Tile
                       _buildOptionTile(
                         icon: Icons.card_giftcard_rounded,
-                        title: 'Rewards & Wallet',
-                        subtitle:
-                            '${profile.rewardPoints} pts • \${profile.walletBalance.toStringAsFixed(2)} balance',
+                        title: context.loc.rewardsAndWallet,
+                        subtitle: context.loc.rewardsSubtitle(
+                          profile.rewardPoints,
+                          profile.walletBalance.toStringAsFixed(2),
+                        ),
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const RewardsReferralScreen(),
-                            ),
-                          );
+                          context.push(AppRoutes.rewards);
                         },
                       ),
 
                       // Help & 24/7 Support
                       _buildOptionTile(
                         icon: Icons.support_agent_rounded,
-                        title: 'Help & 24/7 Support',
-                        subtitle: 'Emergency hotline, FAQ, Live Chat',
+                        title: context.loc.helpAndSupport,
+                        subtitle: context.loc.helpAndSupportSubtitle,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const HelpSupportScreen(),
-                            ),
-                          );
+                          context.push(AppRoutes.helpSupport);
                         },
                       ),
 
                       // Settings & Security (Language, Password, 2FA)
                       _buildOptionTile(
                         icon: Icons.settings_outlined,
-                        title: 'Settings & Security',
-                        subtitle: 'Language, Password, 2FA & Security',
+                        title: context.loc.settingsAndSecurity,
+                        subtitle: context.loc.settingsSecuritySubtitle,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SettingsScreen(),
-                            ),
-                          );
+                          context.push(AppRoutes.settings);
                         },
                       ),
 
                       // Sign Out Button
                       _buildOptionTile(
                         icon: Icons.logout_rounded,
-                        title: 'Sign Out',
-                        subtitle: 'Log out of customer app account',
+                        title: context.loc.signOut,
+                        subtitle: context.loc.signOutSubtitle,
                         isDestructive: true,
                         onTap: () {
                           HapticFeedback.mediumImpact();
@@ -467,14 +440,14 @@ class ProfileTab extends StatelessWidget {
           borderRadius: BorderRadius.circular(20.r),
         ),
         title: Text(
-          'Sign Out',
+          context.loc.signOutConfirmTitle,
           style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w800,
             color: AppColors.textHeadline,
           ),
         ),
         content: Text(
-          'Are you sure you want to log out of your account?',
+          context.loc.signOutConfirmMessage,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14.sp,
             color: AppColors.textSecondary,
@@ -484,7 +457,7 @@ class ProfileTab extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              'Cancel',
+              context.loc.cancel,
               style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textMuted,
@@ -504,7 +477,7 @@ class ProfileTab extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Sign Out',
+              context.loc.signOut,
               style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w700,
                 color: Colors.white,

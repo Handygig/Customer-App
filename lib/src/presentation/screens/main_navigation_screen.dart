@@ -4,7 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/core/utils/extensions.dart';
-import 'package:customer_app/src/presentation/screens/auth/add_properties_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/tabs/home_tab.dart';
 import 'package:customer_app/src/presentation/tabs/jobs_tab.dart';
 import 'package:customer_app/src/presentation/tabs/search_tab.dart';
@@ -43,9 +44,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   void _openAddProperties() {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => const AddPropertiesScreen()),
-    );
+    context.push(AppRoutes.addProperties);
   }
 
   @override

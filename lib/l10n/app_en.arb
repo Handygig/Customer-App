@@ -324,5 +324,723 @@
   "noNotifications": "No notifications yet",
   "@noNotifications": {
     "description": "Empty notifications state text"
+  },
+
+  "completeProfileTitle": "Complete Profile",
+  "@completeProfileTitle": {
+    "description": "Title on complete profile screen"
+  },
+  "completeProfileSubtitle": "Set up your customer profile to continue.",
+  "@completeProfileSubtitle": {
+    "description": "Subtitle on complete profile screen"
+  },
+  "editProfileTitle": "Edit Profile",
+  "@editProfileTitle": {
+    "description": "Title on edit profile screen"
+  },
+  "firstName": "First Name",
+  "@firstName": {
+    "description": "First name field label"
+  },
+  "lastName": "Last Name",
+  "@lastName": {
+    "description": "Last name field label"
+  },
+  "emailAddress": "Email Address",
+  "@emailAddress": {
+    "description": "Email address field label"
+  },
+  "gender": "Gender",
+  "@gender": {
+    "description": "Gender field label"
+  },
+  "male": "Male",
+  "@male": {
+    "description": "Male gender option"
+  },
+  "female": "Female",
+  "@female": {
+    "description": "Female gender option"
+  },
+  "takePhoto": "Take Photo",
+  "@takePhoto": {
+    "description": "Take photo action label"
+  },
+  "chooseFromGallery": "Choose from Gallery",
+  "@chooseFromGallery": {
+    "description": "Choose photo from gallery action label"
+  },
+  "profileCompleted": "Profile completed!",
+  "@profileCompleted": {
+    "description": "Success message when profile is completed"
+  },
+  "profileUpdated": "Profile updated successfully!",
+  "@profileUpdated": {
+    "description": "Success message when profile is updated"
+  },
+  "personalInformation": "Personal Information",
+  "@personalInformation": {
+    "description": "Personal information header"
+  },
+  "phoneNumber": "Phone Number",
+  "@phoneNumber": {
+    "description": "Phone number field label"
+  },
+
+  "addPropertiesTitle": "Add your Properties",
+  "@addPropertiesTitle": {
+    "description": "Title on properties setup screen"
+  },
+  "addPropertiesSubtitle": "Add your homes, offices, or other locations to order cleaning or repairs faster.",
+  "@addPropertiesSubtitle": {
+    "description": "Subtitle on properties setup screen"
+  },
+  "newProperty": "New Property",
+  "@newProperty": {
+    "description": "New property screen title"
+  },
+  "newPropertySubtitle": "Set up your home or workspace coordinates",
+  "@newPropertySubtitle": {
+    "description": "New property subtitle"
+  },
+  "addNewProperty": "Add New Property",
+  "@addNewProperty": {
+    "description": "Add new property button label"
+  },
+  "manageProperties": "Manage Properties",
+  "@manageProperties": {
+    "description": "Manage properties title"
+  },
+  "propertiesRegistered": "{count} properties registered",
+  "@propertiesRegistered": {
+    "description": "Count of registered properties",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "noPropertiesAdded": "No properties added yet",
+  "@noPropertiesAdded": {
+    "description": "Empty state for properties"
+  },
+  "tapToRegisterFirstProperty": "Tap to register your first property",
+  "@tapToRegisterFirstProperty": {
+    "description": "Prompt to add first property"
+  },
+  "locationType": "Location Type",
+  "@locationType": {
+    "description": "Location type field label"
+  },
+  "propertyName": "Property Name",
+  "@propertyName": {
+    "description": "Property name field label"
+  },
+  "locationOnMap": "Location on Map",
+  "@locationOnMap": {
+    "description": "Location on map section title"
+  },
+  "coordinatesSelected": "Coordinates Selected",
+  "@coordinatesSelected": {
+    "description": "Coordinates selected status"
+  },
+  "tapToPinpointOnMap": "Tap to pinpoint on map ➔",
+  "@tapToPinpointOnMap": {
+    "description": "Map picker prompt"
+  },
+  "addressLine1": "Address Line 1",
+  "@addressLine1": {
+    "description": "Address line 1 label"
+  },
+  "addressLine2Optional": "Address Line 2 (Optional)",
+  "@addressLine2Optional": {
+    "description": "Address line 2 label"
+  },
+  "city": "City",
+  "@city": {
+    "description": "City label"
+  },
+  "provinceState": "Province / State",
+  "@provinceState": {
+    "description": "Province or state label"
+  },
+  "postalZipCode": "Postal / ZIP Code",
+  "@postalZipCode": {
+    "description": "Postal code label"
+  },
+  "propertyPhoto": "Property Photo",
+  "@propertyPhoto": {
+    "description": "Property photo label"
+  },
+  "uploadPropertyPhoto": "Upload Property Photo",
+  "@uploadPropertyPhoto": {
+    "description": "Upload property photo button"
+  },
+  "uploadPropertyPhotoSubtitle": "Select or take a high-resolution photo of your property.",
+  "@uploadPropertyPhotoSubtitle": {
+    "description": "Upload property photo instructions"
+  },
+  "propertyPhotoAttached": "Property photo attached",
+  "@propertyPhotoAttached": {
+    "description": "Success banner for attached property photo"
+  },
+  "uploadPropertyImage": "Upload Property Image",
+  "@uploadPropertyImage": {
+    "description": "Upload property image placeholder"
+  },
+  "tapToSelectPropertyPhoto": "Tap to select or capture front photo (JPG, PNG)",
+  "@tapToSelectPropertyPhoto": {
+    "description": "Upload image placeholder hint"
+  },
+  "saveLocation": "Save Location",
+  "@saveLocation": {
+    "description": "Save location button"
+  },
+  "confirmLocation": "Confirm Location",
+  "@confirmLocation": {
+    "description": "Confirm location button"
+  },
+  "skip": "Skip",
+  "@skip": {
+    "description": "Skip button"
+  },
+  "skipAndFinish": "Skip & Finish",
+  "@skipAndFinish": {
+    "description": "Skip and finish button"
+  },
+  "finishRegistration": "Finish Registration",
+  "@finishRegistration": {
+    "description": "Finish registration button"
+  },
+  "typeHome": "Home",
+  "@typeHome": {
+    "description": "Home property type"
+  },
+  "typeOffice": "Office",
+  "@typeOffice": {
+    "description": "Office property type"
+  },
+  "typeApartment": "Apartment",
+  "@typeApartment": {
+    "description": "Apartment property type"
+  },
+  "typeOther": "Other",
+  "@typeOther": {
+    "description": "Other property type"
+  },
+  "defaultProperty": "Default",
+  "@defaultProperty": {
+    "description": "Default property badge"
+  },
+  "setDefaultProperty": "Set as Default",
+  "@setDefaultProperty": {
+    "description": "Set as default property action"
+  },
+  "deletePropertyConfirm": "Are you sure you want to delete this property?",
+  "@deletePropertyConfirm": {
+    "description": "Confirmation message for deleting a property"
+  },
+
+  "goodMorning": "Good Morning",
+  "@goodMorning": {
+    "description": "Generic morning greeting"
+  },
+  "goodMorningUser": "Good Morning, {name}",
+  "@goodMorningUser": {
+    "description": "Personalized morning greeting",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "John"
+      }
+    }
+  },
+  "homeSearchPlaceholder": "Search for cleaning, repairs, plumbing...",
+  "@homeSearchPlaceholder": {
+    "description": "Search input placeholder on home tab"
+  },
+  "addedProperties": "Added Properties",
+  "@addedProperties": {
+    "description": "Added properties carousel title"
+  },
+  "manage": "Manage",
+  "@manage": {
+    "description": "Manage button label"
+  },
+  "exploreServices": "Explore Services",
+  "@exploreServices": {
+    "description": "Explore services section title"
+  },
+  "exploreAll": "Explore All",
+  "@exploreAll": {
+    "description": "Explore all services button label"
+  },
+  "viewAll": "View All",
+  "@viewAll": {
+    "description": "View all button label"
+  },
+  "ongoingJobs": "Ongoing Jobs",
+  "@ongoingJobs": {
+    "description": "Ongoing jobs section title"
+  },
+  "activeCount": "{count} Active",
+  "@activeCount": {
+    "description": "Active count badge",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
+  "noOngoingJobs": "No Ongoing Jobs",
+  "@noOngoingJobs": {
+    "description": "Empty state title for ongoing jobs"
+  },
+  "noOngoingJobsSubtitle": "Active assignments in progress will show up here.",
+  "@noOngoingJobsSubtitle": {
+    "description": "Empty state subtitle for ongoing jobs"
+  },
+  "exclusiveOffers": "Exclusive Offers & Discounts",
+  "@exclusiveOffers": {
+    "description": "Exclusive offers section title"
+  },
+  "trackService": "Track",
+  "@trackService": {
+    "description": "Track service action label"
+  },
+  "serviceProgress": "Service Progress",
+  "@serviceProgress": {
+    "description": "Service progress section title"
+  },
+  "couponCopied": "Coupon \"{code}\" copied to clipboard!",
+  "@couponCopied": {
+    "description": "Toast when coupon is copied",
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "SAVE20"
+      }
+    }
+  },
+  "offerApplied": "Offer code \"{code}\" applied! Navigating to services...",
+  "@offerApplied": {
+    "description": "Toast when offer is applied",
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "SAVE20"
+      }
+    }
+  },
+
+  "myBookingsAndJobs": "My Bookings & Jobs",
+  "@myBookingsAndJobs": {
+    "description": "Title on jobs tab"
+  },
+  "myBookingsSubtitle": "Track requests, approve quotes & review active work",
+  "@myBookingsSubtitle": {
+    "description": "Subtitle on jobs tab"
+  },
+  "tabWaiting": "Waiting",
+  "@tabWaiting": {
+    "description": "Waiting tab name"
+  },
+  "tabToApprove": "To Approve",
+  "@tabToApprove": {
+    "description": "To Approve tab name"
+  },
+  "tabOngoing": "Ongoing",
+  "@tabOngoing": {
+    "description": "Ongoing tab name"
+  },
+  "tabCompleted": "Completed",
+  "@tabCompleted": {
+    "description": "Completed tab name"
+  },
+  "waitingRequests": "waiting requests",
+  "@waitingRequests": {
+    "description": "Empty state waiting requests category name"
+  },
+  "quotesToApprove": "quotes to approve",
+  "@quotesToApprove": {
+    "description": "Empty state quotes to approve category name"
+  },
+  "completedJobs": "completed jobs",
+  "@completedJobs": {
+    "description": "Empty state completed jobs category name"
+  },
+  "noJobsInCategory": "No {category}",
+  "@noJobsInCategory": {
+    "description": "Empty state for jobs in specific category",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "ongoing jobs"
+      }
+    }
+  },
+  "jobDetails": "Job Details",
+  "@jobDetails": {
+    "description": "Job details title"
+  },
+  "jobStatus": "Status",
+  "@jobStatus": {
+    "description": "Job status title"
+  },
+  "jobTimeline": "Timeline",
+  "@jobTimeline": {
+    "description": "Job timeline title"
+  },
+  "jobCancelled": "Cancelled",
+  "@jobCancelled": {
+    "description": "Cancelled job status"
+  },
+  "jobCompletedStatus": "Completed",
+  "@jobCompletedStatus": {
+    "description": "Completed job status"
+  },
+  "awaitingQuotes": "Awaiting Quotes",
+  "@awaitingQuotes": {
+    "description": "Awaiting quotes status"
+  },
+  "quotesAvailable": "Quotes Available",
+  "@quotesAvailable": {
+    "description": "Quotes available status"
+  },
+  "pendingQuote": "Pending Quote",
+  "@pendingQuote": {
+    "description": "Pending quote status"
+  },
+  "fromPrice": "From ${price}",
+  "@fromPrice": {
+    "description": "Lowest quote price prefix",
+    "placeholders": {
+      "price": {
+        "type": "String",
+        "example": "45.00"
+      }
+    }
+  },
+  "quotesCount": "{count} Quote(s)",
+  "@quotesCount": {
+    "description": "Quotes count badge",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "cancelRequest": "Cancel Request",
+  "@cancelRequest": {
+    "description": "Cancel request button label"
+  },
+  "cancelRequestConfirm": "Are you sure you want to cancel this request?",
+  "@cancelRequestConfirm": {
+    "description": "Confirmation message for cancelling request"
+  },
+  "acceptQuote": "Accept Quote",
+  "@acceptQuote": {
+    "description": "Accept quote button"
+  },
+  "declineQuote": "Decline",
+  "@declineQuote": {
+    "description": "Decline quote button"
+  },
+  "contactProvider": "Contact Provider",
+  "@contactProvider": {
+    "description": "Contact provider button"
+  },
+
+  "serviceLocator": "Service Locator",
+  "@serviceLocator": {
+    "description": "Search tab title"
+  },
+  "serviceType": "SERVICE TYPE",
+  "@serviceType": {
+    "description": "Search service type header"
+  },
+  "serviceTypePlaceholder": "Search service type (e.g. Plumbing, Cleaning)",
+  "@serviceTypePlaceholder": {
+    "description": "Service type search placeholder"
+  },
+  "locationLabel": "LOCATION",
+  "@locationLabel": {
+    "description": "Search location header"
+  },
+  "locationPlaceholder": "Search location or area (e.g. Downtown)",
+  "@locationPlaceholder": {
+    "description": "Location search placeholder"
+  },
+  "nearMe": "Near me",
+  "@nearMe": {
+    "description": "Near me button"
+  },
+  "categoryAll": "All",
+  "@categoryAll": {
+    "description": "All category filter"
+  },
+  "bookProvider": "Book Provider",
+  "@bookProvider": {
+    "description": "Book provider button"
+  },
+  "contactingProvider": "Contacting {name}...",
+  "@contactingProvider": {
+    "description": "Toast when contacting provider",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Alex"
+      }
+    }
+  },
+  "available": "Available",
+  "@available": {
+    "description": "Provider available status"
+  },
+  "busy": "Busy",
+  "@busy": {
+    "description": "Provider busy status"
+  },
+  "reviews": "{count} reviews",
+  "@reviews": {
+    "description": "Reviews count",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "142"
+      }
+    }
+  },
+
+  "filterAll": "All",
+  "@filterAll": {
+    "description": "Filter all chip"
+  },
+  "filterUnread": "Unread",
+  "@filterUnread": {
+    "description": "Filter unread chip"
+  },
+  "filterJobs": "Jobs",
+  "@filterJobs": {
+    "description": "Filter jobs chip"
+  },
+  "filterOffers": "Offers",
+  "@filterOffers": {
+    "description": "Filter offers chip"
+  },
+  "filterRewards": "Rewards",
+  "@filterRewards": {
+    "description": "Filter rewards chip"
+  },
+  "filterUpdates": "Updates",
+  "@filterUpdates": {
+    "description": "Filter updates chip"
+  },
+  "markAllAsRead": "Mark all as read",
+  "@markAllAsRead": {
+    "description": "Mark all as read action"
+  },
+  "notificationRemoved": "Notification removed",
+  "@notificationRemoved": {
+    "description": "Toast when notification is dismissed"
+  },
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Try again button"
+  },
+  "noNotificationsCategory": "No notifications in this category",
+  "@noNotificationsCategory": {
+    "description": "Empty state for notifications in selected category"
+  },
+
+  "signOut": "Sign Out",
+  "@signOut": {
+    "description": "Sign out button label"
+  },
+  "signOutConfirmTitle": "Sign Out",
+  "@signOutConfirmTitle": {
+    "description": "Sign out dialog title"
+  },
+  "signOutConfirmMessage": "Are you sure you want to log out of your account?",
+  "@signOutConfirmMessage": {
+    "description": "Sign out dialog message"
+  },
+  "manageProfile": "Manage Profile",
+  "@manageProfile": {
+    "description": "Manage profile tile title"
+  },
+  "manageProfileSubtitle": "Name, Email, Phone, Gender",
+  "@manageProfileSubtitle": {
+    "description": "Manage profile tile subtitle"
+  },
+  "paymentMethods": "Payment Methods",
+  "@paymentMethods": {
+    "description": "Payment methods tile title"
+  },
+  "noCardsSaved": "No cards saved",
+  "@noCardsSaved": {
+    "description": "Empty cards state label"
+  },
+  "cardEnding": "{brand} ending {digits}",
+  "@cardEnding": {
+    "description": "Card summary description",
+    "placeholders": {
+      "brand": {
+        "type": "String",
+        "example": "VISA"
+      },
+      "digits": {
+        "type": "String",
+        "example": "4242"
+      }
+    }
+  },
+  "rewardsAndWallet": "Rewards & Wallet",
+  "@rewardsAndWallet": {
+    "description": "Rewards and wallet tile title"
+  },
+  "rewardsSubtitle": "{points} pts • ${balance} balance",
+  "@rewardsSubtitle": {
+    "description": "Rewards and wallet tile subtitle",
+    "placeholders": {
+      "points": {
+        "type": "int",
+        "example": "250"
+      },
+      "balance": {
+        "type": "String",
+        "example": "45.00"
+      }
+    }
+  },
+  "helpAndSupport": "Help & 24/7 Support",
+  "@helpAndSupport": {
+    "description": "Help and support tile title"
+  },
+  "helpAndSupportSubtitle": "Emergency hotline, FAQ, Live Chat",
+  "@helpAndSupportSubtitle": {
+    "description": "Help and support tile subtitle"
+  },
+  "settingsSecuritySubtitle": "Language, Password, 2FA & Security",
+  "@settingsSecuritySubtitle": {
+    "description": "Settings and security tile subtitle"
+  },
+  "addNewCard": "Add New Card",
+  "@addNewCard": {
+    "description": "Add new payment card title"
+  },
+  "cardNumber": "Card Number",
+  "@cardNumber": {
+    "description": "Card number field label"
+  },
+  "expiryDate": "Expiry Date",
+  "@expiryDate": {
+    "description": "Expiry date field label"
+  },
+  "cvv": "CVV",
+  "@cvv": {
+    "description": "CVV security code field label"
+  },
+  "cardholderName": "Cardholder Name",
+  "@cardholderName": {
+    "description": "Cardholder name field label"
+  },
+  "emergencyHotline": "Emergency Hotline",
+  "@emergencyHotline": {
+    "description": "Emergency hotline title"
+  },
+  "faq": "Frequently Asked Questions",
+  "@faq": {
+    "description": "FAQ title"
+  },
+  "liveChat": "Live Chat Support",
+  "@liveChat": {
+    "description": "Live chat title"
+  },
+  "referralCode": "Referral Code",
+  "@referralCode": {
+    "description": "Referral code title"
+  },
+  "shareReferral": "Share with Friends",
+  "@shareReferral": {
+    "description": "Share referral action"
+  },
+
+  "bookServiceTitle": "Book Service",
+  "@bookServiceTitle": {
+    "description": "Book service modal title"
+  },
+  "selectDateTime": "Select Date & Time",
+  "@selectDateTime": {
+    "description": "Select date and time label"
+  },
+  "serviceAddress": "Service Address",
+  "@serviceAddress": {
+    "description": "Service address label"
+  },
+  "paymentMethod": "Payment Method",
+  "@paymentMethod": {
+    "description": "Payment method label"
+  },
+  "cashOnService": "Cash on Service",
+  "@cashOnService": {
+    "description": "Cash payment option"
+  },
+  "creditDebitCard": "Credit / Debit Card",
+  "@creditDebitCard": {
+    "description": "Card payment option"
+  },
+  "notesDescription": "Job Description & Notes",
+  "@notesDescription": {
+    "description": "Job description label"
+  },
+  "notesPlaceholder": "Describe the problem or any special requirements...",
+  "@notesPlaceholder": {
+    "description": "Job description placeholder"
+  },
+  "confirmBooking": "Confirm Booking",
+  "@confirmBooking": {
+    "description": "Confirm booking button"
+  },
+  "bookingSuccess": "Booking request sent successfully!",
+  "@bookingSuccess": {
+    "description": "Toast message after booking request is sent"
+  },
+  "alertsAndNotifications": "Alerts & Notifications",
+  "@alertsAndNotifications": {
+    "description": "Alerts tab header title"
+  },
+  "alertsSubtitle": "Stay updated on your ongoing bookings and offers",
+  "@alertsSubtitle": {
+    "description": "Alerts tab header subtitle"
+  },
+  "allCaughtUp": "You are all caught up! When updates or offers arrive, you will see them here.",
+  "@allCaughtUp": {
+    "description": "Empty state subtitle in alerts tab"
+  },
+  "refreshFeed": "Refresh Feed",
+  "@refreshFeed": {
+    "description": "Refresh feed button"
+  },
+  "failedToLoadNotifications": "Failed to load notifications",
+  "@failedToLoadNotifications": {
+    "description": "Failed to load notifications error message"
+  },
+  "memberSince": "Member since {year}",
+  "@memberSince": {
+    "description": "Profile member since label",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "signOutSubtitle": "Log out of customer app account",
+  "@signOutSubtitle": {
+    "description": "Sign out tile subtitle"
   }
 }
