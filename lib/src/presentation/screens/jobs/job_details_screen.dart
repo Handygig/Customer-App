@@ -1032,17 +1032,35 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               : 'Awaiting Assignment');
       rating = activeRequest.assignment != null ? '4.9 ★' : 'New';
 
-      if (activeRequest.assignment != null && quotations.isNotEmpty) {
+      if (activeRequest.assignment?.payment != null) {
+        price = 'LKR ${activeRequest.assignment!.payment!.amount.toStringAsFixed(2)}';
+      } else if (activeRequest.assignment?.quotation != null) {
+        final base = activeRequest.assignment!.quotation!.quotedPrice;
+        final extra = (activeRequest.assignment!.isExtraApproved &&
+                activeRequest.assignment!.extraAmount != null)
+            ? activeRequest.assignment!.extraAmount!
+                : 0.0;
+        price = 'LKR ${(base + extra).toStringAsFixed(2)}';
+      } else if (activeRequest.assignment != null && quotations.isNotEmpty) {
         final accepted = quotations.firstWhere(
           (q) => q.isAccepted,
           orElse: () => quotations.first,
         );
-        price = 'LKR ${accepted.quotedPrice.toStringAsFixed(2)}';
+        final base = accepted.quotedPrice;
+        final extra = (activeRequest.assignment!.isExtraApproved &&
+                activeRequest.assignment!.extraAmount != null)
+            ? activeRequest.assignment!.extraAmount!
+            : 0.0;
+        price = 'LKR ${(base + extra).toStringAsFixed(2)}';
       } else if (quotations.isNotEmpty) {
         final lowest = quotations
             .map((q) => q.quotedPrice)
             .reduce((a, b) => a < b ? a : b);
         price = 'LKR ${lowest.toStringAsFixed(2)}';
+      } else if (activeRequest.isCancelled) {
+        price = 'Cancelled';
+      } else if (activeRequest.isCompleted) {
+        price = 'Completed';
       } else {
         price = widget.job?['price'] as String? ?? 'LKR 0.00';
       }

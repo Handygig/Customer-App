@@ -54,7 +54,9 @@ class JobAssignmentEntity extends Equatable {
       extraStatus.toLowerCase() == 'pending' && (extraAmount ?? 0) > 0;
   bool get hasApprovedExtraQuote =>
       extraStatus.toLowerCase() == 'approved' && (extraAmount ?? 0) > 0;
+  bool get isExtraApproved => hasApprovedExtraQuote;
   bool get hasRejectedExtraQuote => extraStatus.toLowerCase() == 'rejected';
+  int? get jobRequestId => jobRequest?.id;
   double get totalEffectivePrice =>
       (quotation?.quotedPrice ?? (payment?.amount ?? 0.0)) +
       (hasApprovedExtraQuote ? (extraAmount ?? 0.0) : 0.0);

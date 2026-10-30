@@ -112,11 +112,24 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
         : 'Awaiting Quotes';
 
     final String price;
-    if (req.quotations.isNotEmpty) {
+    if (req.assignment?.payment != null) {
+      price = 'LKR ${req.assignment!.payment!.amount.toStringAsFixed(2)}';
+    } else if (req.assignment?.quotation != null) {
+      final base = req.assignment!.quotation!.quotedPrice;
+      final extra = (req.assignment!.isExtraApproved &&
+              req.assignment!.extraAmount != null)
+          ? req.assignment!.extraAmount!
+          : 0.0;
+      price = 'LKR ${(base + extra).toStringAsFixed(2)}';
+    } else if (req.quotations.isNotEmpty) {
       final lowest = req.quotations
           .map((q) => q.quotedPrice)
           .reduce((a, b) => a < b ? a : b);
       price = 'From LKR ${lowest.toStringAsFixed(2)}';
+    } else if (req.isCancelled) {
+      price = 'Cancelled';
+    } else if (req.isCompleted) {
+      price = 'Completed';
     } else {
       price = 'Pending Quote';
     }
@@ -187,7 +200,12 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
     if (assignment.payment != null) {
       price = 'LKR ${assignment.payment!.amount.toStringAsFixed(2)}';
     } else if (assignment.quotation != null) {
-      price = 'LKR ${assignment.quotation!.quotedPrice.toStringAsFixed(2)}';
+      final base = assignment.quotation!.quotedPrice;
+      final extra = (assignment.isExtraApproved &&
+              assignment.extraAmount != null)
+          ? assignment.extraAmount!
+          : 0.0;
+      price = 'LKR ${(base + extra).toStringAsFixed(2)}';
     } else {
       price = 'Fixed Rate';
     }
@@ -224,13 +242,27 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
   ) {
     final List<Map<String, dynamic>> list = [];
 
-    // Pending / Unassigned job requests populate Waiting and To Approve tabs
-    for (final req in requests) {
-      if (!req.isAssigned) {
-        list.add(_mapJobRequestToCard(req));
-      } else if (req.isCancelled) {
-        list.add(_mapJobRequestToCard(req));
+    // Collect all request IDs that have already been converted into assignments
+    final assignedRequestIds = <int>{};
+    for (final assignment in assignments) {
+      if (assignment.jobRequestId != null) {
+        assignedRequestIds.add(assignment.jobRequestId!);
       }
+      if (assignment.jobRequest?.id != null) {
+        assignedRequestIds.add(assignment.jobRequest!.id);
+      }
+    }
+
+    // Pending / Unassigned job requests populate Waiting and To Approve tabs (and unassigned Cancelled requests)
+    for (final req in requests) {
+      // If this request already has a corresponding assignment, do not duplicate it
+      if (assignedRequestIds.contains(req.id)) {
+        continue;
+      }
+      if (req.isAssigned) {
+        continue;
+      }
+      list.add(_mapJobRequestToCard(req));
     }
 
     // Assignments populate Ongoing and Completed tabs
