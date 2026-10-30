@@ -20,6 +20,7 @@ import 'package:customer_app/src/domain/entities/properties/property_entity.dart
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
+import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final Map<String, dynamic>? job;
@@ -107,6 +108,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           context,
           'Quotation received from ${quotation.provider?.name ?? 'Provider'} for LKR ${quotation.quotedPrice.toStringAsFixed(2)}!',
         );
+        try {
+          context.read<NotificationCubit>().loadNotifications(showLoading: false);
+        } catch (_) {}
       } else {
         final state = context.read<JobRequestCubit>().state;
         final error = state is JobRequestError
@@ -635,6 +639,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           );
           await cubit.loadAssignments(forceRefresh: true);
           await cubit.loadAssignmentDetails(assignmentId);
+          if (context.mounted) {
+            try {
+              context.read<NotificationCubit>().loadNotifications(showLoading: false);
+            } catch (_) {}
+          }
         } else {
           final state = cubit.state;
           final error = state is JobAssignmentError
@@ -680,6 +689,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           await cubit.loadAssignmentDetails(assignmentId);
           if (context.mounted) {
             context.read<JobRequestCubit>().loadJobRequests(forceRefresh: true);
+            try {
+              context.read<NotificationCubit>().loadNotifications(showLoading: false);
+            } catch (_) {}
           }
         } else {
           final state = cubit.state;
@@ -697,6 +709,55 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       if (mounted) {
         setState(() {
           _isSimulatingCompleteJob = false;
+        });
+      }
+    }
+  }
+
+  bool _isSimulatingStartJob = false;
+
+  Future<void> _simulateStartJob(
+    BuildContext context,
+    int assignmentId,
+  ) async {
+    setState(() {
+      _isSimulatingStartJob = true;
+    });
+    HapticFeedback.mediumImpact();
+    final cubit = context.read<JobAssignmentCubit>();
+    try {
+      final updatedAssignment = await cubit.simulateStartJob(assignmentId);
+
+      if (context.mounted) {
+        if (updatedAssignment != null) {
+          DynamicIslandToast.showSuccess(
+            context,
+            'Job successfully simulated as started!',
+          );
+          await cubit.loadAssignments(forceRefresh: true);
+          await cubit.loadAssignmentDetails(assignmentId);
+          if (context.mounted) {
+            context.read<JobRequestCubit>().loadJobRequests(forceRefresh: true);
+            try {
+              context.read<NotificationCubit>().loadNotifications(showLoading: false);
+            } catch (_) {}
+          }
+        } else {
+          final state = cubit.state;
+          final error = state is JobAssignmentError
+              ? state.message
+              : 'Failed to simulate starting job';
+          DynamicIslandToast.showError(context, error);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        DynamicIslandToast.showError(context, 'Simulation error: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSimulatingStartJob = false;
         });
       }
     }
@@ -1143,6 +1204,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               canCancel: canCancel,
               onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
               onSimulateQuote: _resolvedJobId != null ? _simulateQuote : null,
+              onSimulateStartJob: (activeAssignment != null &&
+                      activeAssignment.status == 'scheduled')
+                  ? () => _simulateStartJob(context, activeAssignment.id)
+                  : null,
               onSimulateExtraQuote: activeAssignment != null
                   ? () => _showChangeQuotationDialog(context, activeAssignment.id)
                   : null,
@@ -1361,6 +1426,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     VoidCallback? onCancel,
     VoidCallback? onDispute,
     VoidCallback? onSimulateQuote,
+    VoidCallback? onSimulateStartJob,
     VoidCallback? onSimulateExtraQuote,
     VoidCallback? onSimulateCompleteJob,
   }) {
@@ -1411,6 +1477,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               if ((canCancel && onCancel != null) ||
                   onDispute != null ||
                   onSimulateQuote != null ||
+                  onSimulateStartJob != null ||
                   onSimulateExtraQuote != null ||
                   onSimulateCompleteJob != null)
                 PopupMenuButton<String>(
@@ -1428,6 +1495,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       onDispute();
                     } else if (value == 'simulate' && onSimulateQuote != null) {
                       onSimulateQuote();
+                    } else if (value == 'simulate_start' &&
+                        onSimulateStartJob != null) {
+                      onSimulateStartJob();
                     } else if (value == 'simulate_extra' &&
                         onSimulateExtraQuote != null) {
                       onSimulateExtraQuote();
@@ -1453,6 +1523,28 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFFD97706),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (onSimulateStartJob != null)
+                      PopupMenuItem(
+                        value: 'simulate_start',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.play_circle_fill_rounded,
+                              color: const Color(0xFF2563EB),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Simulate Start Job (Dev)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF2563EB),
                                 fontSize: 13.sp,
                               ),
                             ),
@@ -3066,16 +3158,18 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             ),
           ),
           SizedBox(height: 12.h),
-          Row(
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
             children: [
-              Expanded(
-                child: SizedBox(
+              if (assignment.status == 'scheduled')
+                SizedBox(
                   height: 42.h,
                   child: ElevatedButton.icon(
-                    onPressed: _isProcessingExtraQuote
+                    onPressed: _isSimulatingStartJob
                         ? null
-                        : () => _showChangeQuotationDialog(context, assignment.id),
-                    icon: _isProcessingExtraQuote
+                        : () => _simulateStartJob(context, assignment.id),
+                    icon: _isSimulatingStartJob
                         ? SizedBox(
                             width: 14.r,
                             height: 14.r,
@@ -3085,12 +3179,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                             ),
                           )
                         : Icon(
-                            Icons.price_change_rounded,
+                            Icons.play_circle_fill_rounded,
                             size: 16.r,
                             color: Colors.white,
                           ),
                     label: Text(
-                      'Change Quote',
+                      'Start Job',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w700,
@@ -3098,58 +3192,93 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD97706),
+                      backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 10.w),
+                      padding: EdgeInsets.symmetric(horizontal: 14.w),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: SizedBox(
-                  height: 42.h,
-                  child: ElevatedButton.icon(
-                    onPressed: (_isSimulatingCompleteJob || isCompleted)
-                        ? null
-                        : () => _simulateCompleteJob(context, assignment.id),
-                    icon: _isSimulatingCompleteJob
-                        ? SizedBox(
-                            width: 14.r,
-                            height: 14.r,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Icon(
-                            isCompleted ? Icons.check_circle_rounded : Icons.task_alt_rounded,
-                            size: 16.r,
+              SizedBox(
+                height: 42.h,
+                child: ElevatedButton.icon(
+                  onPressed: _isProcessingExtraQuote
+                      ? null
+                      : () => _showChangeQuotationDialog(context, assignment.id),
+                  icon: _isProcessingExtraQuote
+                      ? SizedBox(
+                          width: 14.r,
+                          height: 14.r,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
                             color: Colors.white,
                           ),
-                    label: Text(
-                      isCompleted ? 'Completed' : 'Complete Job',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                        )
+                      : Icon(
+                          Icons.price_change_rounded,
+                          size: 16.r,
+                          color: Colors.white,
+                        ),
+                  label: Text(
+                    'Change Quote',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isCompleted
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF16A34A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      padding: EdgeInsets.symmetric(horizontal: 10.w),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  ),
+                ),
+              ),
+              SizedBox(
+                height: 42.h,
+                child: ElevatedButton.icon(
+                  onPressed: (_isSimulatingCompleteJob || isCompleted)
+                      ? null
+                      : () => _simulateCompleteJob(context, assignment.id),
+                  icon: _isSimulatingCompleteJob
+                      ? SizedBox(
+                          width: 14.r,
+                          height: 14.r,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          isCompleted ? Icons.check_circle_rounded : Icons.task_alt_rounded,
+                          size: 16.r,
+                          color: Colors.white,
+                        ),
+                  label: Text(
+                    isCompleted ? 'Completed' : 'Complete Job',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isCompleted
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w),
                   ),
                 ),
               ),

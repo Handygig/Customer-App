@@ -11,6 +11,7 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
   final ApproveExtraChargeUseCase _approveExtraChargeUseCase;
   final RejectExtraChargeUseCase _rejectExtraChargeUseCase;
   final SimulateExtraQuoteUseCase _simulateExtraQuoteUseCase;
+  final SimulateStartJobUseCase _simulateStartJobUseCase;
   final SimulateCompleteJobUseCase _simulateCompleteJobUseCase;
 
   List<JobAssignmentEntity> _cachedAssignments = const [];
@@ -24,6 +25,7 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
     this._approveExtraChargeUseCase,
     this._rejectExtraChargeUseCase,
     this._simulateExtraQuoteUseCase,
+    this._simulateStartJobUseCase,
     this._simulateCompleteJobUseCase,
   ) : super(const JobAssignmentInitial());
 
@@ -303,6 +305,44 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
 
         emit(JobAssignmentActionSuccess(
           message: 'Updated quotation simulated from provider!',
+          assignments: List.unmodifiable(_cachedAssignments),
+          selectedAssignment: _selectedAssignment,
+        ));
+
+        emit(JobAssignmentLoaded(
+          List.unmodifiable(_cachedAssignments),
+          selectedAssignment: _selectedAssignment,
+        ));
+        return assignment;
+      },
+    );
+  }
+
+  Future<JobAssignmentEntity?> simulateStartJob(int assignmentId) async {
+    emit(JobAssignmentActionInProgress(
+      _cachedAssignments,
+      selectedAssignment: _selectedAssignment,
+    ));
+
+    final result = await _simulateStartJobUseCase(assignmentId);
+
+    return result.fold(
+      (failure) {
+        emit(JobAssignmentError(
+          failure.errorMessage,
+          currentAssignments: _cachedAssignments,
+          selectedAssignment: _selectedAssignment,
+        ));
+        return null;
+      },
+      (assignment) {
+        _selectedAssignment = assignment;
+        _cachedAssignments = _cachedAssignments.map((a) {
+          return a.id == assignmentId ? assignment : a;
+        }).toList();
+
+        emit(JobAssignmentActionSuccess(
+          message: 'Job started simulated successfully!',
           assignments: List.unmodifiable(_cachedAssignments),
           selectedAssignment: _selectedAssignment,
         ));

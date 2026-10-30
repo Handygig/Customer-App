@@ -23,5 +23,6 @@ abstract class JobAssignmentRepository {
     double? extraAmount,
     String? extraReason,
   });
+  Future<Either<Failure, JobAssignmentEntity>> simulateStartJob(int assignmentId);
   Future<Either<Failure, JobAssignmentEntity>> simulateCompleteJob(int assignmentId);
 }

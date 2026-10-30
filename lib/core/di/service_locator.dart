@@ -285,6 +285,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<SimulateExtraQuoteUseCase>(
     () => SimulateExtraQuoteUseCase(sl<JobAssignmentRepository>()),
   );
+  sl.registerLazySingleton<SimulateStartJobUseCase>(
+    () => SimulateStartJobUseCase(sl<JobAssignmentRepository>()),
+  );
   sl.registerLazySingleton<SimulateCompleteJobUseCase>(
     () => SimulateCompleteJobUseCase(sl<JobAssignmentRepository>()),
   );
@@ -361,6 +364,7 @@ Future<void> initServiceLocator() async {
       sl<ApproveExtraChargeUseCase>(),
       sl<RejectExtraChargeUseCase>(),
       sl<SimulateExtraQuoteUseCase>(),
+      sl<SimulateStartJobUseCase>(),
       sl<SimulateCompleteJobUseCase>(),
     ),
   );

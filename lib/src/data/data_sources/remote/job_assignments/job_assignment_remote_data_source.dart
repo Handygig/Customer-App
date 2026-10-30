@@ -21,5 +21,6 @@ abstract class JobAssignmentRemoteDataSource {
     double? extraAmount,
     String? extraReason,
   });
+  Future<JobAssignmentModel> simulateStartJob(int assignmentId);
   Future<JobAssignmentModel> simulateCompleteJob(int assignmentId);
 }

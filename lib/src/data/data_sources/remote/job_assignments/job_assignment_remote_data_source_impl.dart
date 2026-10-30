@@ -203,6 +203,32 @@ class JobAssignmentRemoteDataSourceImpl
   }
 
   @override
+  Future<JobAssignmentModel> simulateStartJob(int assignmentId) async {
+    try {
+      final response = await _dio.post(
+        AppEndpoints.customerJobAssignmentSimulateStartJob(assignmentId),
+      );
+      final rawData = response.data;
+      final Map<String, dynamic> itemJson;
+
+      if (rawData is Map && rawData['data'] is Map) {
+        itemJson = Map<String, dynamic>.from(rawData['data'] as Map);
+      } else if (rawData is Map) {
+        itemJson = Map<String, dynamic>.from(rawData);
+      } else {
+        return await getJobAssignment(assignmentId);
+      }
+
+      return JobAssignmentModel.fromJson(itemJson);
+    } on DioException catch (error) {
+      throw AuthException(_extractErrorMessage(error));
+    } catch (error) {
+      if (error is AuthException) rethrow;
+      throw AuthException('Failed to simulate starting job: $error');
+    }
+  }
+
+  @override
   Future<JobAssignmentModel> simulateCompleteJob(int assignmentId) async {
     try {
       final response = await _dio.post(

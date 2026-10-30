@@ -173,6 +173,27 @@ class JobAssignmentRepositoryImpl implements JobAssignmentRepository {
   }
 
   @override
+  Future<Either<Failure, JobAssignmentEntity>> simulateStartJob(
+      int assignmentId) async {
+    try {
+      if (!await _networkService.isConnected()) {
+        return const Left(
+            NetworkFailure(errorMessage: 'No internet connection detected.'));
+      }
+      final assignment =
+          await _remoteDataSource.simulateStartJob(assignmentId);
+      return Right(assignment);
+    } on AuthException catch (e) {
+      return Left(APIFailure(errorMessage: e.message));
+    } catch (e, stackTrace) {
+      debugPrint(
+          '⚠️ [JobAssignmentRepositoryImpl.simulateStartJob] Error: $e');
+      return Left(
+          APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
   Future<Either<Failure, JobAssignmentEntity>> simulateCompleteJob(
       int assignmentId) async {
     try {

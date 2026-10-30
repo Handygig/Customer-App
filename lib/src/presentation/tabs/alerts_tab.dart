@@ -71,6 +71,7 @@ class _AlertsTabState extends State<AlertsTab> {
         break;
       case 'job':
       case 'booking':
+      case 'quotation':
         widget.onNavigateTab?.call(1); // Go to Jobs tab
         break;
       case 'reward':

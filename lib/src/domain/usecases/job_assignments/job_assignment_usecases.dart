@@ -97,6 +97,16 @@ class SimulateExtraQuoteUseCase {
   }
 }
 
+class SimulateStartJobUseCase {
+  final JobAssignmentRepository _repository;
+
+  SimulateStartJobUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.simulateStartJob(assignmentId);
+  }
+}
+
 class SimulateCompleteJobUseCase {
   final JobAssignmentRepository _repository;
 
