@@ -58,3 +58,33 @@ class SubmitDisputeUseCase {
     );
   }
 }
+
+class ApproveExtraChargeUseCase {
+  final JobAssignmentRepository _repository;
+
+  ApproveExtraChargeUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.approveExtraCharge(assignmentId);
+  }
+}
+
+class RejectExtraChargeUseCase {
+  final JobAssignmentRepository _repository;
+
+  RejectExtraChargeUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.rejectExtraCharge(assignmentId);
+  }
+}
+
+class SimulateExtraQuoteUseCase {
+  final JobAssignmentRepository _repository;
+
+  SimulateExtraQuoteUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.simulateExtraQuote(assignmentId);
+  }
+}

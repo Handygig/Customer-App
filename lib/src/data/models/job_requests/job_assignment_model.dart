@@ -18,6 +18,9 @@ class JobAssignmentModel extends JobAssignmentEntity {
     super.jobRequest,
     super.payment,
     super.quotation,
+    super.extraAmount,
+    super.extraReason,
+    super.extraStatus = 'none',
     super.hasReviewed,
     super.hasDispute,
   });
@@ -57,6 +60,9 @@ class JobAssignmentModel extends JobAssignmentEntity {
       quotation: quotationJson != null
           ? QuotationModel.fromJson(quotationJson)
           : null,
+      extraAmount: _asNullableDouble(json['extra_amount'] ?? json['extraAmount']),
+      extraReason: (json['extra_reason'] ?? json['extraReason'])?.toString(),
+      extraStatus: (json['extra_status'] ?? json['extraStatus'] ?? 'none').toString(),
       hasReviewed: json['has_reviewed'] == true,
       hasDispute: json['has_dispute'] == true,
     );
@@ -89,7 +95,16 @@ class JobAssignmentModel extends JobAssignmentEntity {
           : null,
       'has_reviewed': hasReviewed,
       'has_dispute': hasDispute,
+      'extra_amount': extraAmount,
+      'extra_reason': extraReason,
+      'extra_status': extraStatus,
     };
+  }
+
+  static double? _asNullableDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
   }
 
   static int _asInt(dynamic value) {

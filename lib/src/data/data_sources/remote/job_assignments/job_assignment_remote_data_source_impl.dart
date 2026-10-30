@@ -133,6 +133,62 @@ class JobAssignmentRemoteDataSourceImpl
     }
   }
 
+  @override
+  Future<JobAssignmentModel> approveExtraCharge(int assignmentId) async {
+    try {
+      await _dio.post(
+        AppEndpoints.customerJobAssignmentApproveExtra(assignmentId),
+      );
+      return await getJobAssignment(assignmentId);
+    } on DioException catch (error) {
+      throw AuthException(_extractErrorMessage(error));
+    } catch (error) {
+      if (error is AuthException) rethrow;
+      throw AuthException('Failed to approve updated quotation: $error');
+    }
+  }
+
+  @override
+  Future<JobAssignmentModel> rejectExtraCharge(int assignmentId) async {
+    try {
+      await _dio.post(
+        AppEndpoints.customerJobAssignmentRejectExtra(assignmentId),
+      );
+      return await getJobAssignment(assignmentId);
+    } on DioException catch (error) {
+      throw AuthException(_extractErrorMessage(error));
+    } catch (error) {
+      if (error is AuthException) rethrow;
+      throw AuthException('Failed to decline updated quotation: $error');
+    }
+  }
+
+  @override
+  Future<JobAssignmentModel> simulateExtraQuote(int assignmentId) async {
+    try {
+      final response = await _dio.post(
+        AppEndpoints.customerJobAssignmentSimulateExtraQuote(assignmentId),
+      );
+      final rawData = response.data;
+      final Map<String, dynamic> itemJson;
+
+      if (rawData is Map && rawData['data'] is Map) {
+        itemJson = Map<String, dynamic>.from(rawData['data'] as Map);
+      } else if (rawData is Map) {
+        itemJson = Map<String, dynamic>.from(rawData);
+      } else {
+        return await getJobAssignment(assignmentId);
+      }
+
+      return JobAssignmentModel.fromJson(itemJson);
+    } on DioException catch (error) {
+      throw AuthException(_extractErrorMessage(error));
+    } catch (error) {
+      if (error is AuthException) rethrow;
+      throw AuthException('Failed to simulate updated quotation: $error');
+    }
+  }
+
   String _extractErrorMessage(DioException error) {
     final data = error.response?.data;
     if (data is Map) {

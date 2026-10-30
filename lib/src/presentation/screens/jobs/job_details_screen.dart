@@ -16,6 +16,9 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
+import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class JobDetailsScreen extends StatefulWidget {
@@ -281,6 +284,371 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     }
   }
 
+  bool _isProcessingExtraQuote = false;
+
+  Future<void> _confirmApproveExtraQuote(
+    BuildContext context,
+    JobAssignmentEntity assignment,
+  ) async {
+    final extraAmount = assignment.extraAmount ?? 0.0;
+    final originalPrice = assignment.quotation?.quotedPrice ?? 0.0;
+    final totalEffective = assignment.totalEffectivePrice > 0
+        ? assignment.totalEffectivePrice
+        : (originalPrice + extraAmount);
+
+    HapticFeedback.mediumImpact();
+    final shouldApprove = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: const BoxDecoration(
+                color: Color(0xFFDCFCE7),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: const Color(0xFF16A34A),
+                size: 20.r,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'Approve Updated Quote?',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17.sp,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'The service provider has submitted an updated quotation with additional scope/materials:',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13.sp,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12.r),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (assignment.extraReason != null &&
+                      assignment.extraReason!.trim().isNotEmpty) ...[
+                    Text(
+                      'Reason for update:',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      '"${assignment.extraReason!}"',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.primaryDark,
+                      ),
+                    ),
+                    SizedBox(height: 10.h),
+                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                    SizedBox(height: 10.h),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Additional Charge:',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        '+ LKR ${extraAmount.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFD97706),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'New Total Amount:',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                      Text(
+                        'LKR ${totalEffective.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: Text(
+              'Approve Update',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldApprove == true && context.mounted) {
+      setState(() {
+        _isProcessingExtraQuote = true;
+      });
+      HapticFeedback.mediumImpact();
+      final cubit = context.read<JobAssignmentCubit>();
+      try {
+        final success = await cubit.approveExtraCharge(assignment.id);
+
+        if (context.mounted) {
+          if (success) {
+            DynamicIslandToast.showSuccess(
+              context,
+              'Updated quotation of +LKR ${extraAmount.toStringAsFixed(2)} approved!',
+            );
+            await cubit.loadAssignments(forceRefresh: true);
+            await cubit.loadAssignmentDetails(assignment.id);
+          } else {
+            final state = cubit.state;
+            final error = state is JobAssignmentError
+                ? state.message
+                : 'Failed to approve updated quotation';
+            DynamicIslandToast.showError(context, error);
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          DynamicIslandToast.showError(context, 'Approval failed: $e');
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isProcessingExtraQuote = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _confirmRejectExtraQuote(
+    BuildContext context,
+    JobAssignmentEntity assignment,
+  ) async {
+    final extraAmount = assignment.extraAmount ?? 0.0;
+    HapticFeedback.mediumImpact();
+    final shouldReject = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFEE2E2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                color: const Color(0xFFDC2626),
+                size: 20.r,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'Decline Updated Quote?',
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17.sp,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to decline this updated quotation request (+LKR ${extraAmount.toStringAsFixed(2)})?\n\nThe provider will be notified to proceed strictly with the original agreed work scope.',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13.5.sp,
+            color: AppColors.textSecondary,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: Text(
+              'Back',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: Text(
+              'Yes, Decline',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldReject == true && context.mounted) {
+      setState(() {
+        _isProcessingExtraQuote = true;
+      });
+      HapticFeedback.mediumImpact();
+      final cubit = context.read<JobAssignmentCubit>();
+      try {
+        final success = await cubit.rejectExtraCharge(assignment.id);
+
+        if (context.mounted) {
+          if (success) {
+            DynamicIslandToast.showInfo(
+              context,
+              'Updated quotation request declined.',
+            );
+            await cubit.loadAssignments(forceRefresh: true);
+            await cubit.loadAssignmentDetails(assignment.id);
+          } else {
+            final state = cubit.state;
+            final error = state is JobAssignmentError
+                ? state.message
+                : 'Failed to decline updated quotation';
+            DynamicIslandToast.showError(context, error);
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          DynamicIslandToast.showError(context, 'Decline failed: $e');
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isProcessingExtraQuote = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _simulateExtraQuote(
+    BuildContext context,
+    int assignmentId,
+  ) async {
+    setState(() {
+      _isProcessingExtraQuote = true;
+    });
+    HapticFeedback.mediumImpact();
+    final cubit = context.read<JobAssignmentCubit>();
+    try {
+      final updatedAssignment = await cubit.simulateExtraQuote(assignmentId);
+
+      if (context.mounted) {
+        if (updatedAssignment != null) {
+          DynamicIslandToast.showSuccess(
+            context,
+            'Provider sent updated quotation of +LKR 2,500.00!',
+          );
+          await cubit.loadAssignments(forceRefresh: true);
+          await cubit.loadAssignmentDetails(assignmentId);
+        } else {
+          final state = cubit.state;
+          final error = state is JobAssignmentError
+                ? state.message
+                : 'Failed to simulate updated quote';
+          DynamicIslandToast.showError(context, error);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        DynamicIslandToast.showError(context, 'Simulation error: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessingExtraQuote = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final jobCubit = context.watch<JobRequestCubit>();
@@ -289,7 +657,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     final activeAssignment = (_resolvedAssignmentId != null &&
             assignmentCubit.selectedAssignment?.id == _resolvedAssignmentId)
         ? assignmentCubit.selectedAssignment
-        : widget.jobAssignment;
+        : (assignmentCubit.currentAssignments
+                .any((a) => a.id == _resolvedAssignmentId)
+            ? assignmentCubit.currentAssignments
+                .firstWhere((a) => a.id == _resolvedAssignmentId)
+            : widget.jobAssignment);
 
     final activeRequest = (_resolvedJobId != null &&
             jobCubit.selectedJobRequest?.id == _resolvedJobId)
@@ -321,10 +693,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ? activeAssignment.jobRequest!.description
               : (widget.job?['service'] as String? ?? 'Service Assignment'));
       descriptionText = activeAssignment.jobRequest?.description ?? '';
-      property = activeAssignment.jobRequest?.property?.label.isNotEmpty == true
-          ? '${activeAssignment.jobRequest!.property!.label} • ${activeAssignment.jobRequest!.property!.fullAddress}'
-          : (activeAssignment.jobRequest?.property?.fullAddress ??
-              (widget.job?['property'] as String? ?? 'Service Location'));
+      final assignLocMatch =
+          RegExp(r'\(Location:\s*([^)]+)\)', caseSensitive: false)
+              .firstMatch(descriptionText);
+      final String? assignExtractedLoc = assignLocMatch?.group(1)?.trim();
+      final assignProp = activeAssignment.jobRequest?.property;
+      if (assignProp != null && assignProp.fullAddress.isNotEmpty) {
+        property = assignProp.label.isNotEmpty
+            ? '${assignProp.label} • ${assignProp.fullAddress}'
+            : assignProp.fullAddress;
+      } else if (assignExtractedLoc != null && assignExtractedLoc.isNotEmpty) {
+        property = assignExtractedLoc;
+      } else if (assignProp?.label.isNotEmpty == true) {
+        property = assignProp!.label;
+      } else {
+        property = widget.job?['property'] as String? ?? 'Service Location';
+      }
       providerName = activeAssignment.providerName ??
           (activeAssignment.companyName ??
               (widget.job?['provider'] as String? ?? 'Assigned Professional'));
@@ -371,9 +755,22 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ? activeRequest.description
               : 'Service Details');
       descriptionText = activeRequest.description;
-      property = activeRequest.property?.label.isNotEmpty == true
-          ? '${activeRequest.property!.label} • ${activeRequest.property!.fullAddress}'
-          : (activeRequest.property?.fullAddress ?? 'Primary Location');
+      final reqLocMatch =
+          RegExp(r'\(Location:\s*([^)]+)\)', caseSensitive: false)
+              .firstMatch(descriptionText);
+      final String? reqExtractedLoc = reqLocMatch?.group(1)?.trim();
+      final reqProp = activeRequest.property;
+      if (reqProp != null && reqProp.fullAddress.isNotEmpty) {
+        property = reqProp.label.isNotEmpty
+            ? '${reqProp.label} • ${reqProp.fullAddress}'
+            : reqProp.fullAddress;
+      } else if (reqExtractedLoc != null && reqExtractedLoc.isNotEmpty) {
+        property = reqExtractedLoc;
+      } else if (reqProp?.label.isNotEmpty == true) {
+        property = reqProp!.label;
+      } else {
+        property = widget.job?['property'] as String? ?? 'Primary Location';
+      }
       providerName = activeRequest.assignment?.providerName ??
           (quotations.isNotEmpty
               ? (quotations.first.provider?.name ?? 'Assigned Professional')
@@ -449,6 +846,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     final bool canCancel = activeRequest?.canCancel ??
         (type == 'waiting' || status == 'Pending' || status == 'Waiting');
 
+    final PropertyEntity? resolvedProperty =
+        activeAssignment?.jobRequest?.property ?? activeRequest?.property;
+    final locMatch = RegExp(r'\(Location:\s*([^)]+)\)', caseSensitive: false)
+        .firstMatch(descriptionText);
+    final String? resolvedCustomAddress = locMatch?.group(1)?.trim();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
@@ -467,6 +870,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               canCancel: canCancel,
               onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
               onSimulateQuote: _resolvedJobId != null ? _simulateQuote : null,
+              onSimulateExtraQuote: activeAssignment != null
+                  ? () => _simulateExtraQuote(context, activeAssignment.id)
+                  : null,
               onDispute: (activeAssignment != null &&
                       activeAssignment.hasDispute != true)
                   ? () => _showDisputeModal(
@@ -557,6 +963,20 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       _buildProgressTimeline(type),
                       SizedBox(height: 20.h),
 
+                      // Updated Quotation Decision / Status Card
+                      if (activeAssignment != null &&
+                          (activeAssignment.hasPendingExtraQuote ||
+                              activeAssignment.hasApprovedExtraQuote ||
+                              activeAssignment.hasRejectedExtraQuote)) ...[
+                        _buildUpdatedQuotationSection(
+                          context,
+                          activeAssignment,
+                          originalPrice: activeAssignment.quotation?.quotedPrice ??
+                              (double.tryParse(price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0),
+                        ),
+                        SizedBox(height: 20.h),
+                      ],
+
                       // Provider Details Section
                       _buildProviderDetailsSection(
                         context,
@@ -589,7 +1009,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       SizedBox(height: 20.h),
 
                       // Location & Property Details
-                      _buildLocationCard(property),
+                      _buildLocationCard(
+                        context,
+                        property: property,
+                        propertyEntity: resolvedProperty,
+                        customAddress: resolvedCustomAddress,
+                        job: widget.job,
+                      ),
                       SizedBox(height: 20.h),
 
                       // Dispute Section (for assignments when no active dispute yet)
@@ -652,6 +1078,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     VoidCallback? onCancel,
     VoidCallback? onDispute,
     VoidCallback? onSimulateQuote,
+    VoidCallback? onSimulateExtraQuote,
   }) {
     return Container(
       width: double.infinity,
@@ -699,7 +1126,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ),
               if ((canCancel && onCancel != null) ||
                   onDispute != null ||
-                  onSimulateQuote != null)
+                  onSimulateQuote != null ||
+                  onSimulateExtraQuote != null)
                 PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.more_vert_rounded,
@@ -715,6 +1143,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       onDispute();
                     } else if (value == 'simulate' && onSimulateQuote != null) {
                       onSimulateQuote();
+                    } else if (value == 'simulate_extra' &&
+                        onSimulateExtraQuote != null) {
+                      onSimulateExtraQuote();
                     }
                   },
                   itemBuilder: (context) => [
@@ -731,6 +1162,28 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                             SizedBox(width: 10.w),
                             Text(
                               'Simulate Quote (Dev)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFD97706),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (onSimulateExtraQuote != null)
+                      PopupMenuItem(
+                        value: 'simulate_extra',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.auto_fix_high_rounded,
+                              color: const Color(0xFFD97706),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Simulate Updated Quote (Dev)',
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFFD97706),
@@ -1809,6 +2262,425 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
+  Widget _buildUpdatedQuotationSection(
+    BuildContext context,
+    JobAssignmentEntity assignment, {
+    required double originalPrice,
+  }) {
+    if (assignment.hasApprovedExtraQuote) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(18.r),
+          border: Border.all(color: const Color(0xFF86EFAC), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF16A34A).withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(8.r),
+              decoration: const BoxDecoration(
+                color: Color(0xFFDCFCE7),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: const Color(0xFF16A34A),
+                size: 20.r,
+              ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Updated Quotation Approved',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 3.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          '+ LKR ${(assignment.extraAmount ?? 0.0).toStringAsFixed(2)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    assignment.extraReason?.isNotEmpty == true
+                        ? '"${assignment.extraReason!}"'
+                        : 'Additional scope accepted and reflected in final billing.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      color: const Color(0xFF166534),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (assignment.hasRejectedExtraQuote) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              color: const Color(0xFF64748B),
+              size: 20.r,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                'Updated quotation request declined. Provider was instructed to proceed with original scope.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.5.sp,
+                  color: const Color(0xFF475569),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!assignment.hasPendingExtraQuote) {
+      return const SizedBox.shrink();
+    }
+
+    final double extra = assignment.extraAmount ?? 0.0;
+    final double safeOriginal =
+        originalPrice > 0 ? originalPrice : (assignment.totalEffectivePrice - extra);
+    final double newTotal = safeOriginal + extra;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(18.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFDF5),
+        borderRadius: BorderRadius.circular(22.r),
+        border: Border.all(color: const Color(0xFFF59E0B), width: 1.6),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD97706).withValues(alpha: 0.12),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36.r,
+                height: 36.r,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.request_quote_rounded,
+                    color: const Color(0xFFB45309),
+                    size: 20.r,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Updated Quotation Received',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF78350F),
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+                    Text(
+                      'Provider updated quote during the job',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF92400E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDE68A),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: const Color(0xFFF59E0B), width: 0.8),
+                ),
+                child: Text(
+                  'APPROVAL NEEDED',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF78350F),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+
+          // Provider Reason Box
+          if (assignment.extraReason?.isNotEmpty == true) ...[
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(12.r),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.format_quote_rounded,
+                    color: const Color(0xFFD97706),
+                    size: 18.r,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      assignment.extraReason!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF451A03),
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 14.h),
+          ],
+
+          // Cost Breakdown Card
+          Container(
+            padding: EdgeInsets.all(14.r),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEF3C7).withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: const Color(0xFFFCD34D)),
+            ),
+            child: Column(
+              children: [
+                if (safeOriginal > 0) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Original Quote',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          color: const Color(0xFF78350F),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        'LKR ${safeOriginal.toStringAsFixed(2)}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13.sp,
+                          color: const Color(0xFF78350F),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6.h),
+                ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Additional Scope / Parts',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        color: const Color(0xFFB45309),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      '+ LKR ${extra.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        color: const Color(0xFFB45309),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                const Divider(height: 1, color: Color(0xFFF59E0B)),
+                SizedBox(height: 8.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Revised Total',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF451A03),
+                      ),
+                    ),
+                    Text(
+                      'LKR ${newTotal.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 17.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF451A03),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 16.h),
+
+          // Action Buttons: Decline & Approve
+          Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: SizedBox(
+                  height: 44.h,
+                  child: OutlinedButton.icon(
+                    onPressed: _isProcessingExtraQuote
+                        ? null
+                        : () => _confirmRejectExtraQuote(context, assignment),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.2),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: 16.r,
+                      color: const Color(0xFFDC2626),
+                    ),
+                    label: Text(
+                      'Decline',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFDC2626),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                flex: 6,
+                child: SizedBox(
+                  height: 44.h,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessingExtraQuote
+                        ? null
+                        : () => _confirmApproveExtraQuote(context, assignment),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    icon: _isProcessingExtraQuote
+                        ? SizedBox(
+                            width: 16.r,
+                            height: 16.r,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.check_circle_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                    label: Text(
+                      _isProcessingExtraQuote ? 'Processing...' : 'Approve Quote',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPriceBreakdownSection(
     String priceStr,
     String type, {
@@ -1821,8 +2693,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       basePrice = double.tryParse(clean) ?? 120.0;
     } catch (_) {}
 
-    final double tax = basePrice * 0.08;
-    final double total = basePrice + tax;
+    final double extraCharge = (assignment?.hasApprovedExtraQuote == true)
+        ? (assignment?.extraAmount ?? 0.0)
+        : 0.0;
+    final double subtotal = basePrice + extraCharge;
+    final double tax = subtotal * 0.08;
+    final double total = subtotal + tax;
 
     return Container(
       width: double.infinity,
@@ -1855,6 +2731,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             'Base Service Rate',
             'LKR ${basePrice.toStringAsFixed(2)}',
           ),
+          if (assignment?.hasApprovedExtraQuote == true && extraCharge > 0) ...[
+            SizedBox(height: 10.h),
+            _buildPriceRow(
+              'Approved Extra Quotation',
+              '+ LKR ${extraCharge.toStringAsFixed(2)}',
+              valueColor: const Color(0xFF16A34A),
+            ),
+          ],
           SizedBox(height: 10.h),
           _buildPriceRow('Service & Safety Fee', 'LKR 5.00'),
           SizedBox(height: 10.h),
@@ -1963,7 +2847,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
-  Widget _buildPriceRow(String label, String amount) {
+  Widget _buildPriceRow(String label, String amount, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1979,7 +2863,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           amount,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.5.sp,
-            color: AppColors.primaryDark,
+            color: valueColor ?? AppColors.primaryDark,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -1987,7 +2871,51 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     );
   }
 
-  Widget _buildLocationCard(String property) {
+  Widget _buildLocationCard(
+    BuildContext context, {
+    required String property,
+    PropertyEntity? propertyEntity,
+    String? customAddress,
+    Map<String, dynamic>? job,
+  }) {
+    final isCustomLocation = (propertyEntity == null &&
+            customAddress != null &&
+            customAddress.isNotEmpty) ||
+        (propertyEntity == null &&
+            property.isNotEmpty &&
+            property != 'Primary Location' &&
+            property != 'Service Location');
+
+    final locationTitle = propertyEntity?.label.trim().isNotEmpty == true
+        ? propertyEntity!.label.trim()
+        : (isCustomLocation ? 'Current / Pinned Location' : 'Primary Location');
+
+    final fullAddress = propertyEntity?.fullAddress.trim().isNotEmpty == true
+        ? propertyEntity!.fullAddress.trim()
+        : (customAddress != null && customAddress.isNotEmpty
+            ? customAddress
+            : (property.isNotEmpty &&
+                    property != 'Primary Location' &&
+                    property != 'Service Location'
+                ? property
+                : 'Service location confirmed via GPS pin'));
+
+    final cityText = propertyEntity?.city.isNotEmpty == true
+        ? propertyEntity!.city
+        : (customAddress != null && customAddress.contains(',')
+            ? customAddress.split(',').first.trim()
+            : (fullAddress.contains(',')
+                ? fullAddress.split(',').first.trim()
+                : 'Colombo, Western Province'));
+
+    final streetText = propertyEntity?.addressLine.isNotEmpty == true
+        ? propertyEntity!.addressLine
+        : (isCustomLocation ? 'GPS Pinned / Real-Time Location' : null);
+
+    final double? latitude = propertyEntity?.latitude;
+    final double? longitude = propertyEntity?.longitude;
+    final hasCoords = latitude != null && longitude != null;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.r),
@@ -2006,29 +2934,77 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Service Address',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 15.5.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primaryDark,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Service Address',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryDark,
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: isCustomLocation
+                      ? const Color(0xFFEFF6FF)
+                      : const Color(0xFFF3F6E6),
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(
+                    color: isCustomLocation
+                        ? const Color(0xFFBFDBFE)
+                        : const Color(0xFFD6E3B5),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isCustomLocation
+                          ? Icons.my_location_rounded
+                          : Icons.home_work_rounded,
+                      size: 12.r,
+                      color: isCustomLocation
+                          ? const Color(0xFF2563EB)
+                          : AppColors.primaryDark,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      isCustomLocation ? 'GPS Location' : 'Saved Property',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w700,
+                        color: isCustomLocation
+                            ? const Color(0xFF2563EB)
+                            : AppColors.primaryDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           SizedBox(height: 14.h),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 40.r,
-                height: 40.r,
+                width: 42.r,
+                height: 42.r,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F6E6),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Center(
                   child: Icon(
-                    Icons.location_on_rounded,
+                    isCustomLocation
+                        ? Icons.location_on_rounded
+                        : Icons.location_city_rounded,
                     color: AppColors.primaryDark,
-                    size: 20.r,
+                    size: 22.r,
                   ),
                 ),
               ),
@@ -2038,19 +3014,21 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      property,
+                      locationTitle,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14.5.sp,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
                         color: AppColors.primaryDark,
                       ),
                     ),
-                    SizedBox(height: 2.h),
+                    SizedBox(height: 3.h),
                     Text(
-                      'Access Code / Gate Note: Ring Doorbell',
+                      fullAddress,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12.sp,
-                        color: AppColors.textMuted,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF374151),
+                        height: 1.35,
                       ),
                     ),
                   ],
@@ -2058,7 +3036,259 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               ),
             ],
           ),
+          SizedBox(height: 14.h),
+          Container(
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: const Color(0xFFF0F1EA)),
+            ),
+            child: Column(
+              children: [
+                _buildAddressDetailRow(
+                  icon: Icons.map_outlined,
+                  label: 'Area / City',
+                  value: cityText,
+                ),
+                if (streetText != null) ...[
+                  SizedBox(height: 8.h),
+                  _buildAddressDetailRow(
+                    icon: Icons.signpost_outlined,
+                    label: 'Street / Note',
+                    value: streetText,
+                  ),
+                ],
+                if (hasCoords) ...[
+                  SizedBox(height: 8.h),
+                  _buildAddressDetailRow(
+                    icon: Icons.explore_outlined,
+                    label: 'Coordinates',
+                    value:
+                        '${latitude.toStringAsFixed(4)}° N, ${longitude.toStringAsFixed(4)}° E',
+                  ),
+                ],
+                SizedBox(height: 8.h),
+                _buildAddressDetailRow(
+                  icon: Icons.doorbell_outlined,
+                  label: 'Access Note',
+                  value: 'Ring Doorbell / Call upon arrival',
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    Clipboard.setData(ClipboardData(text: fullAddress));
+                    DynamicIslandToast.showSuccess(
+                      context,
+                      'Address copied to clipboard',
+                    );
+                  },
+                  icon: Icon(Icons.copy_rounded, size: 14.r),
+                  label: Text(
+                    'Copy Address',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    padding: EdgeInsets.symmetric(vertical: 9.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _showLocationMapModal(
+                      context,
+                      title: locationTitle,
+                      address: fullAddress,
+                      latitude: latitude,
+                      longitude: longitude,
+                    );
+                  },
+                  icon: Icon(Icons.map_rounded, size: 14.r),
+                  label: Text(
+                    'View on Map',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryDark,
+                    padding: EdgeInsets.symmetric(vertical: 9.h),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAddressDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 14.r, color: AppColors.textMuted),
+        SizedBox(width: 8.w),
+        Text(
+          '$label: ',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 11.5.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textMuted,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11.5.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryDark,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showLocationMapModal(
+    BuildContext context, {
+    required String title,
+    required String address,
+    double? latitude,
+    double? longitude,
+  }) async {
+    HapticFeedback.lightImpact();
+    double targetLat = latitude ?? 6.9271;
+    double targetLng = longitude ?? 79.8612;
+
+    if (latitude == null && address.isNotEmpty) {
+      try {
+        final locs = await Geocoding().locationFromAddress(address);
+        if (locs.isNotEmpty) {
+          targetLat = locs.first.latitude;
+          targetLng = locs.first.longitude;
+        }
+      } catch (_) {}
+    }
+
+    if (!context.mounted) return;
+
+    final targetPos = LatLng(targetLat, targetLng);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        height: 480.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: Column(
+          children: [
+            SizedBox(height: 12.h),
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primaryDark,
+                          ),
+                        ),
+                        SizedBox(height: 2.h),
+                        Text(
+                          address,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.r),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
+                  child: GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: targetPos,
+                      zoom: 15.0,
+                    ),
+                    markers: {
+                      Marker(
+                        markerId: const MarkerId('service_location'),
+                        position: targetPos,
+                        infoWindow: InfoWindow(
+                          title: title,
+                          snippet: address,
+                        ),
+                      ),
+                    },
+                    zoomControlsEnabled: true,
+                    myLocationButtonEnabled: false,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

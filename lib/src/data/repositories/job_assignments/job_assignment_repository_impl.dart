@@ -103,4 +103,66 @@ class JobAssignmentRepositoryImpl implements JobAssignmentRepository {
           APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
     }
   }
+
+  @override
+  Future<Either<Failure, JobAssignmentEntity>> approveExtraCharge(
+      int assignmentId) async {
+    try {
+      if (!await _networkService.isConnected()) {
+        return const Left(
+            NetworkFailure(errorMessage: 'No internet connection detected.'));
+      }
+      final assignment =
+          await _remoteDataSource.approveExtraCharge(assignmentId);
+      return Right(assignment);
+    } on AuthException catch (e) {
+      return Left(APIFailure(errorMessage: e.message));
+    } catch (e, stackTrace) {
+      debugPrint(
+          '⚠️ [JobAssignmentRepositoryImpl.approveExtraCharge] Error: $e');
+      return Left(
+          APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, JobAssignmentEntity>> rejectExtraCharge(
+      int assignmentId) async {
+    try {
+      if (!await _networkService.isConnected()) {
+        return const Left(
+            NetworkFailure(errorMessage: 'No internet connection detected.'));
+      }
+      final assignment =
+          await _remoteDataSource.rejectExtraCharge(assignmentId);
+      return Right(assignment);
+    } on AuthException catch (e) {
+      return Left(APIFailure(errorMessage: e.message));
+    } catch (e, stackTrace) {
+      debugPrint('⚠️ [JobAssignmentRepositoryImpl.rejectExtraCharge] Error: $e');
+      return Left(
+          APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, JobAssignmentEntity>> simulateExtraQuote(
+      int assignmentId) async {
+    try {
+      if (!await _networkService.isConnected()) {
+        return const Left(
+            NetworkFailure(errorMessage: 'No internet connection detected.'));
+      }
+      final assignment =
+          await _remoteDataSource.simulateExtraQuote(assignmentId);
+      return Right(assignment);
+    } on AuthException catch (e) {
+      return Left(APIFailure(errorMessage: e.message));
+    } catch (e, stackTrace) {
+      debugPrint(
+          '⚠️ [JobAssignmentRepositoryImpl.simulateExtraQuote] Error: $e');
+      return Left(
+          APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
 }

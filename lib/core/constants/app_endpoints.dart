@@ -70,6 +70,12 @@ class AppEndpoints {
   static String customerJobAssignment(int id) => '/customer/job-assignments/$id';
   static String customerJobAssignmentReviews(int id) => '/customer/job-assignments/$id/reviews';
   static String customerJobAssignmentDisputes(int id) => '/customer/job-assignments/$id/disputes';
+  static String customerJobAssignmentApproveExtra(int id) =>
+      '/customer/job-assignments/$id/extra-charge/approve';
+  static String customerJobAssignmentRejectExtra(int id) =>
+      '/customer/job-assignments/$id/extra-charge/reject';
+  static String customerJobAssignmentSimulateExtraQuote(int id) =>
+      '/customer/job-assignments/$id/simulate-extra-quote';
 
   // Exclusive Offers endpoints
   static const String customerExclusiveOffers = '/customer/exclusive-offers';

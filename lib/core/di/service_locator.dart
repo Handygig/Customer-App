@@ -276,6 +276,15 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<SubmitDisputeUseCase>(
     () => SubmitDisputeUseCase(sl<JobAssignmentRepository>()),
   );
+  sl.registerLazySingleton<ApproveExtraChargeUseCase>(
+    () => ApproveExtraChargeUseCase(sl<JobAssignmentRepository>()),
+  );
+  sl.registerLazySingleton<RejectExtraChargeUseCase>(
+    () => RejectExtraChargeUseCase(sl<JobAssignmentRepository>()),
+  );
+  sl.registerLazySingleton<SimulateExtraQuoteUseCase>(
+    () => SimulateExtraQuoteUseCase(sl<JobAssignmentRepository>()),
+  );
 
   // Profile Usecases
   sl.registerLazySingleton<GetUserProfileUseCase>(
@@ -346,6 +355,9 @@ Future<void> initServiceLocator() async {
       sl<GetJobAssignmentDetailsUseCase>(),
       sl<SubmitReviewUseCase>(),
       sl<SubmitDisputeUseCase>(),
+      sl<ApproveExtraChargeUseCase>(),
+      sl<RejectExtraChargeUseCase>(),
+      sl<SimulateExtraQuoteUseCase>(),
     ),
   );
   sl.registerFactory<NotificationCubit>(

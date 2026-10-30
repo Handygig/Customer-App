@@ -17,6 +17,9 @@ class JobAssignmentEntity extends Equatable {
   final JobRequestEntity? jobRequest;
   final PaymentEntity? payment;
   final QuotationEntity? quotation;
+  final double? extraAmount;
+  final String? extraReason;
+  final String extraStatus;
   final bool hasReviewed;
   final bool hasDispute;
 
@@ -34,6 +37,9 @@ class JobAssignmentEntity extends Equatable {
     this.jobRequest,
     this.payment,
     this.quotation,
+    this.extraAmount,
+    this.extraReason,
+    this.extraStatus = 'none',
     this.hasReviewed = false,
     this.hasDispute = false,
   });
@@ -44,6 +50,14 @@ class JobAssignmentEntity extends Equatable {
   bool get isCompleted => status.toLowerCase() == 'completed';
   bool get isCancelled => status.toLowerCase() == 'cancelled';
   bool get isOngoing => isScheduled || isInProgress;
+  bool get hasPendingExtraQuote =>
+      extraStatus.toLowerCase() == 'pending' && (extraAmount ?? 0) > 0;
+  bool get hasApprovedExtraQuote =>
+      extraStatus.toLowerCase() == 'approved' && (extraAmount ?? 0) > 0;
+  bool get hasRejectedExtraQuote => extraStatus.toLowerCase() == 'rejected';
+  double get totalEffectivePrice =>
+      (quotation?.quotedPrice ?? (payment?.amount ?? 0.0)) +
+      (hasApprovedExtraQuote ? (extraAmount ?? 0.0) : 0.0);
 
   JobAssignmentEntity copyWith({
     int? id,
@@ -59,6 +73,9 @@ class JobAssignmentEntity extends Equatable {
     JobRequestEntity? jobRequest,
     PaymentEntity? payment,
     QuotationEntity? quotation,
+    double? extraAmount,
+    String? extraReason,
+    String? extraStatus,
     bool? hasReviewed,
     bool? hasDispute,
   }) {
@@ -76,6 +93,9 @@ class JobAssignmentEntity extends Equatable {
       jobRequest: jobRequest ?? this.jobRequest,
       payment: payment ?? this.payment,
       quotation: quotation ?? this.quotation,
+      extraAmount: extraAmount ?? this.extraAmount,
+      extraReason: extraReason ?? this.extraReason,
+      extraStatus: extraStatus ?? this.extraStatus,
       hasReviewed: hasReviewed ?? this.hasReviewed,
       hasDispute: hasDispute ?? this.hasDispute,
     );
@@ -96,6 +116,9 @@ class JobAssignmentEntity extends Equatable {
         jobRequest,
         payment,
         quotation,
+        extraAmount,
+        extraReason,
+        extraStatus,
         hasReviewed,
         hasDispute,
       ];
