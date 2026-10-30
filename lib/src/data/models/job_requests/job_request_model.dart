@@ -93,7 +93,7 @@ class JobRequestModel extends JobRequestEntity {
   }
 
   static Map<String, dynamic> toStoreJson({
-    required int propertyId,
+    int? propertyId,
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
@@ -110,12 +110,14 @@ class JobRequestModel extends JobRequestEntity {
     final formattedDate = '$year-$month-$day $hour:$minute:$second';
 
     final data = <String, dynamic>{
-      'property_id': propertyId,
       'service_category_id': serviceCategoryId,
       'description': description.trim(),
       'preferred_date': formattedDate,
       'payment_method': paymentMethod,
     };
+    if (propertyId != null) {
+      data['property_id'] = propertyId;
+    }
     if (cardId != null) {
       data['card_id'] = cardId;
     }

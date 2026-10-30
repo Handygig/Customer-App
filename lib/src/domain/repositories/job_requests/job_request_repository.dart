@@ -7,7 +7,7 @@ abstract class JobRequestRepository {
   Future<Either<Failure, List<JobRequestEntity>>> getJobRequests();
   Future<Either<Failure, JobRequestEntity>> getJobRequest(int id);
   Future<Either<Failure, JobRequestEntity>> createJobRequest({
-    required int propertyId,
+    int? propertyId,
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
@@ -17,4 +17,5 @@ abstract class JobRequestRepository {
   Future<Either<Failure, void>> cancelJobRequest(int id);
   Future<Either<Failure, List<QuotationEntity>>> getJobRequestQuotations(int id);
   Future<Either<Failure, void>> acceptQuotation(int quotationId);
+  Future<Either<Failure, QuotationEntity>> simulateQuotation(int jobRequestId);
 }

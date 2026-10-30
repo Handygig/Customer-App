@@ -164,8 +164,10 @@ class _SearchTabState extends State<SearchTab> {
 
       if (allowed) {
         final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 8),
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 8),
+          ),
         );
 
         final target = LatLng(position.latitude, position.longitude);
@@ -1558,7 +1560,7 @@ class _SearchTabState extends State<SearchTab> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.35),
-      builder: (context) => _buildProviderDrawer(provider),
+      builder: (drawerContext) => _buildProviderDrawer(drawerContext, provider),
     ).then((_) {
       if (mounted) {
         context.read<ProviderSearchCubit>().selectProvider(null);
@@ -1582,7 +1584,10 @@ class _SearchTabState extends State<SearchTab> {
     return '10-15 mins';
   }
 
-  Widget _buildProviderDrawer(ServiceProviderEntity provider) {
+  Widget _buildProviderDrawer(
+    BuildContext drawerContext,
+    ServiceProviderEntity provider,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1779,7 +1784,13 @@ class _SearchTabState extends State<SearchTab> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(drawerContext);
+                  final locAddress = _locationName.trim().isNotEmpty
+                      ? _locationName.trim()
+                      : (_locationController.text.trim().isNotEmpty
+                          ? _locationController.text.trim()
+                          : 'Pinned Map Location');
+
                   BookServiceModal.show(context, {
                     'id': provider.id,
                     'title': '${provider.serviceType} Service',
@@ -1788,6 +1799,10 @@ class _SearchTabState extends State<SearchTab> {
                     'provider_id': provider.id,
                     'provider_name': provider.name,
                     'price': provider.price,
+                    'location': locAddress,
+                    'latitude': _centerLocation.latitude,
+                    'longitude': _centerLocation.longitude,
+                    'is_from_map': true,
                   });
                 },
                 icon: Icon(

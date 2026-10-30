@@ -259,6 +259,9 @@ Future<void> initServiceLocator() async {
   sl.registerLazySingleton<AcceptQuotationUseCase>(
     () => AcceptQuotationUseCase(sl<JobRequestRepository>()),
   );
+  sl.registerLazySingleton<SimulateQuotationUseCase>(
+    () => SimulateQuotationUseCase(sl<JobRequestRepository>()),
+  );
 
   // Job Assignment Usecases
   sl.registerLazySingleton<GetJobAssignmentsUseCase>(
@@ -334,6 +337,7 @@ Future<void> initServiceLocator() async {
       sl<CancelJobRequestUseCase>(),
       sl<GetJobRequestQuotationsUseCase>(),
       sl<AcceptQuotationUseCase>(),
+      sl<SimulateQuotationUseCase>(),
     ),
   );
   sl.registerFactory<JobAssignmentCubit>(

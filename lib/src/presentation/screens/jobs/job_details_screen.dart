@@ -16,8 +16,6 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
-import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class JobDetailsScreen extends StatefulWidget {
@@ -174,7 +172,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           ),
         ),
         content: Text(
-          'Accept quote from ${quote.provider?.name ?? 'Provider'} for \$${quote.quotedPrice.toStringAsFixed(2)}? This will assign the job to this provider.',
+          'Accept quote from ${quote.provider?.name ?? 'Provider'} for LKR ${quote.quotedPrice.toStringAsFixed(2)}? This will assign the job to this provider.',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 13.5.sp,
             color: AppColors.textSecondary,
@@ -285,12 +283,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       rating = '4.9 ★';
 
       if (activeAssignment.payment != null) {
-        price = '\$${activeAssignment.payment!.amount.toStringAsFixed(2)}';
+        price = 'LKR ${activeAssignment.payment!.amount.toStringAsFixed(2)}';
       } else if (activeAssignment.quotation != null) {
         price =
-            '\$${activeAssignment.quotation!.quotedPrice.toStringAsFixed(2)}';
+            'LKR ${activeAssignment.quotation!.quotedPrice.toStringAsFixed(2)}';
       } else {
-        price = widget.job?['price'] as String? ?? '\$0.00';
+        price = widget.job?['price'] as String? ?? 'LKR 0.00';
       }
 
       final dateVal = activeAssignment.startDate ??
@@ -339,14 +337,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           (q) => q.isAccepted,
           orElse: () => quotations.first,
         );
-        price = '\$${accepted.quotedPrice.toStringAsFixed(2)}';
+        price = 'LKR ${accepted.quotedPrice.toStringAsFixed(2)}';
       } else if (quotations.isNotEmpty) {
         final lowest = quotations
             .map((q) => q.quotedPrice)
             .reduce((a, b) => a < b ? a : b);
-        price = '\$${lowest.toStringAsFixed(2)}';
+        price = 'LKR ${lowest.toStringAsFixed(2)}';
       } else {
-        price = widget.job?['price'] as String? ?? '\$0.00';
+        price = widget.job?['price'] as String? ?? 'LKR 0.00';
       }
 
       date = activeRequest.preferredDate != null
@@ -389,7 +387,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       property = widget.job?['property'] as String? ?? 'Primary Location';
       providerName = widget.job?['provider'] as String? ?? 'Awaiting Assignment';
       rating = widget.job?['rating'] as String? ?? 'New';
-      price = widget.job?['price'] as String? ?? '\$0.00';
+      price = widget.job?['price'] as String? ?? 'LKR 0.00';
       date = widget.job?['date'] as String? ?? 'Scheduled Date';
       status = widget.job?['status'] as String? ?? 'Pending';
       type = widget.job?['type'] as String? ?? 'ongoing';
@@ -1224,7 +1222,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     ),
                   ),
                   Text(
-                    '\$${quote.quotedPrice.toStringAsFixed(2)}',
+                    'LKR ${quote.quotedPrice.toStringAsFixed(2)}',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 17.sp,
                       fontWeight: FontWeight.w800,
@@ -1686,12 +1684,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           SizedBox(height: 16.h),
           _buildPriceRow(
             'Base Service Rate',
-            '\$${basePrice.toStringAsFixed(2)}',
+            'LKR ${basePrice.toStringAsFixed(2)}',
           ),
           SizedBox(height: 10.h),
-          _buildPriceRow('Service & Safety Fee', '\$5.00'),
+          _buildPriceRow('Service & Safety Fee', 'LKR 5.00'),
           SizedBox(height: 10.h),
-          _buildPriceRow('Estimated Tax (8%)', '\$${tax.toStringAsFixed(2)}'),
+          _buildPriceRow('Estimated Tax (8%)', 'LKR ${tax.toStringAsFixed(2)}'),
           SizedBox(height: 14.h),
           const Divider(height: 1, color: Color(0xFFEFF2E4)),
           SizedBox(height: 14.h),
@@ -1707,7 +1705,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 ),
               ),
               Text(
-                '\$${(total + 5.00).toStringAsFixed(2)}',
+                'LKR ${(total + 5.00).toStringAsFixed(2)}',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 20.sp,
                   fontWeight: FontWeight.w800,
@@ -2362,7 +2360,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         job['service'] as String? ??
         'Electrical Maintenance & Safety Inspection';
     final String provider = job['provider'] as String? ?? 'Apex Electricians';
-    final String price = job['price'] as String? ?? '\$242.60';
+    final String price = job['price'] as String? ?? 'LKR 242.60';
     final String date = job['date'] as String? ?? 'Today, 2:30 PM';
     final String property =
         job['property'] as String? ?? 'Silicon Valley Office';
@@ -2545,11 +2543,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                             SizedBox(height: 14.h),
 
                             // Breakdown
-                            _buildReceiptRow('Base Service Rate', '\$220.00'),
+                            _buildReceiptRow('Base Service Rate', 'LKR 220.00'),
                             SizedBox(height: 8.h),
-                            _buildReceiptRow('Service & Safety Fee', '\$5.00'),
+                            _buildReceiptRow('Service & Safety Fee', 'LKR 5.00'),
                             SizedBox(height: 8.h),
-                            _buildReceiptRow('Estimated Tax (8%)', '\$17.60'),
+                            _buildReceiptRow('Estimated Tax (8%)', 'LKR 17.60'),
                             SizedBox(height: 12.h),
 
                             Container(
@@ -3448,7 +3446,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                                 ),
                               ),
                               Text(
-                                '\$${quote.quotedPrice.toStringAsFixed(2)}',
+                                'LKR ${quote.quotedPrice.toStringAsFixed(2)}',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.w800,
@@ -3667,7 +3665,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     HapticFeedback.mediumImpact();
     final String service = job['service'] as String? ?? 'Service Assignment';
     final String provider = job['provider'] as String? ?? 'Assigned Pro';
-    final String price = job['price'] as String? ?? '\$0.00';
+    final String price = job['price'] as String? ?? 'LKR 0.00';
 
     int assignmentId = 1;
     if (job['assignment_id'] is int) {

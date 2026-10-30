@@ -63,7 +63,7 @@ class JobRequestRemoteDataSourceImpl implements JobRequestRemoteDataSource {
 
   @override
   Future<JobRequestModel> createJobRequest({
-    required int propertyId,
+    int? propertyId,
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
@@ -155,6 +155,33 @@ class JobRequestRemoteDataSourceImpl implements JobRequestRemoteDataSource {
     } catch (error) {
       if (error is AuthException) rethrow;
       throw AuthException('Failed to accept quotation: $error');
+    }
+  }
+
+  @override
+  Future<QuotationModel> simulateQuotation(int jobRequestId) async {
+    try {
+      final response = await _dio.post(
+        AppEndpoints.customerJobRequestSimulateQuotation(jobRequestId),
+      );
+      final rawData = response.data;
+      final Map<String, dynamic> itemJson;
+      if (rawData is Map && rawData['quotation'] is Map) {
+        itemJson = Map<String, dynamic>.from(rawData['quotation'] as Map);
+      } else if (rawData is Map && rawData['data'] is Map) {
+        itemJson = Map<String, dynamic>.from(rawData['data'] as Map);
+      } else if (rawData is Map) {
+        itemJson = Map<String, dynamic>.from(rawData);
+      } else {
+        throw const FormatException('Invalid quotation response format');
+      }
+
+      return QuotationModel.fromJson(itemJson);
+    } on DioException catch (error) {
+      throw AuthException(_extractErrorMessage(error));
+    } catch (error) {
+      if (error is AuthException) rethrow;
+      throw AuthException('Failed to simulate quotation: $error');
     }
   }
 

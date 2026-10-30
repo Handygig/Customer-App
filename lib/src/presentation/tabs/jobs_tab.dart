@@ -116,7 +116,7 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
       final lowest = req.quotations
           .map((q) => q.quotedPrice)
           .reduce((a, b) => a < b ? a : b);
-      price = 'From \$${lowest.toStringAsFixed(2)}';
+      price = 'From LKR ${lowest.toStringAsFixed(2)}';
     } else {
       price = 'Pending Quote';
     }
@@ -185,9 +185,9 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
 
     final String price;
     if (assignment.payment != null) {
-      price = '\$${assignment.payment!.amount.toStringAsFixed(2)}';
+      price = 'LKR ${assignment.payment!.amount.toStringAsFixed(2)}';
     } else if (assignment.quotation != null) {
-      price = '\$${assignment.quotation!.quotedPrice.toStringAsFixed(2)}';
+      price = 'LKR ${assignment.quotation!.quotedPrice.toStringAsFixed(2)}';
     } else {
       price = 'Fixed Rate';
     }

@@ -11,6 +11,7 @@ class JobRequestCubit extends Cubit<JobRequestState> {
   final CancelJobRequestUseCase _cancelJobRequestUseCase;
   final GetJobRequestQuotationsUseCase _getJobRequestQuotationsUseCase;
   final AcceptQuotationUseCase _acceptQuotationUseCase;
+  final SimulateQuotationUseCase _simulateQuotationUseCase;
 
   List<JobRequestEntity> _cachedRequests = const [];
   JobRequestEntity? _selectedJobRequest;
@@ -23,6 +24,7 @@ class JobRequestCubit extends Cubit<JobRequestState> {
     this._cancelJobRequestUseCase,
     this._getJobRequestQuotationsUseCase,
     this._acceptQuotationUseCase,
+    this._simulateQuotationUseCase,
   ) : super(const JobRequestInitial());
 
   List<JobRequestEntity> get currentRequests => _cachedRequests;
@@ -118,7 +120,7 @@ class JobRequestCubit extends Cubit<JobRequestState> {
   }
 
   Future<JobRequestEntity?> createJobRequest({
-    required int propertyId,
+    int? propertyId,
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
@@ -328,6 +330,60 @@ class JobRequestCubit extends Cubit<JobRequestState> {
           quotationsByJobId: Map.unmodifiable(_quotationsByJobId),
         ));
         return true;
+      },
+    );
+  }
+
+  Future<QuotationEntity?> simulateQuotation(int jobRequestId) async {
+    emit(JobRequestActionInProgress(
+      _cachedRequests,
+      selectedJobRequest: _selectedJobRequest,
+    ));
+
+    final result = await _simulateQuotationUseCase(jobRequestId);
+
+    return result.fold(
+      (failure) {
+        emit(JobRequestError(
+          failure.errorMessage,
+          currentJobRequests: _cachedRequests,
+          selectedJobRequest: _selectedJobRequest,
+        ));
+        return null;
+      },
+      (quotation) {
+        final currentQuotes =
+            List<QuotationEntity>.from(_quotationsByJobId[jobRequestId] ?? []);
+        currentQuotes.removeWhere((q) => q.id == quotation.id);
+        currentQuotes.insert(0, quotation);
+        _quotationsByJobId[jobRequestId] = currentQuotes;
+
+        if (_selectedJobRequest?.id == jobRequestId) {
+          _selectedJobRequest =
+              _selectedJobRequest!.copyWith(quotations: currentQuotes);
+        }
+
+        _cachedRequests = _cachedRequests.map((r) {
+          if (r.id == jobRequestId) {
+            return r.copyWith(quotations: currentQuotes);
+          }
+          return r;
+        }).toList();
+
+        emit(JobRequestActionSuccess(
+          message: 'Quotation simulated successfully!',
+          jobRequests: List.unmodifiable(_cachedRequests),
+          selectedJobRequest: _selectedJobRequest,
+          quotationsByJobId: Map.unmodifiable(_quotationsByJobId),
+        ));
+
+        emit(JobRequestLoaded(
+          List.unmodifiable(_cachedRequests),
+          selectedJobRequest: _selectedJobRequest,
+          quotationsByJobId: Map.unmodifiable(_quotationsByJobId),
+        ));
+
+        return quotation;
       },
     );
   }

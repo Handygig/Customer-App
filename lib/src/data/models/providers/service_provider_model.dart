@@ -38,7 +38,7 @@ class ServiceProviderModel extends ServiceProviderEntity {
     final ratingStr = (json['rating'] ?? '5.0').toString();
     final ratingVal = _asDouble(json['rating_num'] ?? json['rating']) ?? 5.0;
     final reviewsCountVal = _asInt(json['reviews_count'] ?? json['reviewsCount']);
-    final priceStr = (json['price'] ?? '\$45/hr').toString();
+    final priceStr = (json['price'] ?? 'LKR 4,500/hr').toString();
     final hourlyRateVal = _asDouble(json['hourly_rate'] ?? json['hourlyRate']) ?? 45.0;
     final distanceStr = (json['distance'] ?? 'Nearby').toString();
     final distanceKmVal = _asDouble(json['distance_km'] ?? json['distanceKm']);

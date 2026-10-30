@@ -62,6 +62,8 @@ class AppEndpoints {
   static String customerJobRequestCancel(int id) => '/customer/job-requests/$id/cancel';
   static String customerJobRequestQuotations(int id) => '/customer/job-requests/$id/quotations';
   static String customerQuotationAccept(int id) => '/customer/quotations/$id/accept';
+  static String customerJobRequestSimulateQuotation(int id) =>
+      '/customer/job-requests/$id/simulate-quotation';
 
   // Job Assignments, Reviews & Disputes endpoints
   static const String customerJobAssignments = '/customer/job-assignments';
