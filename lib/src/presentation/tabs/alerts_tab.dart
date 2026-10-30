@@ -9,8 +9,6 @@ import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/domain/entities/notifications/notification_entity.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/notifications/notification_state.dart';
-import 'package:customer_app/src/presentation/screens/profile/rewards_referral_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
 import 'package:customer_app/core/utils/extensions.dart';
 
 class AlertsTab extends StatefulWidget {

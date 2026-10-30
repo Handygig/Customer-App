@@ -76,6 +76,54 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     });
   }
 
+  bool _isSimulatingQuote = false;
+
+  Future<void> _simulateQuote() async {
+    if (_resolvedJobId == null) {
+      DynamicIslandToast.showError(
+        context,
+        'Job ID not available for simulation.',
+      );
+      return;
+    }
+
+    setState(() {
+      _isSimulatingQuote = true;
+    });
+    HapticFeedback.mediumImpact();
+
+    try {
+      final quotation = await context
+          .read<JobRequestCubit>()
+          .simulateQuotation(_resolvedJobId!);
+
+      if (!mounted) return;
+
+      if (quotation != null) {
+        DynamicIslandToast.showSuccess(
+          context,
+          'Quotation received from ${quotation.provider?.name ?? 'Provider'} for LKR ${quotation.quotedPrice.toStringAsFixed(2)}!',
+        );
+      } else {
+        final state = context.read<JobRequestCubit>().state;
+        final error = state is JobRequestError
+            ? state.message
+            : 'Failed to simulate quotation';
+        DynamicIslandToast.showError(context, error);
+      }
+    } catch (e) {
+      if (mounted) {
+        DynamicIslandToast.showError(context, 'Simulation error: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSimulatingQuote = false;
+        });
+      }
+    }
+  }
+
   Future<void> _confirmCancelRequest(BuildContext context, int? jobId) async {
     if (jobId == null) {
       DynamicIslandToast.showError(context, 'Cannot cancel: Job ID not found.');
@@ -418,6 +466,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               statusBg,
               canCancel: canCancel,
               onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
+              onSimulateQuote: _resolvedJobId != null ? _simulateQuote : null,
               onDispute: (activeAssignment != null &&
                       activeAssignment.hasDispute != true)
                   ? () => _showDisputeModal(
@@ -602,6 +651,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     bool canCancel = false,
     VoidCallback? onCancel,
     VoidCallback? onDispute,
+    VoidCallback? onSimulateQuote,
   }) {
     return Container(
       width: double.infinity,
@@ -647,7 +697,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   color: Colors.white,
                 ),
               ),
-              if ((canCancel && onCancel != null) || onDispute != null)
+              if ((canCancel && onCancel != null) ||
+                  onDispute != null ||
+                  onSimulateQuote != null)
                 PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.more_vert_rounded,
@@ -661,9 +713,33 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       onCancel();
                     } else if (value == 'dispute' && onDispute != null) {
                       onDispute();
+                    } else if (value == 'simulate' && onSimulateQuote != null) {
+                      onSimulateQuote();
                     }
                   },
                   itemBuilder: (context) => [
+                    if (onSimulateQuote != null)
+                      PopupMenuItem(
+                        value: 'simulate',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.bolt_rounded,
+                              color: const Color(0xFFD97706),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Simulate Quote (Dev)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFFD97706),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     if (canCancel && onCancel != null)
                       PopupMenuItem(
                         value: 'cancel',
@@ -941,77 +1017,170 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   color: AppColors.primaryDark,
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: quotations.isEmpty
-                      ? const Color(0xFFFEF3C7)
-                      : const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  quotations.isEmpty
-                      ? 'Waiting for Quotes'
-                      : '${quotations.length} Received',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11.5.sp,
-                    fontWeight: FontWeight.w700,
-                    color: quotations.isEmpty
-                        ? const Color(0xFFD97706)
-                        : const Color(0xFF1D4ED8),
+              Row(
+                children: [
+                  if (_resolvedJobId != null) ...[
+                    InkWell(
+                      onTap: _isSimulatingQuote ? null : _simulateQuote,
+                      borderRadius: BorderRadius.circular(20.r),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFFBEB),
+                          borderRadius: BorderRadius.circular(20.r),
+                          border: Border.all(
+                            color: const Color(0xFFFCD34D),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.bolt_rounded,
+                              size: 13.r,
+                              color: const Color(0xFFD97706),
+                            ),
+                            SizedBox(width: 3.w),
+                            Text(
+                              '+ Simulate',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFD97706),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                  ],
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: quotations.isEmpty
+                          ? const Color(0xFFFEF3C7)
+                          : const Color(0xFFDBEAFE),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      quotations.isEmpty
+                          ? 'Waiting for Quotes'
+                          : '${quotations.length} Received',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: quotations.isEmpty
+                            ? const Color(0xFFD97706)
+                            : const Color(0xFF1D4ED8),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
           SizedBox(height: 14.h),
           if (quotations.isEmpty) ...[
             Container(
-              padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+              padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(14.r),
                 border: Border.all(color: const Color(0xFFF0F1EA)),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Container(
-                    width: 36.r,
-                    height: 36.r,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFEF3C7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.hourglass_top_rounded,
-                        color: const Color(0xFFD97706),
-                        size: 18.r,
+                  Row(
+                    children: [
+                      Container(
+                        width: 36.r,
+                        height: 36.r,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFEF3C7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.hourglass_top_rounded,
+                            color: const Color(0xFFD97706),
+                            size: 18.r,
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'No quotes submitted yet',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'Service providers in your area will review your request shortly.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'No quotes submitted yet',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryDark,
-                          ),
+                  SizedBox(height: 14.h),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _isSimulatingQuote ? null : _simulateQuote,
+                      icon: _isSimulatingQuote
+                          ? SizedBox(
+                              width: 14.r,
+                              height: 14.r,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFD97706),
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              Icons.bolt_rounded,
+                              size: 16.r,
+                              color: const Color(0xFFD97706),
+                            ),
+                      label: Text(
+                        _isSimulatingQuote
+                            ? 'Simulating Quote...'
+                            : '⚡ Simulate Quotation (Dev)',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFD97706),
                         ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          'Service providers in your area will review your request shortly.',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11.5.sp,
-                            color: AppColors.textMuted,
-                          ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFFBEB),
+                        side: const BorderSide(
+                          color: Color(0xFFFCD34D),
+                          width: 1.2,
                         ),
-                      ],
+                        padding: EdgeInsets.symmetric(vertical: 10.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1957,7 +2126,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       color: const Color(0xFFDC2626),
                     ),
                     label: Text(
-                      'Cancel Request',
+                      _resolvedJobId != null ? 'Cancel' : 'Cancel Request',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13.sp,
                         fontWeight: FontWeight.w700,
@@ -1976,7 +2147,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     ),
                   ),
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(width: 10.w),
               ],
               Expanded(
                 child: ElevatedButton.icon(
@@ -1997,7 +2168,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   },
                   icon: Icon(Icons.refresh_rounded, size: 16.r),
                   label: Text(
-                    'Refresh Quotes',
+                    _resolvedJobId != null ? 'Refresh' : 'Refresh Quotes',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w800,
@@ -2013,6 +2186,53 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   ),
                 ),
               ),
+              if (_resolvedJobId != null) ...[
+                SizedBox(width: 10.w),
+                ElevatedButton(
+                  onPressed: _isSimulatingQuote ? null : _simulateQuote,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 14.h,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_isSimulatingQuote)
+                        SizedBox(
+                          width: 14.r,
+                          height: 14.r,
+                          child: const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      else
+                        Icon(
+                          Icons.bolt_rounded,
+                          size: 16.r,
+                          color: Colors.white,
+                        ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        'Simulate',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         'to_approve' => Row(
