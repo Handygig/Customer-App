@@ -147,6 +147,33 @@ class JobAssignmentRepositoryImpl implements JobAssignmentRepository {
 
   @override
   Future<Either<Failure, JobAssignmentEntity>> simulateExtraQuote(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  }) async {
+    try {
+      if (!await _networkService.isConnected()) {
+        return const Left(
+            NetworkFailure(errorMessage: 'No internet connection detected.'));
+      }
+      final assignment = await _remoteDataSource.simulateExtraQuote(
+        assignmentId,
+        extraAmount: extraAmount,
+        extraReason: extraReason,
+      );
+      return Right(assignment);
+    } on AuthException catch (e) {
+      return Left(APIFailure(errorMessage: e.message));
+    } catch (e, stackTrace) {
+      debugPrint(
+          '⚠️ [JobAssignmentRepositoryImpl.simulateExtraQuote] Error: $e');
+      return Left(
+          APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, JobAssignmentEntity>> simulateCompleteJob(
       int assignmentId) async {
     try {
       if (!await _networkService.isConnected()) {
@@ -154,13 +181,13 @@ class JobAssignmentRepositoryImpl implements JobAssignmentRepository {
             NetworkFailure(errorMessage: 'No internet connection detected.'));
       }
       final assignment =
-          await _remoteDataSource.simulateExtraQuote(assignmentId);
+          await _remoteDataSource.simulateCompleteJob(assignmentId);
       return Right(assignment);
     } on AuthException catch (e) {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
       debugPrint(
-          '⚠️ [JobAssignmentRepositoryImpl.simulateExtraQuote] Error: $e');
+          '⚠️ [JobAssignmentRepositoryImpl.simulateCompleteJob] Error: $e');
       return Left(
           APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
     }

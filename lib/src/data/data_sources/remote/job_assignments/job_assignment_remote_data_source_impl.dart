@@ -164,10 +164,23 @@ class JobAssignmentRemoteDataSourceImpl
   }
 
   @override
-  Future<JobAssignmentModel> simulateExtraQuote(int assignmentId) async {
+  Future<JobAssignmentModel> simulateExtraQuote(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  }) async {
     try {
+      final Map<String, dynamic> payload = {};
+      if (extraAmount != null) {
+        payload['extra_amount'] = extraAmount;
+      }
+      if (extraReason != null && extraReason.trim().isNotEmpty) {
+        payload['extra_reason'] = extraReason.trim();
+      }
+
       final response = await _dio.post(
         AppEndpoints.customerJobAssignmentSimulateExtraQuote(assignmentId),
+        data: payload,
       );
       final rawData = response.data;
       final Map<String, dynamic> itemJson;
@@ -186,6 +199,32 @@ class JobAssignmentRemoteDataSourceImpl
     } catch (error) {
       if (error is AuthException) rethrow;
       throw AuthException('Failed to simulate updated quotation: $error');
+    }
+  }
+
+  @override
+  Future<JobAssignmentModel> simulateCompleteJob(int assignmentId) async {
+    try {
+      final response = await _dio.post(
+        AppEndpoints.customerJobAssignmentSimulateCompleteJob(assignmentId),
+      );
+      final rawData = response.data;
+      final Map<String, dynamic> itemJson;
+
+      if (rawData is Map && rawData['data'] is Map) {
+        itemJson = Map<String, dynamic>.from(rawData['data'] as Map);
+      } else if (rawData is Map) {
+        itemJson = Map<String, dynamic>.from(rawData);
+      } else {
+        return await getJobAssignment(assignmentId);
+      }
+
+      return JobAssignmentModel.fromJson(itemJson);
+    } on DioException catch (error) {
+      throw AuthException(_extractErrorMessage(error));
+    } catch (error) {
+      if (error is AuthException) rethrow;
+      throw AuthException('Failed to simulate job completion: $error');
     }
   }
 

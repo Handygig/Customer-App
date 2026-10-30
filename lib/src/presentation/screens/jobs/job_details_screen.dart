@@ -610,29 +610,36 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
   Future<void> _simulateExtraQuote(
     BuildContext context,
-    int assignmentId,
-  ) async {
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  }) async {
     setState(() {
       _isProcessingExtraQuote = true;
     });
     HapticFeedback.mediumImpact();
     final cubit = context.read<JobAssignmentCubit>();
+    final double amount = extraAmount ?? 2500.0;
     try {
-      final updatedAssignment = await cubit.simulateExtraQuote(assignmentId);
+      final updatedAssignment = await cubit.simulateExtraQuote(
+        assignmentId,
+        extraAmount: amount,
+        extraReason: extraReason ?? 'Additional materials and extra pipe fittings required',
+      );
 
       if (context.mounted) {
         if (updatedAssignment != null) {
           DynamicIslandToast.showSuccess(
             context,
-            'Provider sent updated quotation of +LKR 2,500.00!',
+            'Provider sent updated quotation of +LKR ${amount.toStringAsFixed(2)}!',
           );
           await cubit.loadAssignments(forceRefresh: true);
           await cubit.loadAssignmentDetails(assignmentId);
         } else {
           final state = cubit.state;
           final error = state is JobAssignmentError
-                ? state.message
-                : 'Failed to simulate updated quote';
+              ? state.message
+              : 'Failed to simulate updated quote';
           DynamicIslandToast.showError(context, error);
         }
       }
@@ -647,6 +654,254 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         });
       }
     }
+  }
+
+  bool _isSimulatingCompleteJob = false;
+
+  Future<void> _simulateCompleteJob(
+    BuildContext context,
+    int assignmentId,
+  ) async {
+    setState(() {
+      _isSimulatingCompleteJob = true;
+    });
+    HapticFeedback.mediumImpact();
+    final cubit = context.read<JobAssignmentCubit>();
+    try {
+      final updatedAssignment = await cubit.simulateCompleteJob(assignmentId);
+
+      if (context.mounted) {
+        if (updatedAssignment != null) {
+          DynamicIslandToast.showSuccess(
+            context,
+            'Job successfully simulated as completed!',
+          );
+          await cubit.loadAssignments(forceRefresh: true);
+          await cubit.loadAssignmentDetails(assignmentId);
+          if (context.mounted) {
+            context.read<JobRequestCubit>().loadJobRequests(forceRefresh: true);
+          }
+        } else {
+          final state = cubit.state;
+          final error = state is JobAssignmentError
+              ? state.message
+              : 'Failed to simulate job completion';
+          DynamicIslandToast.showError(context, error);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        DynamicIslandToast.showError(context, 'Simulation error: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSimulatingCompleteJob = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showChangeQuotationDialog(
+    BuildContext context,
+    int assignmentId,
+  ) async {
+    final amountController = TextEditingController(text: '2500');
+    final reasonController = TextEditingController(
+      text: 'Additional materials and extra pipe fittings required',
+    );
+    double selectedAmount = 2500;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                left: 20.w,
+                right: 20.w,
+                top: 20.h,
+                bottom: MediaQuery.of(dialogCtx).viewInsets.bottom + 24.h,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40.w,
+                      height: 4.h,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2.r),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 16.h),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Icon(
+                          Icons.price_change_rounded,
+                          color: const Color(0xFFD97706),
+                          size: 20.r,
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Simulate Quotation Change',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryDark,
+                              ),
+                            ),
+                            Text(
+                              'Provider sends updated quotation to customer',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'Quick Presets (Extra Amount):',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [1500.0, 2500.0, 5000.0].map((amt) {
+                      final isSelected = selectedAmount == amt;
+                      return Padding(
+                        padding: EdgeInsets.only(right: 8.w),
+                        child: ChoiceChip(
+                          label: Text('+ LKR ${amt.toInt()}'),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFFFDE68A),
+                          backgroundColor: const Color(0xFFF1F5F9),
+                          labelStyle: GoogleFonts.plusJakartaSans(
+                            fontSize: 12.sp,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                            color: isSelected ? const Color(0xFF78350F) : AppColors.textSecondary,
+                          ),
+                          onSelected: (val) {
+                            if (val) {
+                              setModalState(() {
+                                selectedAmount = amt;
+                                amountController.text = amt.toInt().toString();
+                              });
+                            }
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    'Additional Amount (LKR):',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      prefixText: 'LKR ',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    'Reason for update:',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  TextField(
+                    controller: reasonController,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Additional materials required',
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20.h),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48.h,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD97706),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(dialogCtx);
+                        final amt = double.tryParse(amountController.text.trim()) ?? 2500.0;
+                        final reason = reasonController.text.trim();
+                        _simulateExtraQuote(context, assignmentId, extraAmount: amt, extraReason: reason);
+                      },
+                      icon: const Icon(Icons.bolt_rounded, color: Colors.white),
+                      label: Text(
+                        'Send Updated Quotation',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -871,7 +1126,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               onCancel: () => _confirmCancelRequest(context, _resolvedJobId),
               onSimulateQuote: _resolvedJobId != null ? _simulateQuote : null,
               onSimulateExtraQuote: activeAssignment != null
-                  ? () => _simulateExtraQuote(context, activeAssignment.id)
+                  ? () => _showChangeQuotationDialog(context, activeAssignment.id)
+                  : null,
+              onSimulateCompleteJob: (activeAssignment != null &&
+                      activeAssignment.status != 'completed')
+                  ? () => _simulateCompleteJob(context, activeAssignment.id)
                   : null,
               onDispute: (activeAssignment != null &&
                       activeAssignment.hasDispute != true)
@@ -977,6 +1236,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         SizedBox(height: 20.h),
                       ],
 
+                      // Dev Simulation Controls (Change Quotation & Complete Job)
+                      if (activeAssignment != null) ...[
+                        _buildDevSimulationCard(context, activeAssignment),
+                        SizedBox(height: 20.h),
+                      ],
+
                       // Provider Details Section
                       _buildProviderDetailsSection(
                         context,
@@ -1079,6 +1344,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     VoidCallback? onDispute,
     VoidCallback? onSimulateQuote,
     VoidCallback? onSimulateExtraQuote,
+    VoidCallback? onSimulateCompleteJob,
   }) {
     return Container(
       width: double.infinity,
@@ -1127,7 +1393,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
               if ((canCancel && onCancel != null) ||
                   onDispute != null ||
                   onSimulateQuote != null ||
-                  onSimulateExtraQuote != null)
+                  onSimulateExtraQuote != null ||
+                  onSimulateCompleteJob != null)
                 PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.more_vert_rounded,
@@ -1146,6 +1413,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     } else if (value == 'simulate_extra' &&
                         onSimulateExtraQuote != null) {
                       onSimulateExtraQuote();
+                    } else if (value == 'simulate_complete' &&
+                        onSimulateCompleteJob != null) {
+                      onSimulateCompleteJob();
                     }
                   },
                   itemBuilder: (context) => [
@@ -1183,10 +1453,32 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                             ),
                             SizedBox(width: 10.w),
                             Text(
-                              'Simulate Updated Quote (Dev)',
+                              'Simulate Change Quote (Dev)',
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFFD97706),
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (onSimulateCompleteJob != null)
+                      PopupMenuItem(
+                        value: 'simulate_complete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.task_alt_rounded,
+                              color: const Color(0xFF16A34A),
+                              size: 18.r,
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'Simulate Complete Job (Dev)',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF16A34A),
                                 fontSize: 13.sp,
                               ),
                             ),
@@ -2670,6 +2962,175 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDevSimulationCard(
+    BuildContext context,
+    JobAssignmentEntity assignment,
+  ) {
+    final bool isCompleted = assignment.status == 'completed';
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: const Color(0xFFF59E0B), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD97706).withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(6.r),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Icons.developer_mode_rounded,
+                  size: 16.r,
+                  color: const Color(0xFFB45309),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                'DEV SIMULATION TOOLS',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  color: const Color(0xFFB45309),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 3.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDE68A),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Text(
+                  'DEBUG',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 9.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF78350F),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            'Simulate provider actions to test real-time customer state changes:',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11.5.sp,
+              color: const Color(0xFF78350F),
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 42.h,
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessingExtraQuote
+                        ? null
+                        : () => _showChangeQuotationDialog(context, assignment.id),
+                    icon: _isProcessingExtraQuote
+                        ? SizedBox(
+                            width: 14.r,
+                            height: 14.r,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(
+                            Icons.price_change_rounded,
+                            size: 16.r,
+                            color: Colors.white,
+                          ),
+                    label: Text(
+                      'Change Quote',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFD97706),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: SizedBox(
+                  height: 42.h,
+                  child: ElevatedButton.icon(
+                    onPressed: (_isSimulatingCompleteJob || isCompleted)
+                        ? null
+                        : () => _simulateCompleteJob(context, assignment.id),
+                    icon: _isSimulatingCompleteJob
+                        ? SizedBox(
+                            width: 14.r,
+                            height: 14.r,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Icon(
+                            isCompleted ? Icons.check_circle_rounded : Icons.task_alt_rounded,
+                            size: 16.r,
+                            color: Colors.white,
+                          ),
+                    label: Text(
+                      isCompleted ? 'Completed' : 'Complete Job',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isCompleted
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w),
                     ),
                   ),
                 ),

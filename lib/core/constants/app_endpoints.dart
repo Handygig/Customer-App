@@ -76,6 +76,8 @@ class AppEndpoints {
       '/customer/job-assignments/$id/extra-charge/reject';
   static String customerJobAssignmentSimulateExtraQuote(int id) =>
       '/customer/job-assignments/$id/simulate-extra-quote';
+  static String customerJobAssignmentSimulateCompleteJob(int id) =>
+      '/customer/job-assignments/$id/simulate-complete-job';
 
   // Exclusive Offers endpoints
   static const String customerExclusiveOffers = '/customer/exclusive-offers';

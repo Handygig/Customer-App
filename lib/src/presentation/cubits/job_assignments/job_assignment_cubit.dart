@@ -11,6 +11,7 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
   final ApproveExtraChargeUseCase _approveExtraChargeUseCase;
   final RejectExtraChargeUseCase _rejectExtraChargeUseCase;
   final SimulateExtraQuoteUseCase _simulateExtraQuoteUseCase;
+  final SimulateCompleteJobUseCase _simulateCompleteJobUseCase;
 
   List<JobAssignmentEntity> _cachedAssignments = const [];
   JobAssignmentEntity? _selectedAssignment;
@@ -23,6 +24,7 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
     this._approveExtraChargeUseCase,
     this._rejectExtraChargeUseCase,
     this._simulateExtraQuoteUseCase,
+    this._simulateCompleteJobUseCase,
   ) : super(const JobAssignmentInitial());
 
   List<JobAssignmentEntity> get currentAssignments => _cachedAssignments;
@@ -268,13 +270,21 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
     );
   }
 
-  Future<JobAssignmentEntity?> simulateExtraQuote(int assignmentId) async {
+  Future<JobAssignmentEntity?> simulateExtraQuote(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  }) async {
     emit(JobAssignmentActionInProgress(
       _cachedAssignments,
       selectedAssignment: _selectedAssignment,
     ));
 
-    final result = await _simulateExtraQuoteUseCase(assignmentId);
+    final result = await _simulateExtraQuoteUseCase(
+      assignmentId,
+      extraAmount: extraAmount,
+      extraReason: extraReason,
+    );
 
     return result.fold(
       (failure) {
@@ -293,6 +303,44 @@ class JobAssignmentCubit extends Cubit<JobAssignmentState> {
 
         emit(JobAssignmentActionSuccess(
           message: 'Updated quotation simulated from provider!',
+          assignments: List.unmodifiable(_cachedAssignments),
+          selectedAssignment: _selectedAssignment,
+        ));
+
+        emit(JobAssignmentLoaded(
+          List.unmodifiable(_cachedAssignments),
+          selectedAssignment: _selectedAssignment,
+        ));
+        return assignment;
+      },
+    );
+  }
+
+  Future<JobAssignmentEntity?> simulateCompleteJob(int assignmentId) async {
+    emit(JobAssignmentActionInProgress(
+      _cachedAssignments,
+      selectedAssignment: _selectedAssignment,
+    ));
+
+    final result = await _simulateCompleteJobUseCase(assignmentId);
+
+    return result.fold(
+      (failure) {
+        emit(JobAssignmentError(
+          failure.errorMessage,
+          currentAssignments: _cachedAssignments,
+          selectedAssignment: _selectedAssignment,
+        ));
+        return null;
+      },
+      (assignment) {
+        _selectedAssignment = assignment;
+        _cachedAssignments = _cachedAssignments.map((a) {
+          return a.id == assignmentId ? assignment : a;
+        }).toList();
+
+        emit(JobAssignmentActionSuccess(
+          message: 'Job completed simulated successfully!',
           assignments: List.unmodifiable(_cachedAssignments),
           selectedAssignment: _selectedAssignment,
         ));

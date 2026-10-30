@@ -84,7 +84,25 @@ class SimulateExtraQuoteUseCase {
 
   SimulateExtraQuoteUseCase(this._repository);
 
+  Future<Either<Failure, JobAssignmentEntity>> call(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  }) {
+    return _repository.simulateExtraQuote(
+      assignmentId,
+      extraAmount: extraAmount,
+      extraReason: extraReason,
+    );
+  }
+}
+
+class SimulateCompleteJobUseCase {
+  final JobAssignmentRepository _repository;
+
+  SimulateCompleteJobUseCase(this._repository);
+
   Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
-    return _repository.simulateExtraQuote(assignmentId);
+    return _repository.simulateCompleteJob(assignmentId);
   }
 }
