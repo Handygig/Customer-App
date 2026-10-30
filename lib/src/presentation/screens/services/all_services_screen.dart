@@ -9,7 +9,8 @@ import 'package:customer_app/src/presentation/cubits/services/service_category_c
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_state.dart';
-import 'package:customer_app/src/presentation/screens/services/widgets/book_service_modal.dart';
+import 'package:go_router/go_router.dart';
+import 'package:customer_app/config/router/app_routes.dart';
 
 class AllServicesScreen extends StatefulWidget {
   final String? initialCategory;
@@ -345,184 +346,194 @@ class _AllServicesScreenState extends State<AllServicesScreen> {
     final String localAsset = visuals['image'] ?? '';
     final IconData fallbackIcon = visuals['icon'] ?? Icons.build_rounded;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: AppColors.borderUnselected),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(14.r),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Category Badge Row
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Text(
-                  categoryName.isNotEmpty ? categoryName : 'Service',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        _navigateToMapSearch(srv);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: AppColors.borderUnselected),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.all(14.r),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Category Badge Row
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    categoryName.isNotEmpty ? categoryName : 'Service',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          SizedBox(height: 10.h),
+            SizedBox(height: 10.h),
 
-          // Center Service Image / Visual
-          Center(
-            child: SizedBox(
-              width: 60.r,
-              height: 60.r,
-              child: networkImage != null && networkImage.isNotEmpty
-                  ? Image.network(
-                      networkImage,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        if (localAsset.isNotEmpty) {
-                          return Image.asset(
+            // Center Service Image / Visual
+            Center(
+              child: SizedBox(
+                width: 60.r,
+                height: 60.r,
+                child: networkImage != null && networkImage.isNotEmpty
+                    ? Image.network(
+                        networkImage,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          if (localAsset.isNotEmpty) {
+                            return Image.asset(
+                              localAsset,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, _, _) => Icon(
+                                fallbackIcon,
+                                color: AppColors.primary,
+                                size: 38.r,
+                              ),
+                            );
+                          }
+                          return Icon(
+                            fallbackIcon,
+                            color: AppColors.primary,
+                            size: 38.r,
+                          );
+                        },
+                      )
+                    : localAsset.isNotEmpty
+                        ? Image.asset(
                             localAsset,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, _, _) => Icon(
-                              fallbackIcon,
-                              color: AppColors.primary,
-                              size: 38.r,
-                            ),
-                          );
-                        }
-                        return Icon(
-                          fallbackIcon,
-                          color: AppColors.primary,
-                          size: 38.r,
-                        );
-                      },
-                    )
-                  : localAsset.isNotEmpty
-                      ? Image.asset(
-                          localAsset,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              fallbackIcon,
-                              color: AppColors.primary,
-                              size: 38.r,
-                            );
-                          },
-                        )
-                      : Icon(
-                          fallbackIcon,
-                          color: AppColors.primary,
-                          size: 38.r,
-                        ),
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                fallbackIcon,
+                                color: AppColors.primary,
+                                size: 38.r,
+                              );
+                            },
+                          )
+                        : Icon(
+                            fallbackIcon,
+                            color: AppColors.primary,
+                            size: 38.r,
+                          ),
+              ),
             ),
-          ),
 
-          const Spacer(),
+            const Spacer(),
 
-          // Service Title
-          Text(
-            title,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13.5.sp,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textHeadline,
-              height: 1.2,
+            // Service Title
+            Text(
+              title,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13.5.sp,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textHeadline,
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
 
-          SizedBox(height: 4.h),
+            SizedBox(height: 4.h),
 
-          // Description or Category Subtitle
-          Text(
-            srv.description?.isNotEmpty == true
-                ? srv.description!
-                : categoryName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 11.sp,
-              color: AppColors.textMuted,
+            // Description or Category Subtitle
+            Text(
+              srv.description?.isNotEmpty == true
+                  ? srv.description!
+                  : categoryName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11.sp,
+                color: AppColors.textMuted,
+              ),
             ),
-          ),
 
-          SizedBox(height: 12.h),
+            SizedBox(height: 12.h),
 
-          // Bottom Book Button
-          SizedBox(
-            width: double.infinity,
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                _showBookingConfirmationModal(srv);
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10.w,
-                  vertical: 8.h,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.buttonBackground,
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                child: Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.calendar_month_rounded,
-                        size: 14.r,
-                        color: AppColors.buttonText,
-                      ),
-                      SizedBox(width: 6.w),
-                      Text(
-                        'Book Now',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w800,
+            // Bottom Search Button
+            SizedBox(
+              width: double.infinity,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _navigateToMapSearch(srv);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.buttonBackground,
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.search_rounded,
+                          size: 15.r,
                           color: AppColors.buttonText,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 6.w),
+                        Flexible(
+                          child: Text(
+                            'Search',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.buttonText,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  void _showBookingConfirmationModal(ServiceEntity srv) {
-    BookServiceModal.show(context, {
-      'id': srv.id,
-      'title': srv.title.isNotEmpty ? srv.title : srv.name,
-      'name': srv.name,
-      'category': srv.category,
-      'category_id': srv.categoryId,
-      'description': srv.description,
-      'image_url': srv.imageUrl,
-    });
+  void _navigateToMapSearch(ServiceEntity srv) {
+    final String serviceName = srv.title.isNotEmpty ? srv.title : srv.name;
+    context.push(
+      AppRoutes.providerSearch,
+      extra: {
+        'service': serviceName,
+        'category': srv.category,
+        'categoryId': srv.categoryId,
+      },
+    );
   }
 
   Map<String, dynamic> _resolveVisuals(String title, String category) {

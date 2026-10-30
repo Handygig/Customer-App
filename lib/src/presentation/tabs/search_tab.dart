@@ -31,8 +31,17 @@ import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart'
 
 class SearchTab extends StatefulWidget {
   final VoidCallback? onBackTap;
+  final String? initialService;
+  final String? initialCategory;
+  final int? initialCategoryId;
 
-  const SearchTab({super.key, this.onBackTap});
+  const SearchTab({
+    super.key,
+    this.onBackTap,
+    this.initialService,
+    this.initialCategory,
+    this.initialCategoryId,
+  });
 
   @override
   State<SearchTab> createState() => _SearchTabState();
@@ -70,6 +79,10 @@ class _SearchTabState extends State<SearchTab> {
     super.initState();
     _locationController.text = _locationName;
 
+    if (widget.initialService != null && widget.initialService!.trim().isNotEmpty) {
+      _serviceController.text = widget.initialService!.trim();
+    }
+
     _serviceFocusNode.addListener(() {
       if (_serviceFocusNode.hasFocus && mounted) {
         setState(() => _showServiceSuggestions = true);
@@ -93,6 +106,17 @@ class _SearchTabState extends State<SearchTab> {
   }
 
   @override
+  void didUpdateWidget(SearchTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialService != oldWidget.initialService &&
+        widget.initialService != null &&
+        widget.initialService!.trim().isNotEmpty) {
+      _serviceController.text = widget.initialService!.trim();
+      _performSearch();
+    }
+  }
+
+  @override
   void dispose() {
     _debounceTimer?.cancel();
     _profileSub?.cancel();
@@ -111,6 +135,9 @@ class _SearchTabState extends State<SearchTab> {
   Future<void> _initUserLocationAndSearch() async {
     if (!mounted || _initialLoadDone) return;
     _initialLoadDone = true;
+
+    final queryService = _serviceController.text.trim();
+    final effectiveService = queryService.isNotEmpty ? queryService : null;
 
     final propCubit = context.read<PropertyCubit>();
     final properties = propCubit.currentProperties;
@@ -138,6 +165,9 @@ class _SearchTabState extends State<SearchTab> {
       context.read<ProviderSearchCubit>().searchProviders(
             location: target,
             locationName: label,
+            service: effectiveService,
+            category: widget.initialCategory,
+            categoryId: widget.initialCategoryId,
           );
       return;
     }
@@ -198,10 +228,15 @@ class _SearchTabState extends State<SearchTab> {
         _locationController.text = address;
         _animateCameraTo(target);
 
+        final queryService = _serviceController.text.trim();
+        final effectiveService = queryService.isNotEmpty ? queryService : null;
+
         context.read<ProviderSearchCubit>().searchProviders(
               location: target,
               locationName: address,
-              service: _serviceController.text,
+              service: effectiveService,
+              category: widget.initialCategory,
+              categoryId: widget.initialCategoryId,
             );
         return;
       }
@@ -213,9 +248,14 @@ class _SearchTabState extends State<SearchTab> {
 
     // Fallback if initial and GPS not available
     if (initial) {
+      final queryService = _serviceController.text.trim();
+      final effectiveService = queryService.isNotEmpty ? queryService : null;
       context.read<ProviderSearchCubit>().searchProviders(
             location: _centerLocation,
             locationName: _locationName,
+            service: effectiveService,
+            category: widget.initialCategory,
+            categoryId: widget.initialCategoryId,
           );
     }
   }
