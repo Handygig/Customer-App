@@ -21,6 +21,7 @@ class AppRoutes {
   static const String settings = '/settings';
 
   // Services, Jobs & Messaging
+  static const String providerSearch = '/search';
   static const String allServices = '/services';
   static const String jobDetails = '/jobs/details';
   static const String chat = '/chat';

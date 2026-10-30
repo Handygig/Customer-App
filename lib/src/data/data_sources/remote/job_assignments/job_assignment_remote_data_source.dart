@@ -14,4 +14,13 @@ abstract class JobAssignmentRemoteDataSource {
     int assignmentId, {
     required String reason,
   });
+  Future<JobAssignmentModel> approveExtraCharge(int assignmentId);
+  Future<JobAssignmentModel> rejectExtraCharge(int assignmentId);
+  Future<JobAssignmentModel> simulateExtraQuote(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  });
+  Future<JobAssignmentModel> simulateStartJob(int assignmentId);
+  Future<JobAssignmentModel> simulateCompleteJob(int assignmentId);
 }

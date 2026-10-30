@@ -88,6 +88,8 @@ class NotificationEntity {
 
   IconData get icon {
     switch (type) {
+      case 'quotation':
+        return Icons.request_quote_rounded;
       case 'job':
       case 'booking':
         return Icons.event_available_rounded;
@@ -114,6 +116,8 @@ class NotificationEntity {
 
   Color get color {
     switch (type) {
+      case 'quotation':
+        return AppColors.primaryDark;
       case 'job':
       case 'booking':
         return AppColors.primaryLight;

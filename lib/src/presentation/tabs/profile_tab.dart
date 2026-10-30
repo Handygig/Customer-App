@@ -17,12 +17,6 @@ import 'package:customer_app/src/presentation/blocs/auth/auth_bloc.dart';
 import 'package:customer_app/src/presentation/blocs/auth/auth_event.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
-import 'package:customer_app/src/presentation/screens/profile/edit_profile_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/payment_methods_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/help_support_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/settings_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/rewards_referral_screen.dart';
 import 'package:customer_app/core/utils/extensions.dart';
 
 class ProfileTab extends StatelessWidget {

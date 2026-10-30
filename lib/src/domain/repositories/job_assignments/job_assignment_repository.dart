@@ -16,4 +16,13 @@ abstract class JobAssignmentRepository {
     int assignmentId, {
     required String reason,
   });
+  Future<Either<Failure, JobAssignmentEntity>> approveExtraCharge(int assignmentId);
+  Future<Either<Failure, JobAssignmentEntity>> rejectExtraCharge(int assignmentId);
+  Future<Either<Failure, JobAssignmentEntity>> simulateExtraQuote(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  });
+  Future<Either<Failure, JobAssignmentEntity>> simulateStartJob(int assignmentId);
+  Future<Either<Failure, JobAssignmentEntity>> simulateCompleteJob(int assignmentId);
 }

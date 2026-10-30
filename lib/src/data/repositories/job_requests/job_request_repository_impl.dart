@@ -55,7 +55,7 @@ class JobRequestRepositoryImpl implements JobRequestRepository {
 
   @override
   Future<Either<Failure, JobRequestEntity>> createJobRequest({
-    required int propertyId,
+    int? propertyId,
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
@@ -136,6 +136,26 @@ class JobRequestRepositoryImpl implements JobRequestRepository {
       return Left(APIFailure(errorMessage: e.message));
     } catch (e, stackTrace) {
       debugPrint('⚠️ [JobRequestRepositoryImpl.acceptQuotation] Error: $e');
+      return Left(
+          APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
+    }
+  }
+
+  @override
+  Future<Either<Failure, QuotationEntity>> simulateQuotation(
+      int jobRequestId) async {
+    try {
+      if (!await _networkService.isConnected()) {
+        return const Left(
+            NetworkFailure(errorMessage: 'No internet connection detected.'));
+      }
+      final quotation =
+          await _remoteDataSource.simulateQuotation(jobRequestId);
+      return Right(quotation);
+    } on AuthException catch (e) {
+      return Left(APIFailure(errorMessage: e.message));
+    } catch (e, stackTrace) {
+      debugPrint('⚠️ [JobRequestRepositoryImpl.simulateQuotation] Error: $e');
       return Left(
           APIFailure(errorMessage: e.toString(), stackTrace: stackTrace));
     }

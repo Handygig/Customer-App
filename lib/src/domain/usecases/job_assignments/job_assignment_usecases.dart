@@ -58,3 +58,61 @@ class SubmitDisputeUseCase {
     );
   }
 }
+
+class ApproveExtraChargeUseCase {
+  final JobAssignmentRepository _repository;
+
+  ApproveExtraChargeUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.approveExtraCharge(assignmentId);
+  }
+}
+
+class RejectExtraChargeUseCase {
+  final JobAssignmentRepository _repository;
+
+  RejectExtraChargeUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.rejectExtraCharge(assignmentId);
+  }
+}
+
+class SimulateExtraQuoteUseCase {
+  final JobAssignmentRepository _repository;
+
+  SimulateExtraQuoteUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(
+    int assignmentId, {
+    double? extraAmount,
+    String? extraReason,
+  }) {
+    return _repository.simulateExtraQuote(
+      assignmentId,
+      extraAmount: extraAmount,
+      extraReason: extraReason,
+    );
+  }
+}
+
+class SimulateStartJobUseCase {
+  final JobAssignmentRepository _repository;
+
+  SimulateStartJobUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.simulateStartJob(assignmentId);
+  }
+}
+
+class SimulateCompleteJobUseCase {
+  final JobAssignmentRepository _repository;
+
+  SimulateCompleteJobUseCase(this._repository);
+
+  Future<Either<Failure, JobAssignmentEntity>> call(int assignmentId) {
+    return _repository.simulateCompleteJob(assignmentId);
+  }
+}

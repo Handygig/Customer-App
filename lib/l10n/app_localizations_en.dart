@@ -532,7 +532,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fromPrice(String price) {
-    return 'From \$$price';
+    return 'From LKR $price';
   }
 
   @override
@@ -659,7 +659,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String rewardsSubtitle(int points, String balance) {
-    return '$points pts • \$$balance balance';
+    return '$points pts • LKR $balance balance';
   }
 
   @override

@@ -9,7 +9,6 @@ import 'package:customer_app/src/presentation/cubits/payments/card_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
-import 'package:customer_app/src/presentation/screens/profile/add_card_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {

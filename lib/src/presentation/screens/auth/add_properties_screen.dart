@@ -12,7 +12,6 @@ import 'package:customer_app/core/constants/app_assets.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/screens/auth/map_selector_screen.dart';
-import 'package:customer_app/src/presentation/screens/main_navigation_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/core/utils/extensions.dart';
 

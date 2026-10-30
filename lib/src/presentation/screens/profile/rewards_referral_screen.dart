@@ -146,7 +146,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                     ),
                     SizedBox(height: 6.h),
                     Text(
-                      'Exchange your reward points for instant wallet credits. Rate: $_redemptionRate pts = \$1.00 credit.',
+                      'Exchange your reward points for instant wallet credits. Rate: $_redemptionRate pts = LKR 1.00 credit.',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12.5.sp,
                         color: AppColors.textMuted,
@@ -215,7 +215,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                   ),
                                   SizedBox(height: 2.h),
                                   Text(
-                                    '\$${val.toStringAsFixed(2)}',
+                                    'LKR ${val.toStringAsFixed(2)}',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.w700,
@@ -258,7 +258,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                 ),
                               ),
                               Text(
-                                '+\$${creditValue.toStringAsFixed(2)}',
+                                '+LKR ${creditValue.toStringAsFixed(2)}',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 22.sp,
                                   fontWeight: FontWeight.w900,
@@ -312,7 +312,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                     HapticFeedback.heavyImpact();
                                     DynamicIslandToast.showSuccess(
                                       context,
-                                      'Redeemed $selectedPoints points for \$${creditValue.toStringAsFixed(2)} credit!',
+                                      'Redeemed $selectedPoints points for LKR ${creditValue.toStringAsFixed(2)} credit!',
                                     );
                                     _repository.getUserProfile();
                                     _loadRewardsData();
@@ -393,7 +393,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Enter a friend\'s referral code to instantly claim \$${_refereeDiscount.toInt()} wallet credit toward your services!',
+                    'Enter a friend\'s referral code to instantly claim LKR ${_refereeDiscount.toInt()} wallet credit toward your services!',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 13.sp,
                       color: AppColors.textSecondary,
@@ -491,7 +491,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                               HapticFeedback.heavyImpact();
                               DynamicIslandToast.showSuccess(
                                 context,
-                                'Referral code applied! \$${_refereeDiscount.toInt()} credit added to your wallet.',
+                                'Referral code applied! LKR ${_refereeDiscount.toInt()} credit added to your wallet.',
                               );
                               await _repository.getUserProfile();
                               await _loadRewardsData();
@@ -619,7 +619,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                               ),
                             ),
                             Text(
-                              '\$${profile.walletBalance.toStringAsFixed(2)} Credits',
+                              'LKR ${profile.walletBalance.toStringAsFixed(2)} Credits',
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
                                 fontSize: 16.sp,
@@ -711,7 +711,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Invite Friends, Get \$${_referrerBonus.toInt()} Each',
+                                    'Invite Friends, Get LKR ${_referrerBonus.toInt()} Each',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 16.sp,
                                       fontWeight: FontWeight.w800,
@@ -720,7 +720,7 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                   ),
                                   SizedBox(height: 2.h),
                                   Text(
-                                    'Give \$${_refereeDiscount.toInt()} off their 1st service & earn \$${_referrerBonus.toInt()} credit!',
+                                    'Give LKR ${_refereeDiscount.toInt()} off their 1st service & earn LKR ${_referrerBonus.toInt()} credit!',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12.5.sp,
                                       color: AppColors.textMuted,
@@ -961,8 +961,8 @@ class _RewardsReferralScreenState extends State<RewardsReferralScreen> {
                                     if (amount != 0)
                                       Text(
                                         amount > 0
-                                            ? '+\$${amount.toStringAsFixed(2)}'
-                                            : '-\$${amount.abs().toStringAsFixed(2)}',
+                                            ? '+LKR ${amount.toStringAsFixed(2)}'
+                                            : '-LKR ${amount.abs().toStringAsFixed(2)}',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.w700,

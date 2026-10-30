@@ -13,8 +13,6 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignment_state.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
-import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
-import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
 import 'package:customer_app/core/utils/extensions.dart';
 
@@ -32,14 +30,20 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(_handleTabChange);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<JobRequestCubit>().loadJobRequests();
       context.read<JobAssignmentCubit>().loadAssignments();
     });
   }
 
+  void _handleTabChange() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -108,11 +112,24 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
         : 'Awaiting Quotes';
 
     final String price;
-    if (req.quotations.isNotEmpty) {
+    if (req.assignment?.payment != null) {
+      price = 'LKR ${req.assignment!.payment!.amount.toStringAsFixed(2)}';
+    } else if (req.assignment?.quotation != null) {
+      final base = req.assignment!.quotation!.quotedPrice;
+      final extra = (req.assignment!.isExtraApproved &&
+              req.assignment!.extraAmount != null)
+          ? req.assignment!.extraAmount!
+          : 0.0;
+      price = 'LKR ${(base + extra).toStringAsFixed(2)}';
+    } else if (req.quotations.isNotEmpty) {
       final lowest = req.quotations
           .map((q) => q.quotedPrice)
           .reduce((a, b) => a < b ? a : b);
-      price = 'From \$${lowest.toStringAsFixed(2)}';
+      price = 'From LKR ${lowest.toStringAsFixed(2)}';
+    } else if (req.isCancelled) {
+      price = 'Cancelled';
+    } else if (req.isCompleted) {
+      price = 'Completed';
     } else {
       price = 'Pending Quote';
     }
@@ -181,9 +198,14 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
 
     final String price;
     if (assignment.payment != null) {
-      price = '\$${assignment.payment!.amount.toStringAsFixed(2)}';
+      price = 'LKR ${assignment.payment!.amount.toStringAsFixed(2)}';
     } else if (assignment.quotation != null) {
-      price = '\$${assignment.quotation!.quotedPrice.toStringAsFixed(2)}';
+      final base = assignment.quotation!.quotedPrice;
+      final extra = (assignment.isExtraApproved &&
+              assignment.extraAmount != null)
+          ? assignment.extraAmount!
+          : 0.0;
+      price = 'LKR ${(base + extra).toStringAsFixed(2)}';
     } else {
       price = 'Fixed Rate';
     }
@@ -220,13 +242,27 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
   ) {
     final List<Map<String, dynamic>> list = [];
 
-    // Pending / Unassigned job requests populate Waiting and To Approve tabs
-    for (final req in requests) {
-      if (!req.isAssigned) {
-        list.add(_mapJobRequestToCard(req));
-      } else if (req.isCancelled) {
-        list.add(_mapJobRequestToCard(req));
+    // Collect all request IDs that have already been converted into assignments
+    final assignedRequestIds = <int>{};
+    for (final assignment in assignments) {
+      if (assignment.jobRequestId != null) {
+        assignedRequestIds.add(assignment.jobRequestId!);
       }
+      if (assignment.jobRequest?.id != null) {
+        assignedRequestIds.add(assignment.jobRequest!.id);
+      }
+    }
+
+    // Pending / Unassigned job requests populate Waiting and To Approve tabs (and unassigned Cancelled requests)
+    for (final req in requests) {
+      // If this request already has a corresponding assignment, do not duplicate it
+      if (assignedRequestIds.contains(req.id)) {
+        continue;
+      }
+      if (req.isAssigned) {
+        continue;
+      }
+      list.add(_mapJobRequestToCard(req));
     }
 
     // Assignments populate Ongoing and Completed tabs
@@ -257,8 +293,10 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (_tabController.length != 4) {
+      _tabController.removeListener(_handleTabChange);
       _tabController.dispose();
       _tabController = TabController(length: 4, vsync: this);
+      _tabController.addListener(_handleTabChange);
     }
 
     return BlocBuilder<JobRequestCubit, JobRequestState>(
@@ -320,51 +358,63 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
                         ),
                         SizedBox(height: 18.h),
 
-                        // Enhanced Modern Segmented Tab Bar
-                        Container(
-                          height: 48.h,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(16.r),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              width: 1,
-                            ),
-                          ),
-                          padding: EdgeInsets.all(4.r),
-                          child: TabBar(
-                            controller: _tabController,
-                            indicator: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.12),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                        // 2x2 Grid View Tab Bar
+                        AnimatedBuilder(
+                          animation: _tabController,
+                          builder: (context, _) {
+                            final selectedIndex = _tabController.index;
+                            return Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildGridTabItem(
+                                        index: 0,
+                                        title: context.loc.tabWaiting,
+                                        count: waitingCount,
+                                        icon: Icons.schedule_rounded,
+                                        isSelected: selectedIndex == 0,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: _buildGridTabItem(
+                                        index: 1,
+                                        title: context.loc.tabToApprove,
+                                        count: toApproveCount,
+                                        icon: Icons.fact_check_rounded,
+                                        isSelected: selectedIndex == 1,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8.h),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildGridTabItem(
+                                        index: 2,
+                                        title: context.loc.tabOngoing,
+                                        count: ongoingCount,
+                                        icon: Icons.engineering_rounded,
+                                        isSelected: selectedIndex == 2,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: _buildGridTabItem(
+                                        index: 3,
+                                        title: context.loc.tabCompleted,
+                                        count: completedCount,
+                                        icon: Icons.task_alt_rounded,
+                                        isSelected: selectedIndex == 3,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
-                            ),
-                            indicatorSize: TabBarIndicatorSize.tab,
-                            labelColor: AppColors.primaryDark,
-                            unselectedLabelColor:
-                                Colors.white.withValues(alpha: 0.85),
-                            labelStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            dividerColor: Colors.transparent,
-                            tabs: [
-                              Tab(text: '${context.loc.tabWaiting} ($waitingCount)'),
-                              Tab(text: '${context.loc.tabToApprove} ($toApproveCount)'),
-                              Tab(text: '${context.loc.tabOngoing} ($ongoingCount)'),
-                              Tab(text: '${context.loc.tabCompleted} ($completedCount)'),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -630,4 +680,97 @@ class _JobsTabState extends State<JobsTab> with SingleTickerProviderStateMixin {
       ),
     );
   }
+
+  Widget _buildGridTabItem({
+    required int index,
+    required String title,
+    required int count,
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _tabController.animateTo(index);
+        },
+        borderRadius: BorderRadius.circular(14.r),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 11.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Colors.white
+                : Colors.black.withValues(alpha: 0.22),
+            borderRadius: BorderRadius.circular(14.r),
+            border: Border.all(
+              color: isSelected
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.12),
+              width: 1,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 15.sp,
+                color: isSelected
+                    ? AppColors.primaryDark
+                    : Colors.white.withValues(alpha: 0.8),
+              ),
+              SizedBox(width: 6.w),
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected
+                        ? AppColors.primaryDark
+                        : Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ),
+              SizedBox(width: 6.w),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primaryDark.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Text(
+                  '$count',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected
+                        ? AppColors.primaryDark
+                        : Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+

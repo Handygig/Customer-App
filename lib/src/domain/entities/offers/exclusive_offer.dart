@@ -105,7 +105,7 @@ class ExclusiveOffer {
       if (discountType == 'percentage') {
         discountTxt = '${discountVal.toInt()}% OFF';
       } else {
-        discountTxt = '\$${discountVal.toStringAsFixed(0)} OFF';
+        discountTxt = 'LKR ${discountVal.toStringAsFixed(0)} OFF';
       }
     }
 

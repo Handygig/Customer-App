@@ -30,7 +30,7 @@ class CreateJobRequestUseCase {
   CreateJobRequestUseCase(this._repository);
 
   Future<Either<Failure, JobRequestEntity>> call({
-    required int propertyId,
+    int? propertyId,
     required int serviceCategoryId,
     required String description,
     required DateTime preferredDate,
@@ -77,3 +77,14 @@ class AcceptQuotationUseCase {
     return _repository.acceptQuotation(quotationId);
   }
 }
+
+class SimulateQuotationUseCase {
+  final JobRequestRepository _repository;
+
+  SimulateQuotationUseCase(this._repository);
+
+  Future<Either<Failure, QuotationEntity>> call(int jobRequestId) {
+    return _repository.simulateQuotation(jobRequestId);
+  }
+}
+

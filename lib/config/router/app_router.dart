@@ -25,6 +25,7 @@ import 'package:customer_app/src/presentation/screens/profile/settings_screen.da
 import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
 import 'package:customer_app/src/presentation/screens/chat/chat_screen.dart';
+import 'package:customer_app/src/presentation/tabs/search_tab.dart';
 
 class AppRouter {
   AppRouter._();
@@ -35,6 +36,16 @@ class AppRouter {
     navigatorKey: rootNavigatorKey,
     initialLocation:
         AuthManager.isLoggedIn ? AppRoutes.mainNavigation : AppRoutes.welcome,
+    onException: (context, state, router) {
+      final uriString = state.uri.toString();
+      if (uriString.contains('firebaseauth') ||
+          uriString.contains('link') ||
+          uriString.contains('callback')) {
+        debugPrint('ℹ️ Handled Firebase Auth redirect deep link: $uriString');
+        return;
+      }
+      debugPrint('⚠️ GoRouter exception for $uriString: ${state.error}');
+    },
     routes: [
       GoRoute(
         path: AppRoutes.welcome,
@@ -84,7 +95,35 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.mainNavigation,
         name: AppRoutes.mainNavigation,
-        builder: (context, state) => const MainNavigationScreen(),
+        builder: (context, state) {
+          final extra = state.extra;
+          final int initialIndex = extra is int
+              ? extra
+              : (extra is Map ? (extra['initialIndex'] as int? ?? 0) : 0);
+          return MainNavigationScreen(initialIndex: initialIndex);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.providerSearch,
+        name: AppRoutes.providerSearch,
+        builder: (context, state) {
+          final extra = state.extra;
+          String? service;
+          String? category;
+          int? categoryId;
+          if (extra is Map<String, dynamic>) {
+            service = extra['service'] as String?;
+            category = extra['category'] as String?;
+            categoryId = extra['categoryId'] as int?;
+          } else if (extra is String) {
+            service = extra;
+          }
+          return SearchTab(
+            initialService: service,
+            initialCategory: category,
+            initialCategoryId: categoryId,
+          );
+        },
       ),
 
       // Profile & Wallet Routes

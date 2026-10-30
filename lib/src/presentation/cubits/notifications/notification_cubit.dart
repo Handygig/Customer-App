@@ -43,6 +43,13 @@ class NotificationCubit extends Cubit<NotificationState> {
       filtered = _allNotifications.where((n) => !n.isRead).toList();
     } else if (_currentFilter == 'all') {
       filtered = List.from(_allNotifications);
+    } else if (_currentFilter == 'job') {
+      filtered = _allNotifications
+          .where((n) =>
+              n.type == 'job' ||
+              n.type == 'quotation' ||
+              n.type == 'booking')
+          .toList();
     } else {
       filtered = _allNotifications.where((n) => n.type == _currentFilter).toList();
     }

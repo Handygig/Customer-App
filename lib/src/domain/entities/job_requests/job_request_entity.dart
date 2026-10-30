@@ -36,7 +36,10 @@ class JobRequestEntity extends Equatable {
 
   bool get isCancelled => status.toLowerCase() == 'cancelled';
   bool get isAssigned =>
-      assignment != null || status.toLowerCase() == 'assigned';
+      assignment != null ||
+      status.toLowerCase() == 'assigned' ||
+      status.toLowerCase() == 'in_progress' ||
+      status.toLowerCase() == 'completed';
   bool get isCompleted => status.toLowerCase() == 'completed';
   bool get isPending => status.toLowerCase() == 'pending';
   bool get canCancel => !isCancelled && !isAssigned && !isCompleted;

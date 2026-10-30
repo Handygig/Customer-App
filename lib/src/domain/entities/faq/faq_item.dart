@@ -83,7 +83,7 @@ class FaqItem {
       id: 3,
       question: 'What if the technician doesn\'t arrive on time?',
       answer:
-          'All service providers are GPS tracked in real-time. If there is a delay over 15 minutes, our 24/7 support team automatically reaches out and provides a \$10 service credit voucher.',
+          'All service providers are GPS tracked in real-time. If there is a delay over 15 minutes, our 24/7 support team automatically reaches out and provides a LKR 1,000 service credit voucher.',
       category: 'Service & Safety',
       order: 3,
     ),

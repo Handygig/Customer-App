@@ -1093,7 +1093,7 @@ abstract class AppLocalizations {
   /// Lowest quote price prefix
   ///
   /// In en, this message translates to:
-  /// **'From \${price}'**
+  /// **'From LKR {price}'**
   String fromPrice(String price);
 
   /// Quotes count badge
@@ -1321,7 +1321,7 @@ abstract class AppLocalizations {
   /// Rewards and wallet tile subtitle
   ///
   /// In en, this message translates to:
-  /// **'{points} pts • \${balance} balance'**
+  /// **'{points} pts • LKR {balance} balance'**
   String rewardsSubtitle(int points, String balance);
 
   /// Help and support tile title

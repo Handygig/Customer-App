@@ -16,17 +16,13 @@ import 'package:customer_app/src/presentation/cubits/job_assignments/job_assignm
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_state.dart';
 import 'package:customer_app/src/domain/entities/services/service_category_entity.dart';
-import 'package:customer_app/src/presentation/screens/services/all_services_screen.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
-import 'package:customer_app/src/presentation/screens/jobs/job_details_screen.dart';
 import 'package:customer_app/src/domain/repositories/offers/offer_repository.dart';
 import 'package:customer_app/src/data/repositories/offers/offer_repository_impl.dart';
 import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
-import 'package:customer_app/src/presentation/screens/profile/add_new_property_screen.dart';
-import 'package:customer_app/src/presentation/screens/profile/properties_management_screen.dart';
 import 'package:customer_app/core/utils/extensions.dart';
 
 class HomeTab extends StatefulWidget {

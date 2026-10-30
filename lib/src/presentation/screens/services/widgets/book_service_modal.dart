@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:customer_app/core/constants/app_colors.dart';
+import 'package:customer_app/src/domain/entities/job_requests/job_request_entity.dart';
 import 'package:customer_app/src/domain/entities/payments/card_entity.dart';
 import 'package:customer_app/src/domain/entities/properties/property_entity.dart';
 import 'package:customer_app/src/presentation/cubits/job_requests/job_request_cubit.dart';
@@ -15,6 +16,8 @@ import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
@@ -24,13 +27,21 @@ class BookServiceModal extends StatefulWidget {
 
   const BookServiceModal({super.key, required this.service});
 
-  static Future<void> show(BuildContext context, Map<String, dynamic> service) {
-    return showModalBottomSheet(
+  static Future<JobRequestEntity?> show(
+    BuildContext context,
+    Map<String, dynamic> service,
+  ) async {
+    final result = await showModalBottomSheet<JobRequestEntity>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => BookServiceModal(service: service),
     );
+
+    if (result != null && context.mounted) {
+      context.push(AppRoutes.jobDetails, extra: result);
+    }
+    return result;
   }
 
   @override
@@ -44,6 +55,16 @@ class _BookServiceModalState extends State<BookServiceModal> {
   CardEntity? _selectedCard;
   String _selectedPaymentMethod = 'card'; // 'card' or 'cash'
   bool _isSubmitting = false;
+  bool _isLocatingCurrentPosition = false;
+  bool _isUsingCurrentLocation = false;
+  String? _currentLocationAddress;
+  String _scheduleType = 'now'; // 'now' or 'schedule'
+
+  bool get _isFromMapPin {
+    final loc = widget.service['location']?.toString();
+    return widget.service['is_from_map'] == true ||
+        (loc != null && loc.trim().isNotEmpty);
+  }
 
   @override
   void initState() {
@@ -53,11 +74,19 @@ class _BookServiceModalState extends State<BookServiceModal> {
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day + 1, 9, 0);
 
-    // Initial property selection
-    final propCubit = context.read<PropertyCubit>();
-    final properties = propCubit.currentProperties;
-    if (properties.isNotEmpty) {
-      _selectedProperty = properties.where((p) => p.isDefault).firstOrNull ?? properties.first;
+    // Initial property / location selection
+    final mapLocation = widget.service['location']?.toString();
+    if (_isFromMapPin && mapLocation != null && mapLocation.trim().isNotEmpty) {
+      _isUsingCurrentLocation = true;
+      _currentLocationAddress = mapLocation.trim();
+      _selectedProperty = null;
+    } else {
+      final propCubit = context.read<PropertyCubit>();
+      final properties = propCubit.currentProperties;
+      if (properties.isNotEmpty) {
+        _selectedProperty =
+            properties.where((p) => p.isDefault).firstOrNull ?? properties.first;
+      }
     }
 
     // Initial card selection
@@ -369,7 +398,10 @@ class _BookServiceModalState extends State<BookServiceModal> {
                         ),
                         onPressed: () {
                           HapticFeedback.mediumImpact();
-                          setState(() => _selectedDate = tempDate);
+                          setState(() {
+                            _selectedDate = tempDate;
+                            _scheduleType = 'schedule';
+                          });
                           Navigator.pop(sheetContext);
                         },
                         child: Text(
@@ -440,13 +472,140 @@ class _BookServiceModalState extends State<BookServiceModal> {
     }
   }
 
-  Future<void> _submitBooking() async {
-    // 1. Validate Description
-    final description = _descriptionController.text.trim();
-    if (description.isEmpty) {
-      DynamicIslandToast.showError(context, 'Please enter a service description.');
-      return;
+  Future<void> _useCurrentLocationAsProperty() async {
+    if (_isLocatingCurrentPosition) return;
+    HapticFeedback.lightImpact();
+    setState(() => _isLocatingCurrentPosition = true);
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        DynamicIslandToast.showError(
+          context,
+          'Please enable Location Services on your device.',
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        DynamicIslandToast.showError(
+          context,
+          'Location permission is permanently denied. Please enable in Settings.',
+        );
+        return;
+      }
+
+      if (permission == LocationPermission.denied) {
+        if (!mounted) return;
+        DynamicIslandToast.showError(context, 'Location permission denied.');
+        return;
+      }
+
+      // 1. Try to get cached / last known position first (instant on devices and simulators)
+      Position? position;
+      try {
+        position = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      // 2. If no cached position, fetch with medium accuracy and short timeout
+      if (position == null) {
+        try {
+          position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+              timeLimit: Duration(seconds: 5),
+            ),
+          );
+        } catch (_) {
+          // If timed out, try lowest accuracy as quick fallback
+          try {
+            position = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.lowest,
+                timeLimit: Duration(seconds: 4),
+              ),
+            );
+          } catch (_) {
+            // Re-check last known position
+            try {
+              position = await Geolocator.getLastKnownPosition();
+            } catch (_) {}
+          }
+        }
+      }
+
+      // 3. Fallback coordinates (Colombo central) if device/simulator has no GPS fix yet
+      final double lat = position?.latitude ?? 6.9044;
+      final double lng = position?.longitude ?? 79.8543;
+
+      String fullAddress = 'Current Location';
+
+      try {
+        final placemarks = await Geocoding()
+            .placemarkFromCoordinates(lat, lng)
+            .timeout(const Duration(seconds: 5));
+
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+
+          final addressParts = <String?>[
+            p.street,
+            p.subLocality,
+            p.locality,
+            p.postalCode,
+          ]
+              .where((part) => part != null && part.trim().isNotEmpty)
+              .map((part) => part!.trim())
+              .toSet()
+              .toList();
+
+          if (addressParts.isNotEmpty) {
+            fullAddress = addressParts.join(', ');
+          }
+        }
+      } catch (e) {
+        debugPrint('Reverse geocode error or timeout: $e');
+        if (position == null) {
+          fullAddress = 'Colombo, Western Province';
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isUsingCurrentLocation = true;
+        _currentLocationAddress = fullAddress;
+        _selectedProperty = null;
+      });
+
+      DynamicIslandToast.showSuccess(
+        context,
+        'Current location acquired: $fullAddress',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      DynamicIslandToast.showError(context, 'Could not get current location: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLocatingCurrentPosition = false);
+      }
     }
+  }
+
+  Future<void> _submitBooking() async {
+    // 1. Description (Optional)
+    final enteredDesc = _descriptionController.text.trim();
+    final serviceTitle = widget.service['title'] ?? widget.service['name'] ?? 'service';
+    final description = enteredDesc.isNotEmpty
+        ? enteredDesc
+        : 'Booking request for $serviceTitle';
 
     // 2. Validate Payment Method & Cards
     if (_selectedPaymentMethod == 'card') {
@@ -474,21 +633,20 @@ class _BookServiceModalState extends State<BookServiceModal> {
       }
     }
 
-    // 3. Validate Properties
-    final properties = context.read<PropertyCubit>().currentProperties;
-    if (properties.isEmpty) {
-      DynamicIslandToast.showError(
-        context,
-        'No property found. Please add a property before placing your booking.',
-      );
-      return;
-    }
-
-    if (_selectedProperty == null) {
-      DynamicIslandToast.showError(
-        context,
-        'Please select a property for this service.',
-      );
+    // 3. Validate Location (Property or Current Location)
+    if (!_isUsingCurrentLocation && _selectedProperty == null) {
+      final properties = context.read<PropertyCubit>().currentProperties;
+      if (properties.isEmpty) {
+        DynamicIslandToast.showError(
+          context,
+          'Please tap "Use Current Location" or add a property.',
+        );
+      } else {
+        DynamicIslandToast.showError(
+          context,
+          'Please select a property or use current location.',
+        );
+      }
       return;
     }
 
@@ -498,11 +656,21 @@ class _BookServiceModalState extends State<BookServiceModal> {
     final catId = _resolveServiceCategoryId();
     final jobCubit = context.read<JobRequestCubit>();
 
+    final scheduledDate = _scheduleType == 'now' ? DateTime.now() : _selectedDate;
+
+    var finalDescription = description;
+    if (_scheduleType == 'now') {
+      finalDescription = '$finalDescription (Timing: ASAP / Now)';
+    }
+    if (_isUsingCurrentLocation && _currentLocationAddress != null) {
+      finalDescription = '$finalDescription (Location: $_currentLocationAddress)';
+    }
+
     final result = await jobCubit.createJobRequest(
-      propertyId: _selectedProperty!.id,
+      propertyId: _isUsingCurrentLocation ? null : _selectedProperty?.id,
       serviceCategoryId: catId,
-      description: description,
-      preferredDate: _selectedDate,
+      description: finalDescription,
+      preferredDate: scheduledDate,
       paymentMethod: _selectedPaymentMethod,
       cardId: _selectedPaymentMethod == 'card' ? _selectedCard?.id : null,
     );
@@ -511,10 +679,10 @@ class _BookServiceModalState extends State<BookServiceModal> {
     setState(() => _isSubmitting = false);
 
     if (result != null) {
-      Navigator.pop(context);
+      Navigator.pop(context, result);
       DynamicIslandToast.showSuccess(
         context,
-        'Booking request placed for ${widget.service['title']}! Providers will send quotations shortly.',
+        'Booking request placed! Opening task details...',
       );
     } else {
       final state = jobCubit.state;
@@ -564,7 +732,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Book ${srv['title']}',
+                  'Book ${srv['title'] ?? srv['name'] ?? srv['provider_name'] ?? 'Service'}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w800,
@@ -573,7 +741,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Category: ${srv['category'] ?? 'General'}',
+                  'Category: ${srv['category'] ?? srv['serviceType'] ?? 'General'}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5.sp,
                     color: AppColors.textSecondary,
@@ -937,28 +1105,190 @@ class _BookServiceModalState extends State<BookServiceModal> {
 
             SizedBox(height: 18.h),
 
-            // 2. Property Selector Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Select Property',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textHeadline,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: _navigateToAddProperty,
-                  child: Text(
-                    '+ Add Property',
+            // 2. Location / Property Section
+            if (_isFromMapPin) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Service Location',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.sp,
+                      fontSize: 13.5.sp,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.textHeadline,
                     ),
                   ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardSelectedBg,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.pin_drop_rounded,
+                          size: 11.r,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 3.w),
+                        Text(
+                          'From Map Pin',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14.r),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    width: 1.3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryDark.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42.r,
+                      height: 42.r,
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10.r),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.location_on_rounded,
+                          size: 22.r,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _currentLocationAddress ?? 'Pinned Map Location',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textHeadline,
+                              height: 1.3,
+                            ),
+                          ),
+                          SizedBox(height: 3.h),
+                          Text(
+                            'Provider will arrive at this pinned location',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Select Property',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textHeadline,
+                    ),
+                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: _isLocatingCurrentPosition
+                          ? null
+                          : _useCurrentLocationAsProperty,
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 3.h,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isLocatingCurrentPosition)
+                              SizedBox(
+                                width: 12.r,
+                                height: 12.r,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 1.8,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.my_location_rounded,
+                                size: 14.r,
+                                color: AppColors.primary,
+                              ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Current Location',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Text(
+                      ' • ',
+                      style: TextStyle(
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _navigateToAddProperty,
+                      child: Text(
+                        '+ Add Property',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -967,7 +1297,108 @@ class _BookServiceModalState extends State<BookServiceModal> {
               builder: (context, state) {
                 final properties = context.read<PropertyCubit>().currentProperties;
 
-                // Validation: Handle No Properties Added
+                // 1. If user selected Current Location
+                if (_isUsingCurrentLocation) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.cardSelectedBg,
+                      borderRadius: BorderRadius.circular(14.r),
+                      border: Border.all(color: AppColors.primary, width: 1.5),
+                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8.r),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.my_location_rounded,
+                            size: 18.r,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Current Location',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13.5.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textHeadline,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE8F5E9),
+                                      borderRadius: BorderRadius.circular(6.r),
+                                    ),
+                                    child: Text(
+                                      'Selected',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF2E7D32),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 3.h),
+                              Text(
+                                _currentLocationAddress ?? 'Location acquired',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSecondary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (properties.isNotEmpty)
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isUsingCurrentLocation = false;
+                                _selectedProperty = properties.where((p) => p.isDefault).firstOrNull ?? properties.first;
+                              });
+                            },
+                            child: Text(
+                              'Change',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          )
+                        else
+                          IconButton(
+                            onPressed: _isLocatingCurrentPosition ? null : _useCurrentLocationAsProperty,
+                            icon: Icon(
+                              Icons.refresh_rounded,
+                              size: 18.r,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }
+
+                // 2. Validation: Handle No Properties Added
                 if (properties.isEmpty) {
                   return Container(
                     padding: EdgeInsets.all(12.r),
@@ -976,62 +1407,109 @@ class _BookServiceModalState extends State<BookServiceModal> {
                       borderRadius: BorderRadius.circular(14.r),
                       border: Border.all(color: const Color(0xFFFED7AA)),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Container(
-                          padding: EdgeInsets.all(8.r),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEDD5),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Icon(
-                            Icons.home_work_outlined,
-                            color: const Color(0xFFC2410C),
-                            size: 20.r,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'No properties added yet',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.5.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF9A3412),
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8.r),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFEDD5),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Icon(
+                                Icons.home_work_outlined,
+                                color: const Color(0xFFC2410C),
+                                size: 20.r,
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'No properties added yet',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.5.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF9A3412),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Add a property or use your current location',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.sp,
+                                      color: const Color(0xFFC2410C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _navigateToAddProperty,
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 6.h,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  side: const BorderSide(color: Color(0xFFFDBA74)),
                                 ),
                               ),
-                              Text(
-                                'Add a property to place your booking',
+                              child: Text(
+                                '+ Add',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp,
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.w800,
                                   color: const Color(0xFFC2410C),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: _navigateToAddProperty,
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10.w,
-                              vertical: 6.h,
+                        SizedBox(height: 10.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isLocatingCurrentPosition
+                                ? null
+                                : _useCurrentLocationAsProperty,
+                            icon: _isLocatingCurrentPosition
+                                ? SizedBox(
+                                    width: 14.r,
+                                    height: 14.r,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.my_location_rounded,
+                                    size: 16.r,
+                                    color: Colors.white,
+                                  ),
+                            label: Text(
+                              _isLocatingCurrentPosition
+                                  ? 'Getting Current Location...'
+                                  : 'Use Current Location',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                              side: const BorderSide(color: Color(0xFFFDBA74)),
-                            ),
-                          ),
-                          child: Text(
-                            '+ Add',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFFC2410C),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              disabledBackgroundColor:
+                                  AppColors.primary.withValues(alpha: 0.6),
+                              padding: EdgeInsets.symmetric(vertical: 10.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              elevation: 0,
                             ),
                           ),
                         ),
@@ -1198,9 +1676,10 @@ class _BookServiceModalState extends State<BookServiceModal> {
                 );
               },
             ),
+          ],
             SizedBox(height: 18.h),
 
-            // 3. Preferred Date & Time Picker
+            // 3. Preferred Schedule (Now vs Schedule)
             Text(
               'Preferred Schedule',
               style: GoogleFonts.plusJakartaSans(
@@ -1210,10 +1689,139 @@ class _BookServiceModalState extends State<BookServiceModal> {
               ),
             ),
             SizedBox(height: 8.h),
-            GestureDetector(
-              onTap: _pickDateTime,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+
+            // Now vs Schedule Selector
+            Row(
+              children: [
+                // "Now" Option
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _scheduleType = 'now';
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
+                      decoration: BoxDecoration(
+                        color: _scheduleType == 'now'
+                            ? AppColors.primary.withValues(alpha: 0.08)
+                            : const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: _scheduleType == 'now'
+                              ? AppColors.primary
+                              : const Color(0xFFE5E7EB),
+                          width: _scheduleType == 'now' ? 1.8 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bolt_rounded,
+                            size: 18.r,
+                            color: _scheduleType == 'now'
+                                ? AppColors.primary
+                                : AppColors.textMuted,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'Now (ASAP)',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5.sp,
+                              fontWeight: _scheduleType == 'now'
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: _scheduleType == 'now'
+                                  ? AppColors.primary
+                                  : AppColors.textHeadline,
+                            ),
+                          ),
+                          if (_scheduleType == 'now') ...[
+                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 14.r,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.w),
+
+                // "Schedule" Option
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _scheduleType = 'schedule';
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 12.w),
+                      decoration: BoxDecoration(
+                        color: _scheduleType == 'schedule'
+                            ? AppColors.primary.withValues(alpha: 0.08)
+                            : const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: _scheduleType == 'schedule'
+                              ? AppColors.primary
+                              : const Color(0xFFE5E7EB),
+                          width: _scheduleType == 'schedule' ? 1.8 : 1.0,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_month_rounded,
+                            size: 18.r,
+                            color: _scheduleType == 'schedule'
+                                ? AppColors.primary
+                                : AppColors.textMuted,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            'Schedule',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12.5.sp,
+                              fontWeight: _scheduleType == 'schedule'
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: _scheduleType == 'schedule'
+                                  ? AppColors.primary
+                                  : AppColors.textHeadline,
+                            ),
+                          ),
+                          if (_scheduleType == 'schedule') ...[
+                            SizedBox(width: 4.w),
+                            Icon(
+                              Icons.check_circle_rounded,
+                              size: 14.r,
+                              color: AppColors.primary,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10.h),
+
+            if (_scheduleType == 'now')
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14.r),
@@ -1225,31 +1833,15 @@ class _BookServiceModalState extends State<BookServiceModal> {
                       width: 44.w,
                       height: 44.h,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: const Color(0xFFFEF3C7),
                         borderRadius: BorderRadius.circular(10.r),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            DateFormat('MMM').format(_selectedDate).toUpperCase(),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          Text(
-                            DateFormat('dd').format(_selectedDate),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primaryDark,
-                              height: 1.1,
-                            ),
-                          ),
-                        ],
+                      child: Center(
+                        child: Icon(
+                          Icons.bolt_rounded,
+                          color: const Color(0xFFD97706),
+                          size: 24.r,
+                        ),
                       ),
                     ),
                     SizedBox(width: 12.w),
@@ -1257,15 +1849,36 @@ class _BookServiceModalState extends State<BookServiceModal> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            DateFormat('EEEE, MMMM d, yyyy').format(_selectedDate),
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textHeadline,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                'Immediate Service (ASAP)',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textHeadline,
+                                ),
+                              ),
+                              SizedBox(width: 6.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(6.r),
+                                ),
+                                child: Text(
+                                  'NOW',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF15803D),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 2.h),
+                          SizedBox(height: 3.h),
                           Row(
                             children: [
                               Icon(
@@ -1275,7 +1888,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
                               ),
                               SizedBox(width: 4.w),
                               Text(
-                                'Time: ${DateFormat('hh:mm a').format(_selectedDate)}',
+                                'Requesting right away • Ready to start',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 11.5.sp,
                                   color: AppColors.textSecondary,
@@ -1287,46 +1900,140 @@ class _BookServiceModalState extends State<BookServiceModal> {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.tune_rounded,
-                            size: 13.r,
-                            color: AppColors.textHeadline,
-                          ),
-                          SizedBox(width: 4.w),
-                          Text(
-                            'Change',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textHeadline,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
+              )
+            else
+              GestureDetector(
+                onTap: _pickDateTime,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44.w,
+                        height: 44.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10.r),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              DateFormat('MMM').format(_selectedDate).toUpperCase(),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              DateFormat('dd').format(_selectedDate),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primaryDark,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              DateFormat('EEEE, MMMM d, yyyy').format(_selectedDate),
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textHeadline,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 13.r,
+                                  color: AppColors.primary,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  'Time: ${DateFormat('hh:mm a').format(_selectedDate)}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11.5.sp,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 13.r,
+                              color: AppColors.textHeadline,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Change',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textHeadline,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
             SizedBox(height: 18.h),
 
-            // 4. Description Field
-            Text(
-              'Service Description & Notes',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 13.5.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textHeadline,
-              ),
+            // 4. Description Field (Optional)
+            Row(
+              children: [
+                Text(
+                  'Service Description & Notes',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textHeadline,
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  '(Optional)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 8.h),
             Container(
@@ -1344,7 +2051,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
                   color: AppColors.textHeadline,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Describe details, preferred timing, or special notes...',
+                  hintText: 'Describe details, preferred timing, or special notes (optional)...',
                   hintStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5.sp,
                     color: AppColors.textMuted,
@@ -1388,7 +2095,9 @@ class _BookServiceModalState extends State<BookServiceModal> {
                           ),
                           SizedBox(width: 8.w),
                           Text(
-                            'Place Booking & Request Quotes',
+                            _scheduleType == 'now'
+                                ? 'Book Now & Request Quotes'
+                                : 'Schedule & Request Quotes',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w800,
