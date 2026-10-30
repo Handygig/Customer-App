@@ -35,6 +35,16 @@ class AppRouter {
     navigatorKey: rootNavigatorKey,
     initialLocation:
         AuthManager.isLoggedIn ? AppRoutes.mainNavigation : AppRoutes.welcome,
+    onException: (context, state, router) {
+      final uriString = state.uri.toString();
+      if (uriString.contains('firebaseauth') ||
+          uriString.contains('link') ||
+          uriString.contains('callback')) {
+        debugPrint('ℹ️ Handled Firebase Auth redirect deep link: $uriString');
+        return;
+      }
+      debugPrint('⚠️ GoRouter exception for $uriString: ${state.error}');
+    },
     routes: [
       GoRoute(
         path: AppRoutes.welcome,

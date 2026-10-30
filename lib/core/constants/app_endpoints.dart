@@ -1,18 +1,30 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppEndpoints {
   AppEndpoints._();
 
   static String get baseUrl {
-    final baseUrl = dotenv.env['BASE_URL'];
-    if (baseUrl == null || baseUrl.trim().isEmpty) {
-      // Fallback to environment variable or standard localhost
-      return const String.fromEnvironment(
+    var url = dotenv.env['BASE_URL']?.trim();
+    if (url == null || url.isEmpty) {
+      url = const String.fromEnvironment(
         'API_BASE_URL',
-        defaultValue: 'http://10.0.2.2:8000/api',
+        defaultValue: 'http://127.0.0.1:8000/api',
       );
     }
-    return baseUrl;
+
+    // iOS Simulator cannot reach Android's 10.0.2.2 loopback address
+    if (!kIsWeb && Platform.isIOS && url.contains('10.0.2.2')) {
+      return url.replaceAll('10.0.2.2', '127.0.0.1');
+    }
+
+    // Android Emulator cannot reach host localhost / 127.0.0.1
+    if (!kIsWeb && Platform.isAndroid && (url.contains('127.0.0.1') || url.contains('localhost'))) {
+      return url.replaceAll('127.0.0.1', '10.0.2.2').replaceAll('localhost', '10.0.2.2');
+    }
+
+    return url;
   }
 
   // Auth endpoints

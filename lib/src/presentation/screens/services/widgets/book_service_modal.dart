@@ -15,6 +15,8 @@ import 'package:customer_app/src/presentation/cubits/payments/card_state.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_cubit.dart';
 import 'package:customer_app/src/presentation/cubits/properties/property_state.dart';
 import 'package:customer_app/src/presentation/cubits/services/service_category_cubit.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:customer_app/config/router/app_routes.dart';
 import 'package:customer_app/src/presentation/widgets/dynamic_island_toast.dart';
@@ -44,6 +46,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
   CardEntity? _selectedCard;
   String _selectedPaymentMethod = 'card'; // 'card' or 'cash'
   bool _isSubmitting = false;
+  bool _isLocatingCurrentPosition = false;
 
   @override
   void initState() {
@@ -440,6 +443,174 @@ class _BookServiceModalState extends State<BookServiceModal> {
     }
   }
 
+  Future<void> _useCurrentLocationAsProperty() async {
+    if (_isLocatingCurrentPosition) return;
+    HapticFeedback.lightImpact();
+    setState(() => _isLocatingCurrentPosition = true);
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        DynamicIslandToast.showError(
+          context,
+          'Please enable Location Services on your device.',
+        );
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        DynamicIslandToast.showError(
+          context,
+          'Location permission is permanently denied. Please enable in Settings.',
+        );
+        return;
+      }
+
+      if (permission == LocationPermission.denied) {
+        if (!mounted) return;
+        DynamicIslandToast.showError(context, 'Location permission denied.');
+        return;
+      }
+
+      // 1. Try to get cached / last known position first (instant on devices and simulators)
+      Position? position;
+      try {
+        position = await Geolocator.getLastKnownPosition();
+      } catch (_) {}
+
+      // 2. If no cached position, fetch with medium accuracy and short timeout
+      if (position == null) {
+        try {
+          position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+              timeLimit: Duration(seconds: 5),
+            ),
+          );
+        } catch (_) {
+          // If timed out, try lowest accuracy as quick fallback
+          try {
+            position = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.lowest,
+                timeLimit: Duration(seconds: 4),
+              ),
+            );
+          } catch (_) {
+            // Re-check last known position
+            try {
+              position = await Geolocator.getLastKnownPosition();
+            } catch (_) {}
+          }
+        }
+      }
+
+      // 3. Fallback coordinates (Colombo central) if device/simulator has no GPS fix yet
+      final double lat = position?.latitude ?? 6.9044;
+      final double lng = position?.longitude ?? 79.8543;
+
+      String city = 'Colombo';
+      String fullAddress = 'Current Location';
+
+      try {
+        final placemarks = await Geocoding()
+            .placemarkFromCoordinates(lat, lng)
+            .timeout(const Duration(seconds: 5));
+
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+          final locality = p.locality ?? p.subAdministrativeArea ?? p.administrativeArea;
+          if (locality != null && locality.trim().isNotEmpty) {
+            city = locality.trim();
+          }
+
+          final addressParts = <String?>[
+            p.street,
+            p.subLocality,
+            p.locality,
+            p.postalCode,
+          ]
+              .where((part) => part != null && part.trim().isNotEmpty)
+              .map((part) => part!.trim())
+              .toSet()
+              .toList();
+
+          if (addressParts.isNotEmpty) {
+            fullAddress = addressParts.join(', ');
+          }
+        }
+      } catch (e) {
+        debugPrint('Reverse geocode error or timeout: $e');
+        if (position == null) {
+          fullAddress = 'Colombo, Western Province';
+        }
+      }
+
+      if (!mounted) return;
+
+      final propCubit = context.read<PropertyCubit>();
+      final existingLocationProp = propCubit.currentProperties.where(
+        (p) =>
+            p.label == 'Current Location' ||
+            (p.latitude != null &&
+                (p.latitude! - lat).abs() < 0.0005 &&
+                (p.longitude! - lng).abs() < 0.0005),
+      ).firstOrNull;
+
+      if (existingLocationProp != null) {
+        setState(() {
+          _selectedProperty = existingLocationProp;
+        });
+        DynamicIslandToast.showSuccess(
+          context,
+          'Selected: ${existingLocationProp.fullAddress}',
+        );
+      } else {
+        final success = await propCubit.addProperty(
+          label: 'Current Location',
+          addressLine: fullAddress,
+          city: city,
+          latitude: lat,
+          longitude: lng,
+          isDefault: true,
+        );
+
+        if (!mounted) return;
+
+        if (success) {
+          final updated = propCubit.currentProperties;
+          setState(() {
+            _selectedProperty = updated.where((p) => p.label == 'Current Location').firstOrNull ??
+                updated.lastOrNull;
+          });
+          DynamicIslandToast.showSuccess(
+            context,
+            'Current location added and selected!',
+          );
+        } else {
+          DynamicIslandToast.showError(
+            context,
+            'Failed to save current location as property.',
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      DynamicIslandToast.showError(context, 'Could not get current location: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLocatingCurrentPosition = false);
+      }
+    }
+  }
+
   Future<void> _submitBooking() async {
     // 1. Validate Description
     final description = _descriptionController.text.trim();
@@ -564,7 +735,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Book ${srv['title']}',
+                  'Book ${srv['title'] ?? srv['name'] ?? srv['provider_name'] ?? 'Service'}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w800,
@@ -573,7 +744,7 @@ class _BookServiceModalState extends State<BookServiceModal> {
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Category: ${srv['category'] ?? 'General'}',
+                  'Category: ${srv['category'] ?? srv['serviceType'] ?? 'General'}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12.5.sp,
                     color: AppColors.textSecondary,
@@ -949,16 +1120,69 @@ class _BookServiceModalState extends State<BookServiceModal> {
                     color: AppColors.textHeadline,
                   ),
                 ),
-                GestureDetector(
-                  onTap: _navigateToAddProperty,
-                  child: Text(
-                    '+ Add Property',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: _isLocatingCurrentPosition
+                          ? null
+                          : _useCurrentLocationAsProperty,
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6.w,
+                          vertical: 3.h,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isLocatingCurrentPosition)
+                              SizedBox(
+                                width: 12.r,
+                                height: 12.r,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 1.8,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            else
+                              Icon(
+                                Icons.my_location_rounded,
+                                size: 14.r,
+                                color: AppColors.primary,
+                              ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Current Location',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                    Text(
+                      ' • ',
+                      style: TextStyle(
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                        fontSize: 11.sp,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _navigateToAddProperty,
+                      child: Text(
+                        '+ Add Property',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -976,62 +1200,109 @@ class _BookServiceModalState extends State<BookServiceModal> {
                       borderRadius: BorderRadius.circular(14.r),
                       border: Border.all(color: const Color(0xFFFED7AA)),
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Container(
-                          padding: EdgeInsets.all(8.r),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEDD5),
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                          child: Icon(
-                            Icons.home_work_outlined,
-                            color: const Color(0xFFC2410C),
-                            size: 20.r,
-                          ),
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'No properties added yet',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12.5.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF9A3412),
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(8.r),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFEDD5),
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              child: Icon(
+                                Icons.home_work_outlined,
+                                color: const Color(0xFFC2410C),
+                                size: 20.r,
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'No properties added yet',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12.5.sp,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF9A3412),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Add a property or use your current location',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11.sp,
+                                      color: const Color(0xFFC2410C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _navigateToAddProperty,
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 6.h,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  side: const BorderSide(color: Color(0xFFFDBA74)),
                                 ),
                               ),
-                              Text(
-                                'Add a property to place your booking',
+                              child: Text(
+                                '+ Add',
                                 style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11.sp,
+                                  fontSize: 11.5.sp,
+                                  fontWeight: FontWeight.w800,
                                   color: const Color(0xFFC2410C),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        TextButton(
-                          onPressed: _navigateToAddProperty,
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10.w,
-                              vertical: 6.h,
+                        SizedBox(height: 10.h),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: _isLocatingCurrentPosition
+                                ? null
+                                : _useCurrentLocationAsProperty,
+                            icon: _isLocatingCurrentPosition
+                                ? SizedBox(
+                                    width: 14.r,
+                                    height: 14.r,
+                                    child: const CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.my_location_rounded,
+                                    size: 16.r,
+                                    color: Colors.white,
+                                  ),
+                            label: Text(
+                              _isLocatingCurrentPosition
+                                  ? 'Getting Current Location...'
+                                  : 'Use Current Location',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.r),
-                              side: const BorderSide(color: Color(0xFFFDBA74)),
-                            ),
-                          ),
-                          child: Text(
-                            '+ Add',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFFC2410C),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              disabledBackgroundColor:
+                                  AppColors.primary.withValues(alpha: 0.6),
+                              padding: EdgeInsets.symmetric(vertical: 10.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                              elevation: 0,
                             ),
                           ),
                         ),
